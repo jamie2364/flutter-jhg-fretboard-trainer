@@ -314,8 +314,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     required double height,
   }) =>
       Padding(
-        padding:
-            EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
+        padding: EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
         child: Container(
           width: height * 0.030,
           height: height * 0.030,

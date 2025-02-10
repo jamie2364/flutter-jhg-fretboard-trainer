@@ -80,7 +80,7 @@ class HomeController extends GetxController {
 
   Future<void> playSound(int index, String note, int str, String tune) async {
     isPlayed = false;
-    await player.stop();
+    player.stop();
     // EXECUTE LOOP
     fretList.forEach((element) async {
       // if(element.id == index){
@@ -512,12 +512,9 @@ class HomeController extends GetxController {
   }
 
   Future<void> initLocalDbData() async {
-    defaultTimerSelectedValue(
-        await SharedPrefHelper.instance.getDefaultTimerType());
-    minutesValue.value =
-        await SharedPrefHelper.instance.getDefaultTimerMinutes();
-    timerIntervalValue.value =
-        await SharedPrefHelper.instance.getTimerInterval();
+    defaultTimerSelectedValue(await SharedPrefHelper.instance.getDefaultTimerType());
+    minutesValue.value = await SharedPrefHelper.instance.getDefaultTimerMinutes();
+    timerIntervalValue.value = await SharedPrefHelper.instance.getTimerInterval();
     string1 = await SharedPrefHelper.instance.getString1();
     string2 = await SharedPrefHelper.instance.getString2();
     string3 = await SharedPrefHelper.instance.getString3();

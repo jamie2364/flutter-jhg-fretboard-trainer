@@ -29,14 +29,14 @@ class BoardModel {
   Future<void> playSound() async {
     try {
       if (player.playing) {
-        await player.stop(); // Stop if it's currently playing
+         player.stop(); // Stop if it's currently playing
       }
       if (kIsWeb) {
-        await player.setAsset("web/$fretSound");
+         player.setAsset("web/$fretSound");
       } else {
         await player.setFilePath(Utils.getAsset(fretSound!).path);
       }
-      await player.play(); // Play the audio
+       player.play(); // Play the audio
     } catch (e) {
       print("Error playing sound: $e");
     }
