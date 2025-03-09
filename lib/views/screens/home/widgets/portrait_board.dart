@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:fretboard/utils/app_assets.dart';
-import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
+import 'package:fretboard/utils/app_assets.dart';
+import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
@@ -225,10 +225,21 @@ class PortraitBoard extends StatelessWidget {
                   ),
                 ],
               ),
-            )
+            ),
           // : const SizedBox(
           //     height: 23,
           //   ),
+          !controller.leaderboardMode
+              ? SizedBox(height: 14)
+              : Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'You can\'t change settings in leaderboard',
+                    style: TextStyle(
+                      color: JHGColors.primary,
+                    ),
+                  ),
+                ),
         ],
       ),
     );

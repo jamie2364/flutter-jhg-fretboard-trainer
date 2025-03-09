@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
+import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
-import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
@@ -67,16 +67,18 @@ class WebBoard extends StatelessWidget {
                                     child: Center(
                                       child: const WebLandscapeGuitarBoard(),
                                     ))
-                                :    ScrollConfiguration(
-                                 behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-                                  child: SingleChildScrollView(
-                                    child: Container(
-                                      // color: Colors.blue,
-                                        width: width * 0.28,
-                                        alignment: Alignment.topCenter,
-                                        child: const WebPortraitGuitarBoard()),
+                                : ScrollConfiguration(
+                                    behavior: ScrollConfiguration.of(context)
+                                        .copyWith(scrollbars: false),
+                                    child: SingleChildScrollView(
+                                      child: Container(
+                                          // color: Colors.blue,
+                                          width: width * 0.28,
+                                          alignment: Alignment.topCenter,
+                                          child:
+                                              const WebPortraitGuitarBoard()),
+                                    ),
                                   ),
-                                ),
                           ],
                         ),
                       ),
@@ -134,13 +136,14 @@ class WebBoard extends StatelessWidget {
                 ),
                 JHGAppBar(
                   isResponsive: true,
-                  isBottom: true,
+                  isBottom: false,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   leadingWidget: controller.isStart == true
                       ? JHGResetBtn(
                           enabled: true,
                           onTap: () {
-                            controller.setGameMode(timer: false, leaderboard: false);
+                            controller.setGameMode(
+                                timer: false, leaderboard: false);
                             controller.resetGame(false);
                           })
                       :
@@ -154,7 +157,8 @@ class WebBoard extends StatelessWidget {
                               size: 40,
                               svgImg: AppAssets.iconStopwatch,
                               onTap: () {
-                                controller.setGameMode(timer: true, leaderboard: false);
+                                controller.setGameMode(
+                                    timer: true, leaderboard: false);
                                 controller.resetTimer();
                               })
                           :
@@ -167,7 +171,8 @@ class WebBoard extends StatelessWidget {
                                   size: 40,
                                   svgImg: AppAssets.iconTimer,
                                   onTap: () {
-                                    controller.setGameMode(timer: false, leaderboard: true);
+                                    controller.setGameMode(
+                                        timer: false, leaderboard: true);
                                     controller.resetTimer();
                                   })
                               :
@@ -180,7 +185,8 @@ class WebBoard extends StatelessWidget {
                                       enabled: true,
                                       svgImg: AppAssets.iconTropy,
                                       onTap: () {
-                                        controller.setGameMode(timer: false, leaderboard: false);
+                                        controller.setGameMode(
+                                            timer: false, leaderboard: false);
                                         controller.resetTimer();
                                       })
                                   : SizedBox(),
@@ -252,6 +258,17 @@ class WebBoard extends StatelessWidget {
               ],
             ),
           ),
+          !controller.leaderboardMode
+              ? SizedBox(height: 14)
+              : Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'You can\'t change settings in leaderboard',
+                    style: TextStyle(
+                      color: JHGColors.primary,
+                    ),
+                  ),
+                ),
         ],
       ),
     );

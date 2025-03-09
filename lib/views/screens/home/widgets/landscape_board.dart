@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:fretboard/utils/app_assets.dart';
-import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
+import 'package:fretboard/utils/app_assets.dart';
+import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
@@ -41,7 +41,8 @@ class LandscapeBoard extends StatelessWidget {
                 children: [
                   controller.isStart == true
                       ? JHGResetBtn(onTap: () {
-                          controller.setGameMode(timer: false, leaderboard: false);
+                          controller.setGameMode(
+                              timer: false, leaderboard: false);
                           controller.resetGame(false);
                         })
                       : controller.timerMode == false &&
@@ -54,7 +55,8 @@ class LandscapeBoard extends StatelessWidget {
                                   enabled: true,
                                   svgImg: AppAssets.iconStopwatchLandscape,
                                   onTap: () {
-                                    controller.setGameMode(timer: true, leaderboard: false);
+                                    controller.setGameMode(
+                                        timer: true, leaderboard: false);
                                     controller.resetTimer();
                                   }),
                             )
@@ -64,7 +66,8 @@ class LandscapeBoard extends StatelessWidget {
                                   enabled: true,
                                   svgImg: AppAssets.iconTimerLandscape,
                                   onTap: () {
-                                    controller.setGameMode(timer: false, leaderboard: true);
+                                    controller.setGameMode(
+                                        timer: false, leaderboard: true);
                                     controller.resetTimer();
                                   })
                               : controller.leaderboardMode == true
@@ -73,7 +76,8 @@ class LandscapeBoard extends StatelessWidget {
                                       enabled: true,
                                       svgImg: AppAssets.iconTrophyLandscape,
                                       onTap: () {
-                                        controller.setGameMode(timer: false, leaderboard: false);
+                                        controller.setGameMode(
+                                            timer: false, leaderboard: false);
                                         controller.resetTimer();
                                       })
                                   : SizedBox(),
@@ -112,14 +116,29 @@ class LandscapeBoard extends StatelessWidget {
                     ? const SizedBox()
                     : RotatedBox(
                         quarterTurns: 1,
-                        child: JHGPrimaryBtn(
-                          label: AppStrings.start,
-                          height: 50,
-                          width: width * 0.45,
-                          onPressed: () {
-                            controller.startTimer();
-                            controller.startTheGame();
-                          },
+                        child: Column(
+                          children: [
+                            JHGPrimaryBtn(
+                              label: AppStrings.start,
+                              height: 50,
+                              width: width * 0.45,
+                              onPressed: () {
+                                controller.startTimer();
+                                controller.startTheGame();
+                              },
+                            ),
+                            !controller.leaderboardMode
+                                ? SizedBox(height: 14)
+                                : Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      'You can\'t change settings in leaderboard',
+                                      style: TextStyle(
+                                        color: JHGColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                          ],
                         ),
                       ),
 
