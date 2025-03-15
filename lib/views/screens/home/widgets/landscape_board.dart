@@ -7,7 +7,7 @@ import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
-import 'package:fretboard/views/widgets/add_sub_button.dart';
+import 'package:fretboard/views/widgets/count_timer_widget.dart';
 import 'package:get/get.dart';
 
 class LandscapeBoard extends StatelessWidget {
@@ -185,48 +185,7 @@ class LandscapeBoard extends StatelessWidget {
                       ),
                 Spacer(),
                 // TIMER WITH INCREASE AND DECREASE BUTTON
-                Container(
-                  //color: Colors.yellow,
-                  child: RotatedBox(
-                      quarterTurns: 1,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          controller.timerMode == true
-                              ? AddAndSubtractButton(
-                                  onTap: () {
-                                    controller.decreaseTime();
-                                  },
-                                  isAdd: false)
-                              : SizedBox(),
-                          SizedBox(
-                            width: width * 0.050,
-                          ),
-                          ValueListenableBuilder<int>(
-                            valueListenable: controller.secondsRemaining,
-                            //widget.model.seconds,
-                            builder: (context, value, child) {
-                              return Text(
-                                controller.formatTime(value),
-                                style: JHGTextStyles.lrlabelStyle.copyWith(
-                                  fontSize: 36,
-                                ),
-                              );
-                            },
-                          ),
-                          SizedBox(
-                            width: width * 0.050,
-                          ),
-                          controller.timerMode == true
-                              ? AddAndSubtractButton(
-                                  onTap: () {
-                                    controller.increaseTime();
-                                  },
-                                  isAdd: true)
-                              : SizedBox(),
-                        ],
-                      )),
-                ),
+                RotatedBox(quarterTurns: 1, child: CountTimerWidget()),
 
                 Spacer(),
                 // controller.isStart ?

@@ -414,7 +414,7 @@ class HomeController extends GetxController {
 
   // Value Notifier listener
 
-  ValueNotifier<int> secondsRemaining = ValueNotifier(0);
+  Rx<int> secondsRemaining = Rx(0);
 
   void startLeaderBoardCountDownTimer() {
     if (secondsRemaining.value == 0) {

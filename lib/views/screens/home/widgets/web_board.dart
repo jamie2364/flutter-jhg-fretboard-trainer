@@ -8,8 +8,9 @@ import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
-import 'package:fretboard/views/widgets/add_sub_button.dart';
 import 'package:get/get.dart';
+
+import '../../../widgets/count_timer_widget.dart';
 
 class WebBoard extends StatelessWidget {
   const WebBoard({super.key, required this.controller});
@@ -85,55 +86,10 @@ class WebBoard extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 14,
-                ),
+                SizedBox(height: 14),
                 // TIMER  WITH ADD AND SUBTRACT BUTTONS
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    controller.timerMode == true
-                        ? WebAddAndSubtractButton(
-                            onTap: () {
-                              controller.decreaseTime();
-                            },
-                            isAdd: false)
-                        : const SizedBox(),
-                    SizedBox(
-                      width: 3.w,
-                    ),
-                    Center(
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: controller.secondsRemaining,
-                        //widget.model.seconds,
-                        builder: (context, value, child) {
-                          return Text(
-                            controller.formatTime(value),
-                            textAlign: TextAlign.center,
-                            style: JHGTextStyles.subLabelStyle.copyWith(
-                              fontSize: 2.5.w,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 3.w,
-                    ),
-                    controller.timerMode == true
-                        ? WebAddAndSubtractButton(
-                            onTap: () {
-                              controller.increaseTime();
-                            },
-                            isAdd: true)
-                        : const SizedBox(),
-                  ],
-                ),
-                // //TIMER , STOPWATCH , ROTATE ICON
-                SizedBox(
-                  height: 7,
-                ),
+                CountTimerWidget(),
+                SizedBox(height: 7),
                 JHGAppBar(
                   isResponsive: true,
                   isBottom: false,

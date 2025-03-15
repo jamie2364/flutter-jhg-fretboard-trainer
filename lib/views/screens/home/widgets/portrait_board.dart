@@ -7,8 +7,9 @@ import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
-import 'package:fretboard/views/widgets/add_sub_button.dart';
 import 'package:get/get.dart';
+
+import '../../../widgets/count_timer_widget.dart';
 
 class PortraitBoard extends StatelessWidget {
   const PortraitBoard({super.key, required this.controller});
@@ -78,50 +79,8 @@ class PortraitBoard extends StatelessWidget {
           SizedBox(
             height: height * 0.02,
           ),
-
           // TIMER
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              controller.timerMode == true
-                  ? AddAndSubtractButton(
-                      onTap: () {
-                        controller.decreaseTime();
-                      },
-                      isAdd: false)
-                  : const SizedBox(),
-              SizedBox(
-                width: width * 0.050,
-              ),
-              Center(
-                child: ValueListenableBuilder<int>(
-                  valueListenable: controller.secondsRemaining,
-                  //widget.model.seconds,
-                  builder: (context, value, child) {
-                    return Text(
-                      controller.formatTime(value),
-                      textAlign: TextAlign.center,
-                      style: JHGTextStyles.lrlabelStyle.copyWith(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                width: width * 0.050,
-              ),
-              controller.timerMode == true
-                  ? AddAndSubtractButton(
-                      onTap: () {
-                        controller.increaseTime();
-                      },
-                      isAdd: true)
-                  : const SizedBox(),
-            ],
-          ),
-          //: const SizedBox(),
+          CountTimerWidget(),
           // //TIMER , STOPWATCH , ROTATE ICON
           SizedBox(
             height: height * 0.010,
