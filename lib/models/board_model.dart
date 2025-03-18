@@ -8,7 +8,8 @@ class BoardModel {
   int? fret;
   String? note;
   String? fretSound;
-  AudioPlayer player; // Make it non-nullable
+  final AudioPlayer player;
+  bool _isDisposed = false;
 
   BoardModel({
     required this.id,
@@ -16,29 +17,50 @@ class BoardModel {
     required this.fret,
     required this.note,
     required this.fretSound,
-  }) : player = AudioPlayer() { // Initialize the AudioPlayer for each instance
+  }) : player = AudioPlayer() {
     _initializePlayer();
   }
 
   // Initialize player settings and asset
-  void _initializePlayer() async {
-    player.setVolume(1);
+  Future<void> _initializePlayer() async {
+    try {
+      await player.setVolume(1);
+    } catch (e) {
+      print("Error initializing player: $e");
+    }
   }
 
   // Method to play the sound
   Future<void> playSound() async {
+    if (_isDisposed) return;
+    
     try {
       if (player.playing) {
-         player.stop(); // Stop if it's currently playing
+        await player.stop();
       }
+      
       if (kIsWeb) {
-         player.setAsset("web/$fretSound");
+        await player.setAsset("web/$fretSound");
       } else {
         await player.setFilePath(Utils.getAsset(fretSound!).path);
       }
-       player.play(); // Play the audio
+      
+      await player.play();
     } catch (e) {
       print("Error playing sound: $e");
+    }
+  }
+
+  // Method to dispose of the audio player
+  Future<void> dispose() async {
+    if (!_isDisposed) {
+      try {
+        await player.stop();
+        await player.dispose();
+        _isDisposed = true;
+      } catch (e) {
+        print("Error disposing player: $e");
+      }
     }
   }
 }
