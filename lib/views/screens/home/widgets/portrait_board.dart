@@ -4,6 +4,7 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
+import 'package:fretboard/views/screens/home/widgets/board_widgets.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';

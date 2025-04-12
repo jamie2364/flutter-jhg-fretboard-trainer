@@ -32,7 +32,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                 children: [
                   //NUMBERS
                   Container(
-                    width: width * 0.90,
+                    width: width * 0.850,
                     height: 35,
                     // color: Colors.green,
                     child: ListView.builder(
@@ -59,7 +59,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                   //fretboard
                   Container(
                     height: 235,
-                    width: width * 0.900,
+                    width: width * 0.850,
                     // alignment: Alignment.,
                     child: Stack(
                       children: [
@@ -699,7 +699,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                         Align(
                             alignment: Alignment.topCenter,
                             child: AlignedGridView.count(
-                              itemCount: 96,  
+                              itemCount: 96,
                               shrinkWrap: true,
                               padding: EdgeInsets.zero,
                               physics: const NeverScrollableScrollPhysics(),
