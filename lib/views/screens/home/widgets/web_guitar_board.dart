@@ -575,7 +575,8 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     return GetBuilder<HomeController>(
         init: HomeController(),
         builder: (controller) {
-          return Row(
+          return
+            Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
