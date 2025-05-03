@@ -56,7 +56,7 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           title: 'JHG Fretboard',
           theme: JHGTheme.themeData,
-          initialBinding: AppBindings(),
+          initialBinding: AppBindings(),  
           navigatorKey: navKey,
           home: kIsWeb
               ? const HomeScreen()

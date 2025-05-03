@@ -32,7 +32,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                 children: [
                   //NUMBERS
                   Container(
-                    width: width * 0.850,
+                    width: width * 0.900,
                     height: 35,
                     // color: Colors.green,
                     child: ListView.builder(

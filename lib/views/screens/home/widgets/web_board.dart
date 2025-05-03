@@ -71,7 +71,7 @@ class WebBoard extends StatelessWidget {
                                   ? SizedBox.shrink()
                                   : Center(
                                       child: Padding(
-                                      padding: EdgeInsets.only( right: width * 0.016),
+                                      padding: EdgeInsets.only( right: width * 0.014),
                                         child: Container(
                                           padding: EdgeInsets.only(bottom: 10.dp),
                                           width: width * 0.15,
@@ -96,50 +96,53 @@ class WebBoard extends StatelessWidget {
                                       ),
                                     ),
                               controller.isPortrait == true
-                                  ? Container(
-                                      //color: Colors.blue,
-                                      height: height * 0.50,
-                                      width: width * 0.900,
-                                      child: Center(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(top: 16.dp),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  buildStringCharWeb(
-                                                      'E', 1, controller),
-                                                  buildStringCharWeb(
-                                                      'A', 2, controller),
-                                                  buildStringCharWeb(
-                                                      'D', 3, controller),
-                                                  buildStringCharWeb(
-                                                      'G', 4, controller),
-                                                  buildStringCharWeb(
-                                                      'B', 5, controller),
-                                                  buildStringCharWeb(
-                                                      'E', 6, controller),
-                                                ],
+                                  ? SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                    child: Container(
+                                        //color: Colors.blue,
+                                        height: height * 0.50,
+                                       // width: width * 0.930,
+                                        child: Center(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsets.only(top: 16.dp),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    buildStringCharWeb(
+                                                        'E', 1, controller),
+                                                    buildStringCharWeb(
+                                                        'A', 2, controller),
+                                                    buildStringCharWeb(
+                                                        'D', 3, controller),
+                                                    buildStringCharWeb(
+                                                        'G', 4, controller),
+                                                    buildStringCharWeb(
+                                                        'B', 5, controller),
+                                                    buildStringCharWeb(
+                                                        'E', 6, controller),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                            const WebLandscapeGuitarBoard()
-                                          ],
+                                              const WebLandscapeGuitarBoard()
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    )
+                                  )
                                   :  ScrollConfiguration(
                                 behavior: NoScrollbarBehavior(),
                                       child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
                                         child: Container(
                                             // color: Colors.blue,
-                                            width: width * 0.28,
+                                            //width: width * 0.29,
                                             alignment: Alignment.topCenter,
                                             child:
                                                 const WebPortraitGuitarBoard()),
