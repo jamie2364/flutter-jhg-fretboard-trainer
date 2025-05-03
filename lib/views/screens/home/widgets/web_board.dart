@@ -56,8 +56,9 @@ class WebBoard extends StatelessWidget {
                     child: ScrollConfiguration(
                       behavior: NoScrollbarBehavior(),
                       child: SingleChildScrollView(
+                        scrollDirection:  controller.isPortrait == true ? Axis.horizontal : Axis.vertical,
                         padding: EdgeInsets.only(
-                            top: controller.isPortrait
+                            top: controller.isPortrait 
                                 ? height * 0.10
                                 : height * 0.060),
                         child: IgnorePointer(
@@ -97,7 +98,7 @@ class WebBoard extends StatelessWidget {
                               controller.isPortrait == true
                                   ? Container(
                                       //color: Colors.blue,
-                                      height: height * 0.65,
+                                      height: height * 0.50,
                                       width: width * 0.900,
                                       child: Center(
                                         child: Row(
