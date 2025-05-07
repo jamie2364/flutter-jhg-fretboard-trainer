@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
@@ -56,9 +55,11 @@ class WebBoard extends StatelessWidget {
                     child: ScrollConfiguration(
                       behavior: NoScrollbarBehavior(),
                       child: SingleChildScrollView(
-                        scrollDirection:  controller.isPortrait == true ? Axis.horizontal : Axis.vertical,
+                        scrollDirection: controller.isPortrait == true
+                            ? Axis.horizontal
+                            : Axis.vertical,
                         padding: EdgeInsets.only(
-                            top: controller.isPortrait 
+                            top: controller.isPortrait
                                 ? height * 0.10
                                 : height * 0.060),
                         child: IgnorePointer(
@@ -71,12 +72,15 @@ class WebBoard extends StatelessWidget {
                                   ? SizedBox.shrink()
                                   : Center(
                                       child: Padding(
-                                      padding: EdgeInsets.only( right: width * 0.014),
+                                        padding: EdgeInsets.only(
+                                            right: width * 0.014),
                                         child: Container(
-                                          padding: EdgeInsets.only(bottom: 10.dp),
+                                          padding:
+                                              EdgeInsets.only(bottom: 10.dp),
                                           width: width * 0.15,
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
                                             children: [
                                               buildStringCharWeb(
                                                   'E', 1, controller),
@@ -97,18 +101,19 @@ class WebBoard extends StatelessWidget {
                                     ),
                               controller.isPortrait == true
                                   ? SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                    child: Container(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Container(
                                         //color: Colors.blue,
                                         height: height * 0.50,
-                                       // width: width * 0.930,
+                                        // width: width * 0.930,
                                         child: Center(
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
                                               Padding(
-                                                padding: EdgeInsets.only(top: 16.dp),
+                                                padding:
+                                                    EdgeInsets.only(top: 16.dp),
                                                 child: Column(
                                                   mainAxisAlignment:
                                                       MainAxisAlignment.center,
@@ -135,9 +140,9 @@ class WebBoard extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                  )
-                                  :  ScrollConfiguration(
-                                behavior: NoScrollbarBehavior(),
+                                    )
+                                  : ScrollConfiguration(
+                                      behavior: NoScrollbarBehavior(),
                                       child: SingleChildScrollView(
                                         scrollDirection: Axis.horizontal,
                                         child: Container(
