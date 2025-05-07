@@ -23,7 +23,14 @@ class WebBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-
+    final List<Widget> alphabetsWidget = [
+      buildStringCharWeb('E', 1, controller),
+      buildStringCharWeb('A', 2, controller),
+      buildStringCharWeb('D', 3, controller),
+      buildStringCharWeb('G', 4, controller),
+      buildStringCharWeb('B', 5, controller),
+      buildStringCharWeb('E', 6, controller),
+    ];
     return JHGBody(
       body: Column(
         children: [
@@ -81,20 +88,7 @@ class WebBoard extends StatelessWidget {
                                           child: Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              buildStringCharWeb(
-                                                  'E', 1, controller),
-                                              buildStringCharWeb(
-                                                  'A', 2, controller),
-                                              buildStringCharWeb(
-                                                  'D', 3, controller),
-                                              buildStringCharWeb(
-                                                  'G', 4, controller),
-                                              buildStringCharWeb(
-                                                  'B', 5, controller),
-                                              buildStringCharWeb(
-                                                  'E', 6, controller),
-                                            ],
+                                            children: alphabetsWidget,
                                           ),
                                         ),
                                       ),
@@ -119,20 +113,9 @@ class WebBoard extends StatelessWidget {
                                                       MainAxisAlignment.center,
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.center,
-                                                  children: [
-                                                    buildStringCharWeb(
-                                                        'E', 1, controller),
-                                                    buildStringCharWeb(
-                                                        'A', 2, controller),
-                                                    buildStringCharWeb(
-                                                        'D', 3, controller),
-                                                    buildStringCharWeb(
-                                                        'G', 4, controller),
-                                                    buildStringCharWeb(
-                                                        'B', 5, controller),
-                                                    buildStringCharWeb(
-                                                        'E', 6, controller),
-                                                  ],
+                                                  children: alphabetsWidget
+                                                      .reversed
+                                                      .toList(),
                                                 ),
                                               ),
                                               const WebLandscapeGuitarBoard()
