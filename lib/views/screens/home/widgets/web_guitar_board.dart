@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:fretboard/utils/app_colors.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/models/freth_list.dart';
+import 'package:fretboard/utils/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
 
@@ -108,29 +108,22 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     blackLandscapeCircle(
-                                        isColor: index == 11 ? true : false,
-                                        //isColor: true,
-                                        width: width),
+                                        isColor: index == 11, width: width),
                                     SizedBox(
                                       height: 7.1.h,
                                     ),
                                     blackLandscapeCircle(
                                         width: width,
-                                        //isColor: true,
                                         isColor: index == 2 ||
-                                                index == 4 ||
-                                                index == 6 ||
-                                                index == 8 ||
-                                                index == 14
-                                            ? true
-                                            : false),
+                                            index == 4 ||
+                                            index == 6 ||
+                                            index == 8 ||
+                                            index == 14),
                                     SizedBox(
                                       height: 7.1.h,
                                     ),
                                     blackLandscapeCircle(
-                                        width: width,
-                                        //isColor: true,
-                                        isColor: index == 11 ? true : false),
+                                        width: width, isColor: index == 11),
                                   ],
                                 ),
                               ),
@@ -186,7 +179,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                                 isColor: controller.selectedFret == index
                                     ? true
                                     : false,
-                                 color: controller.selectedColor,
+                                color: controller.selectedColor,
                                 index: index,
                               );
                             },
@@ -219,7 +212,8 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                                           controller.playSound(
                                               index,
                                               noteIndex.note!,
-                                              noteIndex.string!,fretList[index].fretSound!);
+                                              noteIndex.string!,
+                                              fretList[index].fretSound!);
                                         },
                                         child: stringLandscapePress(
                                             index: index, width: width),
@@ -343,7 +337,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
             shape: BoxShape.circle,
             color: isColor == true ? color : Colors.transparent,
           ),
-         // child: Text("${fretList[index].note}",style: TextStyle(color: Colors.red),),
+          // child: Text("${fretList[index].note}",style: TextStyle(color: Colors.red),),
         ),
       );
 
@@ -443,10 +437,10 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     int index,
     double width,
   ) {
-    if (index >= 0 &&  index <= 5) {
+    if (index >= 0 && index <= 5) {
       return 0;
     } else if (index >= 6 && index <= 11) {
-      return width *  0.010;
+      return width * 0.010;
     } else if (index >= 12 && index <= 17) {
       return width * 0.050;
     } else if (index >= 18 && index <= 23) {
@@ -572,11 +566,11 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
+    final wMultiple = 0.21; // previous 0.14
     return GetBuilder<HomeController>(
         init: HomeController(),
         builder: (controller) {
-          return
-            Row(
+          return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -585,7 +579,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                 children: [
                   Container(
                     height: height * 1.185,
-                    width: width * 0.14,
+                    width: width * wMultiple,
                     alignment: Alignment.center,
                     child: Stack(
                       alignment: Alignment.bottomCenter,
@@ -598,7 +592,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                             ),
                             Expanded(
                               child: Container(
-                                width: width * 0.14,
+                                width: width * wMultiple,
                                 color: AppColors.creamColor,
                               ),
                             ),
@@ -610,7 +604,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                             child: RotatedBox(
                               quarterTurns: 2,
                               child: Container(
-                                width: width * 0.14,
+                                width: width * wMultiple,
                                 height: height * 0.022,
                                 decoration: BoxDecoration(
                                     color: JHGColors.black,
@@ -630,32 +624,33 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                             physics: const NeverScrollableScrollPhysics(),
                             itemBuilder: (context, index) {
                               return Container(
+                                margin: EdgeInsets.symmetric(horizontal: 13),
                                 padding: EdgeInsets.only(
                                   top: getPortraitBlackSpace(index, height),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    blackPortraitCircle(
+                                    Expanded(
+                                        child: blackPortraitCircle(
                                       height: height,
-                                      isColor: index == 11 ? true : false,
-                                    ),
-                                    SizedBox(
-                                      width: width * 0.032,
-                                    ),
-                                    blackPortraitCircle(
-                                        height: height,
-                                        isColor: index == 2 ||
+                                      isColor: index == 11,
+                                    )),
+                                    Expanded(child: SizedBox.shrink()),
+                                    Expanded(
+                                        child: blackPortraitCircle(
+                                            height: height,
+                                            isColor: index == 2 ||
                                                 index == 4 ||
                                                 index == 6 ||
                                                 index == 8 ||
-                                                index == 14
-                                            ? true
-                                            : false),
-                                    SizedBox(width: width * 0.032),
-                                    blackPortraitCircle(
-                                        height: height,
-                                        isColor: index == 11 ? true : false),
+                                                index == 14)),
+                                    Expanded(child: SizedBox.shrink()),
+                                    Expanded(
+                                        child: blackPortraitCircle(
+                                            height: height,
+                                            isColor: index == 11)),
                                   ],
                                 ),
                               );
@@ -680,22 +675,16 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                         ),
 
                         // COLUMN
-
                         RotatedBox(
                           quarterTurns: 2,
-                          child: ListView.builder(
-                            itemCount: 6,
-                            shrinkWrap: false,
-                            padding: EdgeInsets.zero,
-                            scrollDirection: Axis.horizontal,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemBuilder: (context, index) {
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(6, (index) {
                               return colPortraitDivider(
                                   width, index, controller.highlightString);
-                            },
+                            }),
                           ),
                         ),
-
 
                         Align(
                             alignment: Alignment.topCenter,
@@ -709,15 +698,12 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                               crossAxisSpacing: 10,
                               itemBuilder: (context, index) {
                                 return redGreenPortraitCircle(
-                                    isColor: controller.selectedFret == index
-                                        ? true
-                                        : false,
+                                    isColor: controller.selectedFret == index,
                                     color: controller.selectedColor,
                                     index: index,
                                     height: height);
                               },
                             )),
-
 
                         // /// Fret press With Grid
                         // ///===========================================================
@@ -737,8 +723,11 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                                   cursor: SystemMouseCursors.click,
                                   child: GestureDetector(
                                     onTap: () {
-                                      controller.playSound(index,
-                                          noteIndex.note!, noteIndex.string!,fretList[index].fretSound!);
+                                      controller.playSound(
+                                          index,
+                                          noteIndex.note!,
+                                          noteIndex.string!,
+                                          fretList[index].fretSound!);
                                     },
                                     child: stringPortraitPress(
                                         index: index,
@@ -812,8 +801,8 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
 
   Widget colPortraitDivider(double width, int index, int? selectedString) {
     return Padding(
-      padding:
-          EdgeInsets.only(left: index == 0 ? width * 0.007 : width * 0.0218),
+      padding: EdgeInsets.only(
+          left: index == 0 ? 12 : 0, right: index == 5 ? 12 : 0),
       child: Container(
         width: index == 6
             ? width * 0.0045

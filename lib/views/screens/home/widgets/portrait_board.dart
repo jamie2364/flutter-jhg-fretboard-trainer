@@ -67,11 +67,9 @@ class PortraitBoard extends StatelessWidget {
               padding: EdgeInsets.only(left: width * 0.070),
               child: IgnorePointer(
                 ignoring: !controller.isStart,
-                child: Container(
-                    //color: Colors.red,
-                    child: const GuitarBoard(
+                child:  const GuitarBoard(
                   isPortrait: true,
-                )),
+                ),
               ),
             ),
           ),
@@ -90,10 +88,13 @@ class PortraitBoard extends StatelessWidget {
             isResponsive: true,
             crossAxisAlignment: CrossAxisAlignment.end,
             leadingWidget: controller.isStart == true
-                ? JHGResetBtn(onTap: () {
-                    controller.setGameMode(timer: false, leaderboard: false);
-                    controller.resetGame(false);
-                  })
+                ? JHGResetBtn(
+                    onTap: () {
+                      controller.setGameMode(timer: false, leaderboard: false);
+                      controller.resetGame(false);
+                    },
+                    enabled: true,
+                  )
                 : controller.timerMode == false &&
                         controller.leaderboardMode == false
                     ? JHGIconButton(

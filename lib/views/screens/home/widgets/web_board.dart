@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
@@ -6,6 +5,8 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/board_widgets.dart';
+import 'package:fretboard/views/screens/home/widgets/guitar_board.dart'
+    show StringsNameWidget;
 import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
@@ -73,26 +74,11 @@ class WebBoard extends StatelessWidget {
                           ignoring: !controller.isStart,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               controller.isPortrait == true
                                   ? SizedBox.shrink()
-                                  : Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.only(
-                                            right: width * 0.014),
-                                        child: Container(
-                                          padding:
-                                              EdgeInsets.only(bottom: 10.dp),
-                                          width: width * 0.15,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: alphabetsWidget,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                  : StringsNameWidget(width: width * 0.21),
                               controller.isPortrait == true
                                   ? SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,

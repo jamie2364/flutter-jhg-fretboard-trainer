@@ -149,4 +149,7 @@ class AppStrings {
   static const String str6Fr13 = "assets/audio/str_6/str6_fr13_ntf.mp3";
   static const String str6Fr14 = "assets/audio/str_6/str6_fr14_ntf.mp3";
   static const String str6Fr15 = "assets/audio/str_6/str6_fr15_ntg.mp3";
+
+  // String position
+  static const List<String> guitarStrings = ['E', 'A', 'D', 'G', 'B', 'E'];
 }
