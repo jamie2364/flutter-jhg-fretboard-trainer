@@ -745,13 +745,10 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                 ],
               ),
               //SPACER
-              SizedBox(
-                width: width * 0.004,
-              ),
+              SizedBox(width: 5),
               // NUMBERS
-              Container(
-                // color: Colors.red,
-                width: width * 0.016,
+              SizedBox(
+                width: 18,
                 child: ListView.builder(
                   itemCount: 16,
                   shrinkWrap: true,
@@ -767,7 +764,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                         child: Text(
                           index.toString(),
                           style: JHGTextStyles.subLabelStyle
-                              .copyWith(fontSize: height * 0.020),
+                              .copyWith(fontSize: 18),
                         ),
                       ),
                     );
