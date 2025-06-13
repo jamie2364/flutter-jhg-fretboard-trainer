@@ -36,10 +36,11 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.only(left: width * 0.08),
+                child:  Container(
+                  padding: EdgeInsets.only(left:width * 0.08),
+                  margin: EdgeInsets.only(right:isPortrait ? 0 : width*0.170),
                   child: StringsNameWidget(
-                      width: width * (isPortrait ? 0.55 : 0.48)),
+                      width: width * (isPortrait ? 0.55 : 0.47)),
                 ),
               ),
               Row(
@@ -48,7 +49,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 children: [
                   // fretboard
                   Container(
-                    width: width * (isPortrait ? 0.55 : 0.48),
+                    width: width * (isPortrait ? 0.55 : 0.47),
                     constraints: BoxConstraints(maxHeight: height * 1.2),
                     alignment: Alignment.center,
                     child: Stack(
