@@ -41,7 +41,11 @@ class LeaderBoardController extends GetxController {
     int highestScore = 0;
     myCurrentScore = scoreList
             .firstWhere(
-              (p0) => p0.username == username.value,
+              (p0) =>
+                  p0.username ==
+                  (kIsWeb
+                      ? Get.find<HomeController>().userNameWeb
+                      : username.value),
               orElse: () => LeaderboardData(),
             )
             .score ??
