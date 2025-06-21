@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
+import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/main.dart';
 import 'package:fretboard/models/leaderboard.dart';
 import 'package:get/get.dart';
 import 'package:reg_page/reg_page.dart';
@@ -58,11 +60,13 @@ class LeaderBoardController extends GetxController {
   Future<dynamic> updateScore(int score) async {
     final data = LeaderboardData(
         score: score,
-        username: SplashScreen.session.user?.userName ?? 'jamieharrisontest');
+        username: kIsWeb
+            ? Get.find<HomeController>().userNameWeb
+            : SplashScreen.session.user?.userName ?? 'jamieharrisontest');
     if (score < myCurrentScore) return;
     var response = await compute(updateScoreApiRequest, data);
     JHGDialogHelper.showInfoDialog(
-        context: Nav.key.currentState!.context,
+        context: navKey.currentState!.context,
         buttonLabel: 'OK',
         title: 'Congratulations',
         description:

@@ -508,7 +508,11 @@ class HomeController extends GetxController {
       userNameWeb = uri.queryParameters['username'].toString();
       isActive = bool.parse(uri.queryParameters['active'].toString());
       update();
-    } on Exception {}
+    } on Exception {
+      if(userNameWeb==null || userNameWeb=="null"){
+        userNameWeb = "DefaultUserName";
+      }
+    }
   }
 
   Future<void> initLocalDbData() async {
