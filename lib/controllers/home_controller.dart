@@ -39,6 +39,7 @@ class HomeController extends GetxController {
   RxInt minutesValue = 1.obs;
 
   RxString defaultTimerSelectedValue = "Stopwatch".obs;
+
   // JHGInterstitialAd? interstitialAd;
   JHGInterstitialAd? interstitialAds;
   RxBool isExpanded = RxBool(false);
@@ -462,16 +463,24 @@ class HomeController extends GetxController {
     });
   }
 
-  void startCountUpTimer() {
-    secondsRemaining.value = 0;
+  void startCountUpTimer() async {
+    final minutes = await SharedPrefHelper.instance.getDefaultTimerMinutes();
+    final interval = await SharedPrefHelper.instance.getTimerInterval();
+    secondsRemaining.value = minutes * 60;
     update();
     if (timer != null) {
       timer!.cancel();
     }
     // Create a timer that runs every second
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(Duration(seconds: interval), (timer) {
       // Update the UI and decrement the remaining seconds
-      secondsRemaining.value++;
+      if (secondsRemaining.value > 0) {
+        secondsRemaining.value--;
+      }else{
+        timer.cancel();
+        resetGame(false);
+        update();
+      }
     });
   }
 
@@ -479,7 +488,7 @@ class HomeController extends GetxController {
     int seconds = timerIntervalValue.value;
     int minutes = minutesValue.value;
     saveStrings();
-    if (defaultTimerSelectedValue == "Countdown") {
+    if (defaultTimerSelectedValue.value == "Countdown") {
       SharedPrefHelper.instance
           .storeDefaultTimerType(defaultTimerSelectedValue.value);
       SharedPrefHelper.instance.storeTimerInterval(seconds);
@@ -509,16 +518,19 @@ class HomeController extends GetxController {
       isActive = bool.parse(uri.queryParameters['active'].toString());
       update();
     } on Exception {
-      if(userNameWeb==null || userNameWeb=="null"){
+      if (userNameWeb == null || userNameWeb == "null") {
         userNameWeb = "DefaultUserName";
       }
     }
   }
 
   Future<void> initLocalDbData() async {
-    defaultTimerSelectedValue(await SharedPrefHelper.instance.getDefaultTimerType());
-    minutesValue.value = await SharedPrefHelper.instance.getDefaultTimerMinutes();
-    timerIntervalValue.value = await SharedPrefHelper.instance.getTimerInterval();
+    defaultTimerSelectedValue(
+        await SharedPrefHelper.instance.getDefaultTimerType());
+    minutesValue.value =
+        await SharedPrefHelper.instance.getDefaultTimerMinutes();
+    timerIntervalValue.value =
+        await SharedPrefHelper.instance.getTimerInterval();
     string1 = await SharedPrefHelper.instance.getString1();
     string2 = await SharedPrefHelper.instance.getString2();
     string3 = await SharedPrefHelper.instance.getString3();

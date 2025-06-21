@@ -33,6 +33,7 @@ class SettingsDefaultTimer extends StatelessWidget {
                         onChanged: (String? value) {
                           if (value != null) {
                             controller.selectedDropDownValue.value = value;
+                            controller.defaultTimerSelectedValue.value= value;
                           }
                         },
                       )),
@@ -42,7 +43,7 @@ class SettingsDefaultTimer extends StatelessWidget {
             Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: JHGExpandableSection(
-                    expand: controller.selectedDropDownValue.value ==
+                    expand: controller.defaultTimerSelectedValue.value ==
                         controller.defaultTimer[1],
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
