@@ -49,7 +49,7 @@ class SharedPrefHelper {
 
   Future<int> getDefaultTimerMinutes() async {
     final prefs = await preferences;
-    final value = prefs.getInt(defaultTimerMinutesKey) ?? 1;
+    final value = prefs.getInt(defaultTimerMinutesKey) ?? 2;
     return value;
   }
 

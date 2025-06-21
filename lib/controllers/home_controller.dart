@@ -22,7 +22,7 @@ class HomeController extends GetxController {
   void onDefaultTimerInitialized() {
     selectedDropDownValue.value = "Stopwatch";
     timerIntervalValue.value = 10;
-    minutesValue.value = 1;
+    minutesValue.value = 2;
   }
 
   var isActive = true;
@@ -36,7 +36,7 @@ class HomeController extends GetxController {
 
   RxBool timerIntervalExpanded = false.obs;
   RxInt timerIntervalValue = 10.obs;
-  RxInt minutesValue = 1.obs;
+  RxInt minutesValue = 2.obs;
 
   RxString defaultTimerSelectedValue = "Stopwatch".obs;
 
@@ -467,16 +467,32 @@ class HomeController extends GetxController {
     final minutes = await SharedPrefHelper.instance.getDefaultTimerMinutes();
     final interval = await SharedPrefHelper.instance.getTimerInterval();
     secondsRemaining.value = minutes * 60;
+    int totalSeconds = minutes * 60;
+    ;
     update();
     if (timer != null) {
       timer!.cancel();
     }
+    int elapsed = 0;
     // Create a timer that runs every second
-    timer = Timer.periodic(Duration(seconds: interval), (timer) {
-      // Update the UI and decrement the remaining seconds
-      if (secondsRemaining.value > 0) {
-        secondsRemaining.value--;
-      }else{
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      elapsed++;
+      totalSeconds--;
+
+      if (elapsed % interval == 0) {
+        secondsRemaining.value -= interval;
+
+        // Clamp to zero
+        if (secondsRemaining.value <= 0) {
+          secondsRemaining.value = 0;
+          update();
+          timer.cancel();
+          resetGame(false);
+          return;
+        }
+
+        update();
+      } else if (totalSeconds <= 0) {
         timer.cancel();
         resetGame(false);
         update();

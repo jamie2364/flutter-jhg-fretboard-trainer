@@ -7,7 +7,6 @@ class AppStrings {
   static const String logout = 'Logout';
   static const String start = 'Start';
   static String loadMore = "Load more";
-  static String username = "username";
   static String score = "score";
   static const String titleLeaderBoardTitle = "Leaderboard - Fretboard Trainer";
   static const String save = 'Save';
