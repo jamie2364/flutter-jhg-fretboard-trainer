@@ -2,6 +2,7 @@ import 'package:fretboard/models/leaderboard.dart';
 import 'package:fretboard/services/base_service.dart';
 import 'package:fretboard/utils/app_urls.dart';
 import 'package:reg_page/reg_page.dart';
+import 'package:fretboard/models/leaderboard.dart';
 
 import '../services/base_controller.dart';
 

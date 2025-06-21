@@ -18,11 +18,13 @@ class LeaderBoardController extends GetxController {
   RxList<LeaderboardData> scoreList = <LeaderboardData>[].obs;
 
   Future<void> getLeaderBoard() async {
-    username.value = SplashScreen.session.user?.userName ?? '';
+    username.value = kIsWeb
+        ? Get.find<HomeController>().userNameWeb
+        : SplashScreen.session.user?.userName ?? '';
     try {
       scoreList([]);
       isLoading(true);
-      var value = await compute(getLeaderBoardApiRequest, gameType.value);
+      var value = await getLeaderBoardApiRequest(gameType.value);
       scoreList.value = value;
       isLoading(false);
       highestScorer();
