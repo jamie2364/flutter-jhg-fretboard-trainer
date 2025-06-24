@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
+import 'package:fretboard/main.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
@@ -14,14 +15,14 @@ import 'leaderboard_controller.dart';
 
 class HomeController extends GetxController {
   // disable the web active status is true
-  var userNameWeb = 'DefaultUserName';
+  var userNameWeb = 'DefaultUserName'.obs;
 
   List<String> defaultTimer = ['Stopwatch', "Countdown"];
   RxString selectedDropDownValue = "".obs;
 
   void onDefaultTimerInitialized() {
     selectedDropDownValue.value = "Stopwatch";
-    timerIntervalValue.value = 10;
+    timerIntervalValue.value = 1;
     minutesValue.value = 2;
   }
 
@@ -35,7 +36,7 @@ class HomeController extends GetxController {
   String? userName;
 
   RxBool timerIntervalExpanded = false.obs;
-  RxInt timerIntervalValue = 10.obs;
+  RxInt timerIntervalValue = 1.obs;
   RxInt minutesValue = 2.obs;
 
   RxString defaultTimerSelectedValue = "Stopwatch".obs;
@@ -530,12 +531,12 @@ class HomeController extends GetxController {
   void getUserNameFromRL() async {
     try {
       var uri = Uri.parse(window.location.href);
-      userNameWeb = uri.queryParameters['username'].toString();
+      userNameWeb.value = uri.queryParameters['username'].toString();
       isActive = bool.parse(uri.queryParameters['active'].toString());
       update();
     } on Exception {
       if (userNameWeb == null || userNameWeb == "null") {
-        userNameWeb = "DefaultUserName";
+        userNameWeb.value = "DefaultUserName";
       }
     }
   }

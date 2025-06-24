@@ -19,7 +19,7 @@ class LeaderBoardController extends GetxController {
 
   Future<void> getLeaderBoard() async {
     username.value = kIsWeb
-        ? Get.find<HomeController>().userNameWeb
+        ? Get.find<HomeController>().userNameWeb.value
         : SplashScreen.session.user?.userName ?? '';
     try {
       scoreList([]);
@@ -67,9 +67,9 @@ class LeaderBoardController extends GetxController {
     final data = LeaderboardData(
         score: score,
         username: kIsWeb
-            ? Get.find<HomeController>().userNameWeb
+            ? Get.find<HomeController>().userNameWeb.value
             : SplashScreen.session.user?.userName ?? 'jamieharrisontest');
-    if (score < myCurrentScore) return;
+    // if (score < myCurrentScore) return;
     var response = await compute(updateScoreApiRequest, data);
     JHGDialogHelper.showInfoDialog(
         context: navKey.currentState!.context,
