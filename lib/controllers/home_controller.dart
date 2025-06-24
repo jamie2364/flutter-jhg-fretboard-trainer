@@ -103,11 +103,11 @@ class HomeController extends GetxController {
             previousHighlightNode = highlightNode;
             incrementScore();
             highLightTheGame();
-            Future.delayed(Duration(milliseconds: 300), () {
+            // Future.delayed(Duration(milliseconds: 300), () {
               selectedFret = null;
               selectedColor = Colors.transparent;
               update();
-            });
+            // });
           } else {
             decrementScore();
           }
