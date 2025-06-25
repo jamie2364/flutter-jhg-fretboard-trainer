@@ -36,7 +36,6 @@ class WebBoard extends StatelessWidget {
       body: Column(
         children: [
           JHGAppBar(
-            title: Obx(()=>Text(controller.userNameWeb.value,style: JHGTextStyles.bodyStyle,)),
             isResponsive: true,
             leadingWidget: JHGIconButton(
                 childPadding: EdgeInsets.all(6),

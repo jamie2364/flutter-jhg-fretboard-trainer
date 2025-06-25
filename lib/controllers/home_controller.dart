@@ -84,11 +84,12 @@ class HomeController extends GetxController {
     isPlayed = false;
     player.stop();
     // EXECUTE LOOP
-    fretList.forEach((element) async {
-      // if(element.id == index){
-      if (element.note == note && element.string == str && isPlayed == false) {
+    final boardModel = fretList.firstWhereOrNull(
+        (element) => element.note == note && element.string == str);
+    if (boardModel != null) {
+      if (!isPlayed) {
         // GET ALLOW STRING STATUS
-        final stringStatus = getStringStatus(element.string!);
+        final stringStatus = getStringStatus(boardModel.string!);
 
         // CHECK IF THE STATUS IS TRUE AND GAME IS START
         // THEN WE WILL HIGHLIGHT THINGS
@@ -96,7 +97,7 @@ class HomeController extends GetxController {
           selectedFret = index;
           selectedString = str;
           selectedNote = note;
-          element.playSound();
+          boardModel.playSound();
           if (highlightNode == selectedNote &&
               selectedString == highlightString) {
             previousHighlightFret = highlightFret;
@@ -113,11 +114,10 @@ class HomeController extends GetxController {
           }
           update();
         } else {
-          element.playSound();
+          boardModel.playSound();
         }
-        return;
       }
-    });
+    }
   }
 
   double scale = 1;

@@ -46,7 +46,7 @@ class LeaderBoardController extends GetxController {
               (p0) =>
                   p0.username ==
                   (kIsWeb
-                      ? Get.find<HomeController>().userNameWeb
+                      ? Get.find<HomeController>().userNameWeb.value
                       : username.value),
               orElse: () => LeaderboardData(),
             )
@@ -69,7 +69,16 @@ class LeaderBoardController extends GetxController {
         username: kIsWeb
             ? Get.find<HomeController>().userNameWeb.value
             : SplashScreen.session.user?.userName ?? 'jamieharrisontest');
-    // if (score < myCurrentScore) return;
+    print("object====score--${score}  myCurrentScore===${myCurrentScore}");
+    if (score < myCurrentScore) {
+      JHGDialogHelper.showInfoDialog(
+          context: navKey.currentState!.context,
+          buttonLabel: 'OK',
+          title: 'Congratulations',
+          description:
+              'You achieved a new milestone. Your previous\'s highest score was $myCurrentScore and current score is ${score}');
+      return;
+    }
     var response = await updateScoreApiRequest(data);
     JHGDialogHelper.showInfoDialog(
         context: navKey.currentState!.context,
