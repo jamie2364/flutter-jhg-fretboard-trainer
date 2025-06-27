@@ -32,26 +32,29 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                 children: [
                   //NUMBERS
                   Container(
-                    width: width * 0.900,
+                    width: width * 0.870,
                     height: 35,
-                    // color: Colors.green,
-                    child: ListView.builder(
+                     // color: Colors.green,
+                    child:
+
+                    ListView.builder(
                       itemCount: 16,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       scrollDirection: Axis.horizontal,
                       physics: const NeverScrollableScrollPhysics(),
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                              right: getLandscapeSpace(index, width)),
-                          child: Text(
-                            index.toString(),
-                            style: JHGTextStyles.subLabelStyle.copyWith(
-                              fontSize: width * 0.012,
-                            ),
-                          ),
-                        );
+                        return numberLandscape(index, width);
+                        //   Padding(
+                        //   padding: EdgeInsets.only(
+                        //       right: getLandscapeSpace(index, width)),
+                        //   child: Text(
+                        //     index.toString(),
+                        //     style: JHGTextStyles.subLabelStyle.copyWith(
+                        //       fontSize: width * 0.012,
+                        //     ),
+                        //   ),
+                        // );
                       },
                     ),
                   ),
@@ -240,6 +243,32 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
         });
   }
 
+  Widget numberLandscape(int index, double width) {
+    return Padding(
+      padding: EdgeInsets.only(left: getLandscapeNumberSpace(index, width)),
+      child: Container(
+        // width: width * 0.0025,
+        // decoration: BoxDecoration(
+        //   gradient: LinearGradient(
+        //       begin: Alignment.centerRight,
+        //       end: Alignment.centerLeft,
+        //       colors: [
+        //         AppColors.whiteLight,
+        //         AppColors.whiteLight,
+        //         JHGColors.charcolGray,
+        //         JHGColors.secondryBlack
+        //       ]),
+        // ),
+        child: Text(
+                  index.toString(),
+                  style: JHGTextStyles.subLabelStyle.copyWith(
+                    fontSize: width * 0.012,
+                  ),
+                ),
+        // child: Text("r$index",style: TextStyle(color:Colors.white ),),
+      ),
+    );
+  }
   Widget rowLandscapeDivider(int index, double width) {
     return Padding(
       padding: EdgeInsets.only(left: getLandscapeFrethSpace(index, width)),
@@ -328,7 +357,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
   }) =>
       Padding(
         padding: EdgeInsets.only(
-            left: getLandscapeHighLightBasedOnIndex(index, width), top: 0),
+        left: getLandscapeHighLightBasedOnIndex(index, width), top: 0),
         child: Container(
           width: width * 0.020,
           height: width * 0.020,
@@ -355,6 +384,44 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
         //child: Text("$index",style: TextStyle(color: Colors.red),),
       );
 
+  double getLandscapeNumberSpace(
+      int index,
+      double width,
+      ) {
+    if (index == 0) {
+      return width * 0.006;
+    } else if (index == 1) {
+      return width * 0.030;
+    } else if (index == 2) {
+      return width * 0.060;
+    } else if (index == 3) {
+      return width * 0.062;
+    } else if (index == 4) {
+      return width * 0.062;
+    } else if (index == 5) {
+      return width * 0.062;
+    } else if (index == 6) {
+      return width * 0.058;
+    } else if (index == 7) {
+      return width * 0.057;
+    } else if (index == 8) {
+      return width * 0.054;
+    } else if (index == 9) {
+      return width * 0.052;
+    } else if (index == 10) {
+      return width * 0.048;
+    } else if (index == 11) {
+      return width * 0.042;
+    } else if (index == 12) {
+      return width * 0.044;
+    } else if (index == 13) {
+      return width * 0.042;
+    } else if (index == 14) {
+      return width * 0.038;
+    } else {
+      return width * 0.015;
+    }
+  }
   double getLandscapeFrethSpace(
     int index,
     double width,
