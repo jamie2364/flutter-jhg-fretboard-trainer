@@ -201,10 +201,12 @@ class _SettingScreenState extends State<SettingScreen> {
         bool val = snapshot.data ?? false;
         return Column(
           children: [
+            SizedBox(height: 20,),
             JHGHeadWithActions(
               AppStrings.strings,
               margin: EdgeInsets.only(top: 6),
               subLabel: AppStrings.stringDescriptionLandscape,
+              titleStyle: JHGTextStyles.labelStyle,
               subtitleStyle: JHGTextStyles.subLabelStyle.copyWith(fontSize: 12),
               onTapTitle: () {
                 expansionStream.sink.add(!val);
