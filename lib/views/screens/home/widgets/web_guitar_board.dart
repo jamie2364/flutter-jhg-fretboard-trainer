@@ -814,7 +814,8 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
               //SPACER
               SizedBox(width: 5),
               // NUMBERS
-              SizedBox(
+              Container(
+                // color: Colors.red,
                 width: 18,
                 child: ListView.builder(
                   itemCount: 16,
@@ -822,19 +823,20 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                   padding: EdgeInsets.zero,
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: getPotraitHeight(index, height),
-                      ),
-                      child: RotatedBox(
-                        quarterTurns: 0,
-                        child: Text(
-                          index.toString(),
-                          style: JHGTextStyles.subLabelStyle
-                              .copyWith(fontSize: 18),
-                        ),
-                      ),
-                    );
+                    return numberPortrait(height, index);
+                    //   Padding(
+                    //   padding: EdgeInsets.only(
+                    //     bottom: getPotraitHeight(index, height),
+                    //   ),
+                    //   child: RotatedBox(
+                    //     quarterTurns: 0,
+                    //     child: Text(
+                    //       index.toString(),
+                    //       style: JHGTextStyles.subLabelStyle
+                    //           .copyWith(fontSize: 18),
+                    //     ),
+                    //   ),
+                    // );
                   },
                 ),
               ),
@@ -843,6 +845,33 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
         });
   }
 
+  Widget numberPortrait(double height, int index) {
+    return Padding(
+      padding: EdgeInsets.only(top: getNumberPortraitSpace(index, height)),
+      child: Container(
+       // height: height * 0.0038,
+       //  decoration: BoxDecoration(
+       //    gradient: LinearGradient(
+       //        begin: Alignment.topCenter,
+       //        end: Alignment.bottomCenter,
+       //        colors: [
+       //          AppColors.whiteLight,
+       //          AppColors.whiteLight,
+       //          JHGColors.charcolGray,
+       //          JHGColors.secondryBlack
+       //        ]),
+       //  ),
+        child:  RotatedBox(
+        quarterTurns: 0,
+        child: Text(
+          index.toString(),
+          style: JHGTextStyles.subLabelStyle
+              .copyWith(fontSize: 18),
+        ),
+      )
+      ),
+    );
+  }
   Widget rowPortraitDivider(double height, int index) {
     return Padding(
       padding: EdgeInsets.only(top: getPortraitSpace(index, height)),
@@ -977,10 +1006,53 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     }
   }
 
-  double getPortraitSpace(
+  double getNumberPortraitSpace(
     int index,
     double height,
   ) {
+    switch (index) {
+      case 0:
+        return height * 0.0000;
+      case 1:
+        return height * 0.0130;
+      case 2:
+        return height * 0.0550;
+      case 3:
+        return height * 0.0620;
+      case 4:
+        return height * 0.0620;
+      case 5:
+        return height * 0.0610;
+      case 6:
+        return height * 0.0540;
+      case 7:
+        return height * 0.0500;
+      case 8:
+        return height * 0.0480;
+      case 9:
+        return height * 0.0490;
+      case 10:
+        return height * 0.0420;
+      case 11:
+        return height * 0.0380;
+      case 12:
+        return height * 0.0370;
+      case 13:
+        return height * 0.0330;
+      case 14:
+        return height * 0.0290;
+      case 15:
+        return height * 0.0270;
+      default:
+        return height * 0.0490;
+    }
+  }
+
+
+  double getPortraitSpace(
+      int index,
+      double height,
+      ) {
     switch (index) {
       case 0:
         return height * 0.0960;
