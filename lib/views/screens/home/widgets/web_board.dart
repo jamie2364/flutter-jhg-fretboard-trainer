@@ -12,6 +12,7 @@ import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/setting_screen.dart';
 import 'package:get/get.dart';
 
+import '../../../../utils/app_colors.dart';
 import '../../../widgets/count_timer_widget.dart';
 import '../../../widgets/scroll_bar_behavior.dart';
 
@@ -33,27 +34,28 @@ class WebBoard extends StatelessWidget {
       buildStringCharWeb('E', 6, controller),
     ];
     return JHGBody(
+      bodyAppBar: JHGAppBar(
+        isResponsive: true,
+        leadingWidget: JHGIconButton(
+            childPadding: EdgeInsets.all(6),
+            enabled: true,
+            svgImg: AppAssets.iconTropy,
+            onTap: () {
+              Get.to(() => LeadershipScreen(),
+                  transition: Transition.leftToRight);
+            }),
+        trailingWidget: JHGSettingsOptBtn(
+          btnEnabled: !controller.leaderboardMode,
+          onTap: () {
+            controller.resetGame(false);
+            Get.to(() => SettingScreen(),
+                transition: Transition.rightToLeft);
+          },
+        ),
+      ),
       body: Column(
         children: [
-          JHGAppBar(
-            isResponsive: true,
-            leadingWidget: JHGIconButton(
-                childPadding: EdgeInsets.all(6),
-                enabled: true,
-                svgImg: AppAssets.iconTropy,
-                onTap: () {
-                  Get.to(() => LeadershipScreen(),
-                      transition: Transition.leftToRight);
-                }),
-            trailingWidget: JHGSettingsOptBtn(
-              btnEnabled: !controller.leaderboardMode,
-              onTap: () {
-                controller.resetGame(false);
-                Get.to(() => SettingScreen(),
-                    transition: Transition.rightToLeft);
-              },
-            ),
-          ),
+
           Expanded(
             child: Column(
               children: [
@@ -132,133 +134,146 @@ class WebBoard extends StatelessWidget {
                 SizedBox(height: 14),
                 // TIMER  WITH ADD AND SUBTRACT BUTTONS
                 CountTimerWidget(),
-                SizedBox(height: 7),
-                JHGAppBar(
-                  isResponsive: true,
-                  isBottom: false,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  leadingWidget: controller.isStart == true
-                      ? JHGResetBtn(
-                          enabled: true,
-                          onTap: () {
-                            controller.setGameMode(
-                                timer: false, leaderboard: false);
-                            controller.resetGame(false);
-                          })
-                      :
 
-                      // ICON STOP WATCH
-                      controller.timerMode == false &&
-                              controller.leaderboardMode == false
-                          ? JHGIconButton(
-                              childPadding: EdgeInsets.all(4),
-                              enabled: true,
-                              size: 40,
-                              svgImg: AppAssets.iconStopwatch,
-                              onTap: () {
-                                controller.setGameMode(
-                                    timer: true, leaderboard: false);
-                                controller.resetTimer();
-                              })
-                          :
 
-                          // ICON TIMER
-                          controller.timerMode == true
-                              ? JHGIconButton(
-                                  childPadding: EdgeInsets.all(4),
-                                  enabled: true,
-                                  size: 40,
-                                  svgImg: AppAssets.iconTimer,
-                                  onTap: () {
-                                    controller.setGameMode(
-                                        timer: false, leaderboard: true);
-                                    controller.resetTimer();
-                                  })
-                              :
-
-                              // ICON LEADERBOARD
-                              controller.leaderboardMode == true
-                                  ? JHGIconButton(
-                                      size: 40,
-                                      childPadding: EdgeInsets.all(6),
-                                      enabled: true,
-                                      svgImg: AppAssets.iconTropy,
-                                      onTap: () {
-                                        controller.setGameMode(
-                                            timer: false, leaderboard: false);
-                                        controller.resetTimer();
-                                      })
-                                  : SizedBox(),
-                  centerWidget:
-
-                      // HIGILITED NOTE
-                      controller.isStart == true
-                          ? Container(
-                              height: 45,
-                              width: 22.w,
-                              alignment: Alignment.topCenter,
-                              //color: Colors.red,
-                              child: Text(
-                                "    ${controller.highlightNode ?? ""}",
-                                textAlign: TextAlign.center,
-                                style: JHGTextStyles.subLabelStyle.copyWith(
-                                  color: JHGColors.primary,
-                                  fontSize: 2.0.w,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            )
-                          :
-                          // START BUTTON
-                          JHGPrimaryBtn(
-                              label: AppStrings.start,
-                              width: 20.w,
-                              onPressed: () {
-                                controller.startTimer();
-                                controller.startTheGame();
-                              },
-                            ),
-                  trailingWidget:
-                      // ROTATE ICON
-                      JHGIconButton(
-                          childPadding: EdgeInsets.all(4),
-                          enabled: true,
-                          svgImg: AppAssets.iconRotate,
-                          size: 40,
-                          onTap: () {
-                            controller.toggleOrientation();
-                          }),
-                  bottom: controller.isStart == true
-                      ?
-
-                      // SCORE TEXT
-
-                      Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                AppStrings.scoreText,
-                                style: JHGTextStyles.labelStyle.copyWith(
-                                  fontSize: 1.6.w,
-                                ),
-                              ),
-                              Text(
-                                controller.score.toString(),
-                                style: JHGTextStyles.labelStyle.copyWith(
-                                  fontSize: 1.6.w,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : const SizedBox(),
-                ),
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.only(left: 5.0),
+            child: JHGAppBar(
+              isResponsive: true,
+              isBottom: true,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              leadingWidget: controller.isStart == true
+                  ? JHGResetBtn(
+                  enabled: true,
+                  onTap: () {
+                    controller.setGameMode(
+                        timer: false, leaderboard: false);
+                    controller.resetGame(false);
+                  })
+                  :
+
+              // ICON STOP WATCH
+              controller.timerMode == false &&
+                  controller.leaderboardMode == false
+                  ? JHGIconButton(
+                  childPadding: EdgeInsets.all(4),
+                  enabled: true,
+                  size: 40,
+                  svgImg: AppAssets.iconStopwatch,
+                  onTap: () {
+                    controller.setGameMode(
+                        timer: true, leaderboard: false);
+                    controller.resetTimer();
+                  })
+                  :
+
+              // ICON TIMER
+              controller.timerMode == true
+                  ? Container(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: JHGIconButton(
+                    onTap: () {
+                      controller.setGameMode(
+                          timer: false, leaderboard: true);
+                      controller.resetTimer();
+                    },
+                    childPadding: EdgeInsets.all(4),
+                    size: 29,
+                    svgImg: AppAssets.iconTimer,
+                  ),
+                ),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.whiteGrey),
+                padding: EdgeInsets.all(4),
+              )
+                  :
+
+              // ICON LEADERBOARD
+              controller.leaderboardMode == true
+                  ? JHGIconButton(
+                  size: 40,
+                  childPadding: EdgeInsets.all(6),
+                  enabled: true,
+                  svgImg: AppAssets.iconTropy,
+                  onTap: () {
+                    controller.setGameMode(
+                        timer: false, leaderboard: false);
+                    controller.resetTimer();
+                  })
+                  : SizedBox(),
+              centerWidget:
+
+              // HIGILITED NOTE
+              controller.isStart == true
+                  ? Container(
+                height: 40,
+                width: 22.w,
+                alignment: Alignment.topCenter,
+                //color: Colors.red,
+                child: Text(
+                  "    ${controller.highlightNode ?? ""}",
+                  textAlign: TextAlign.center,
+                  style: JHGTextStyles.subLabelStyle.copyWith(
+                    color: JHGColors.primary,
+                    fontSize: 2.0.w,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+                  :
+              // START BUTTON
+              JHGPrimaryBtn(
+                label: AppStrings.start,
+                width: 20.w,
+                onPressed: () {
+                  controller.startTimer();
+                  controller.startTheGame();
+                },
+              ),
+              trailingWidget:
+              // ROTATE ICON
+              JHGIconButton(
+                  childPadding: EdgeInsets.all(4),
+                  enabled: true,
+                  svgImg: AppAssets.iconRotate,
+                  size: 40,
+                  onTap: () {
+                    controller.toggleOrientation();
+                  }),
+              bottom: controller.isStart == true
+                  ?
+
+              // SCORE TEXT
+
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      AppStrings.scoreText,
+                      style: JHGTextStyles.labelStyle.copyWith(
+                        fontSize: 1.6.w,
+                      ),
+                    ),
+                    Text(
+                      controller.score.toString(),
+                      style: JHGTextStyles.labelStyle.copyWith(
+                        fontSize: 1.6.w,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  : const SizedBox(),
+            ),
+          ),
           !controller.leaderboardMode
-              ? SizedBox(height: 14)
+              ? SizedBox.shrink()
               : Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(

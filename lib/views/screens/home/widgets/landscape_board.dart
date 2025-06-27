@@ -214,7 +214,7 @@ class LandscapeBoard extends StatelessWidget {
           ),
 
           Container(
-            //color: Colors.green,
+
             height: 30,
             child: Padding(
               padding: EdgeInsets.only(
