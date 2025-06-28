@@ -215,7 +215,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                     width: width * 0.05,
                   ),
                   // NUMBERS
-                  SizedBox(
+                  Container(
+                    // color: Colors.red,
                     width: width * 0.06,
                     child: ListView.builder(
                       itemCount: 16,
@@ -249,6 +250,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ));
         });
   }
+
+
 
   Widget rowDivider(double height, int index) {
     return Padding(
@@ -425,13 +428,13 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   double getPotraitHeight(int index, double height) {
     switch (index) {
       case 0:
-        return height * 0.025;
+        return height * 0.015;
       case 1:
-        return height * 0.05;
-      case 2:
         return height * 0.055;
+      case 2:
+        return height * 0.065;
       case 3:
-        return height * 0.060;
+        return height * 0.065;
       case 4:
         return height * 0.056;
       case 5:
@@ -445,9 +448,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       case 12:
       case 13:
       case 14:
-        return height * 0.060;
+        return height * 0.061;
       default:
-        return height * 0.05;
+        return height * 0.055;
     }
   }
 
