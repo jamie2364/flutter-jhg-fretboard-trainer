@@ -459,9 +459,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       case 0:
         return height * 0.035;
       case 1:
-        return height * 0.060;
-      case 2:
         return height * 0.065;
+      case 2:
+        return height * 0.068;
       case 3:
         return height * 0.070;
       case 4:
@@ -470,17 +470,17 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       case 6:
       case 7:
       case 8:
-        return height * 0.072;
+        return height * 0.075;
       case 9:
-        return height * 0.050;
-      case 10:
         return height * 0.055;
+      case 10:
+        return height * 0.065;
       case 11:
-        return height * 0.060;
+        return height * 0.070;
       case 12:
       case 13:
       case 14:
-        return height * 0.060;
+        return height * 0.065;
       default:
         return height * 0.05;
     }
