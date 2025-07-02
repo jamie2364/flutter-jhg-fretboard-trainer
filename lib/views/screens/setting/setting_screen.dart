@@ -81,6 +81,8 @@ class _SettingScreenState extends State<SettingScreen> {
                     'Settings',
                     style: JHGTextStyles.smlabelStyle,
                   ),
+                  rowHeight: 38,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   trailingWidget: kIsWeb
                       ? null
                       : JHGReportAnIssueBtn(
@@ -201,7 +203,9 @@ class _SettingScreenState extends State<SettingScreen> {
         bool val = snapshot.data ?? false;
         return Column(
           children: [
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             JHGHeadWithActions(
               AppStrings.strings,
               margin: EdgeInsets.only(top: 6),
