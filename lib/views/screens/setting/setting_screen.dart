@@ -81,7 +81,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     'Settings',
                     style: JHGTextStyles.smlabelStyle,
                   ),
-                  rowHeight: 38,
+                  // rowHeight: 38,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   trailingWidget: kIsWeb
                       ? null
