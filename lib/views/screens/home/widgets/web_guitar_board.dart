@@ -7,6 +7,7 @@ import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
+import 'dart:math';
 
 class WebLandscapeGuitarBoard extends StatefulWidget {
   const WebLandscapeGuitarBoard({super.key});
@@ -19,8 +20,8 @@ class WebLandscapeGuitarBoard extends StatefulWidget {
 class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
     return GetBuilder<HomeController>(
         init: HomeController(),
         builder: (controller) {
@@ -32,9 +33,9 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                 children: [
                   //NUMBERS
                   Container(
-                    width: width * 0.870,
+                    width: width * 0.900,
                     height: 35,
-                     // color: Colors.green,
+                    // color: Colors.green,
                     child:
 
                     ListView.builder(
@@ -62,7 +63,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                   //fretboard
                   Container(
                     height: 235,
-                    width: width * 0.850,
+                    width: width * 0.901,
                     // alignment: Alignment.,
                     child: Stack(
                       children: [
@@ -247,25 +248,12 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     return Padding(
       padding: EdgeInsets.only(left: getLandscapeNumberSpace(index, width)),
       child: Container(
-        // width: width * 0.0025,
-        // decoration: BoxDecoration(
-        //   gradient: LinearGradient(
-        //       begin: Alignment.centerRight,
-        //       end: Alignment.centerLeft,
-        //       colors: [
-        //         AppColors.whiteLight,
-        //         AppColors.whiteLight,
-        //         JHGColors.charcolGray,
-        //         JHGColors.secondryBlack
-        //       ]),
-        // ),
         child: Text(
                   index.toString(),
                   style: JHGTextStyles.subLabelStyle.copyWith(
                     fontSize: width * 0.012,
                   ),
                 ),
-        // child: Text("r$index",style: TextStyle(color:Colors.white ),),
       ),
     );
   }
@@ -395,13 +383,13 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     } else if (index == 2) {
       return width * 0.060;
     } else if (index == 3) {
-      return width * 0.062;
+      return width * 0.063;
     } else if (index == 4) {
-      return width * 0.062;
+      return width * 0.063;
     } else if (index == 5) {
-      return width * 0.062;
+      return width * 0.063;
     } else if (index == 6) {
-      return width * 0.058;
+      return width * 0.059;
     } else if (index == 7) {
       return width * 0.057;
     } else if (index == 8) {
@@ -413,13 +401,13 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     } else if (index == 11) {
       return width * 0.042;
     } else if (index == 12) {
-      return width * 0.044;
+      return width * 0.040;
     } else if (index == 13) {
-      return width * 0.042;
+      return width * 0.040;
     } else if (index == 14) {
       return width * 0.038;
     } else {
-      return width * 0.015;
+      return width * 0.031;
     }
   }
   double getLandscapeFrethSpace(
@@ -644,7 +632,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
               //fretboard
               Stack(
                 children: [
-                  Container(
+                  Container(  
                     height: height * 1.185,
                     width: width * wMultiple,
                     alignment: Alignment.center,
@@ -815,6 +803,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
               SizedBox(width: 5),
               // NUMBERS
               Container(
+                height: height * 1.185,
                 // color: Colors.red,
                 width: 18,
                 child: ListView.builder(
@@ -824,19 +813,6 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
                     return numberPortrait(height, index);
-                    //   Padding(
-                    //   padding: EdgeInsets.only(
-                    //     bottom: getPotraitHeight(index, height),
-                    //   ),
-                    //   child: RotatedBox(
-                    //     quarterTurns: 0,
-                    //     child: Text(
-                    //       index.toString(),
-                    //       style: JHGTextStyles.subLabelStyle
-                    //           .copyWith(fontSize: 18),
-                    //     ),
-                    //   ),
-                    // );
                   },
                 ),
               ),
@@ -849,24 +825,12 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     return Padding(
       padding: EdgeInsets.only(top: getNumberPortraitSpace(index, height)),
       child: Container(
-       // height: height * 0.0038,
-       //  decoration: BoxDecoration(
-       //    gradient: LinearGradient(
-       //        begin: Alignment.topCenter,
-       //        end: Alignment.bottomCenter,
-       //        colors: [
-       //          AppColors.whiteLight,
-       //          AppColors.whiteLight,
-       //          JHGColors.charcolGray,
-       //          JHGColors.secondryBlack
-       //        ]),
-       //  ),
         child:  RotatedBox(
         quarterTurns: 0,
         child: Text(
           index.toString(),
           style: JHGTextStyles.subLabelStyle
-              .copyWith(fontSize: 18),
+              .copyWith(fontSize: height*0.022),
         ),
       )
       ),
