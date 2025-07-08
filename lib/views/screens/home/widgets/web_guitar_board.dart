@@ -7,7 +7,6 @@ import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_state.dart';
-import 'dart:math';
 
 class WebLandscapeGuitarBoard extends StatefulWidget {
   const WebLandscapeGuitarBoard({super.key});
@@ -36,9 +35,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                     width: width * 0.900,
                     height: 35,
                     // color: Colors.green,
-                    child:
-
-                    ListView.builder(
+                    child: ListView.builder(
                       itemCount: 16,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
@@ -249,14 +246,15 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
       padding: EdgeInsets.only(left: getLandscapeNumberSpace(index, width)),
       child: Container(
         child: Text(
-                  index.toString(),
-                  style: JHGTextStyles.subLabelStyle.copyWith(
-                    fontSize: width * 0.012,
-                  ),
-                ),
+          index.toString(),
+          style: JHGTextStyles.subLabelStyle.copyWith(
+            fontSize: width * 0.012,
+          ),
+        ),
       ),
     );
   }
+
   Widget rowLandscapeDivider(int index, double width) {
     return Padding(
       padding: EdgeInsets.only(left: getLandscapeFrethSpace(index, width)),
@@ -345,7 +343,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
   }) =>
       Padding(
         padding: EdgeInsets.only(
-        left: getLandscapeHighLightBasedOnIndex(index, width), top: 0),
+            left: getLandscapeHighLightBasedOnIndex(index, width), top: 0),
         child: Container(
           width: width * 0.020,
           height: width * 0.020,
@@ -373,9 +371,9 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
       );
 
   double getLandscapeNumberSpace(
-      int index,
-      double width,
-      ) {
+    int index,
+    double width,
+  ) {
     if (index == 0) {
       return width * 0.006;
     } else if (index == 1) {
@@ -410,6 +408,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
       return width * 0.031;
     }
   }
+
   double getLandscapeFrethSpace(
     int index,
     double width,
@@ -632,7 +631,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
               //fretboard
               Stack(
                 children: [
-                  Container(  
+                  Container(
                     height: height * 1.185,
                     width: width * wMultiple,
                     alignment: Alignment.center,
@@ -825,17 +824,16 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     return Padding(
       padding: EdgeInsets.only(top: getNumberPortraitSpace(index, height)),
       child: Container(
-        child:  RotatedBox(
+          child: RotatedBox(
         quarterTurns: 0,
         child: Text(
           index.toString(),
-          style: JHGTextStyles.subLabelStyle
-              .copyWith(fontSize: height*0.022),
+          style: JHGTextStyles.subLabelStyle.copyWith(fontSize: height * 0.022),
         ),
-      )
-      ),
+      )),
     );
   }
+
   Widget rowPortraitDivider(double height, int index) {
     return Padding(
       padding: EdgeInsets.only(top: getPortraitSpace(index, height)),
@@ -1012,11 +1010,10 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     }
   }
 
-
   double getPortraitSpace(
-      int index,
-      double height,
-      ) {
+    int index,
+    double height,
+  ) {
     switch (index) {
       case 0:
         return height * 0.0960;
