@@ -226,45 +226,51 @@ class _SettingScreenState extends State<SettingScreen> {
               padding: EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
               ),
               child: JHGExpandableSection(
                 expand: val,
                 child: Column(
                   children: [
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string6,
-                        initialValue: controller.string6,
+                        value: controller.string6,
                         onChanged: (val) {
                           controller.setString6(0);
                         }),
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string5,
-                        initialValue: controller.string5,
+                        value: controller.string5,
                         onChanged: (val) {
                           controller.setString5(1);
                         }),
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string4,
-                        initialValue: controller.string4,
+                        value: controller.string4,
                         onChanged: (val) {
                           controller.setString4(2);
                         }),
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string3,
-                        initialValue: controller.string3,
+                        value: controller.string3,
                         onChanged: (val) {
                           controller.setString3(3);
                         }),
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string2,
-                        initialValue: controller.string2,
+                        value: controller.string2,
                         onChanged: (val) {
                           controller.setString2(4);
                         }),
-                    JHGSwitchTile(
+                    JHGSwitchInfoTile(
+                        paddingTop: 0,
                         title: AppStrings.string1,
-                        initialValue: controller.string1,
+                        value: controller.string1,
                         onChanged: (val) {
                           controller.setString1(5);
                         }),
