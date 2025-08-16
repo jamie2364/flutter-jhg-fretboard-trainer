@@ -18,6 +18,7 @@ class GuitarBoard extends StatefulWidget {
 
 class _GuitarBoardAltState extends State<GuitarBoard> {
   late bool isPortrait;
+
   @override
   void initState() {
     super.initState();
@@ -36,11 +37,14 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child:  Container(
-                  padding: EdgeInsets.only(left:width * 0.08),
-                  margin: EdgeInsets.only(right:isPortrait ? 0 : width*0.170),
+                child: Container(
+                  padding: EdgeInsets.only(left: width * 0.08),
+                  margin:
+                      EdgeInsets.only(right: isPortrait ? 0 : width * 0.170),
                   child: StringsNameWidget(
-                      width: width * (isPortrait ? 0.55 : 0.47)),
+                    width: width * (isPortrait ? 0.55 : 0.47),
+                    isPortrait: isPortrait,
+                  ),
                 ),
               ),
               Row(
@@ -250,8 +254,6 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ));
         });
   }
-
-
 
   Widget rowDivider(double height, int index) {
     return Padding(
@@ -488,21 +490,34 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
 }
 
 class StringsNameWidget extends StatelessWidget {
-  const StringsNameWidget({super.key, required this.width});
+  const StringsNameWidget({super.key, required this.width, this.isPortrait});
 
+  final bool? isPortrait;
   final double width;
 
   @override
   Widget build(BuildContext context) {
+    bool isLand=false;
+    if(isPortrait != null){
+      isLand=!isPortrait!;
+    }
     return SizedBox(
       width: width,
       child: Padding(
-        padding: EdgeInsets.only(bottom: 10, left: 10, right: 10),
+        padding: EdgeInsets.only(bottom:  10, left:  isLand?0:10, right: isLand?5: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: AppStrings.guitarStrings
-              .map((e) => Text(e,
-                  style: const TextStyle(color: Colors.red, fontSize: 20)))
+              .map((e) => isPortrait == null
+                  ? Text(e,
+                      style: const TextStyle(color: Colors.red, fontSize: 20))
+                  : RotatedBox(
+                      quarterTurns: isPortrait! ? 0 : 1,
+                      child: Text(e,
+
+                          style: const TextStyle(
+
+                              color: Colors.red, fontSize: 20))))
               .toList(),
         ),
       ),

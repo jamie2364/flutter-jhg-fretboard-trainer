@@ -80,7 +80,7 @@ class WebBoard extends StatelessWidget {
                             children: [
                               controller.isPortrait == true
                                   ? SizedBox.shrink()
-                                  : StringsNameWidget(width: width * 0.21),
+                                  : StringsNameWidget(width: width * 0.21, ),
                               controller.isPortrait == true
                                   ? SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,

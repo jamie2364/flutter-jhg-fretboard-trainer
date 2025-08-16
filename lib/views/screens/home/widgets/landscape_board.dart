@@ -110,7 +110,8 @@ class LandscapeBoard extends StatelessWidget {
             height: height * 0.75,
             child: Row(
               children: [
-                Spacer(),
+                // Spacer(),
+
                 // START BUTTON
                 controller.isStart == true
                     ? const SizedBox()
@@ -201,7 +202,9 @@ class LandscapeBoard extends StatelessWidget {
                       height: height * 0.74,
                       child: const GuitarBoard(
                         isPortrait: false,
-                      )),
+                      ),
+
+                  ),
                 ),
                 Spacer(),
               ],
