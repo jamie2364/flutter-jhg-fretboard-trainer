@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -27,6 +28,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTablet = MediaQuery.of(context).size.width < 1100 &&
+        MediaQuery.of(context).size.width >= 701 &&
+        !kIsWeb;
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     return GetBuilder<HomeController>(
@@ -34,16 +38,22 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         builder: (controller) {
           return SingleChildScrollView(
               child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
+                          children: [
+              Center(
                 child: Container(
-                  padding: EdgeInsets.only(left: width * 0.08),
+                  padding:isPortrait? EdgeInsets.only(right: width * 0.11):EdgeInsets.zero,
                   margin:
                       EdgeInsets.only(right: isPortrait ? 0 : width * 0.170),
-                  child: StringsNameWidget(
-                    width: width * (isPortrait ? 0.55 : 0.47),
-                    isPortrait: isPortrait,
+                  child: Padding(
+                    padding:isPortrait? EdgeInsets.only(right:0):EdgeInsets.only(left:isTablet?70:30),
+
+
+
+                    child: StringsNameWidget(
+                      width: width * (isPortrait ? isTablet? 0.3: 0.55 : isTablet? 0.3:0.47),
+                      isPortrait: isPortrait,
+                      isTablet: isTablet,
+                    ),
                   ),
                 ),
               ),
@@ -53,7 +63,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 children: [
                   // fretboard
                   Container(
-                    width: width * (isPortrait ? 0.55 : 0.47),
+                    width: width * (isPortrait ? isTablet? 0.3: 0.55 : isTablet? 0.3:0.47),
                     constraints: BoxConstraints(maxHeight: height * 1.2),
                     alignment: Alignment.center,
                     child: Stack(
@@ -231,8 +241,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         return Padding(
                           padding: EdgeInsets.only(
                             bottom: widget.isPortrait == true
-                                ? getPotraitHeight(index, height)
-                                : getLandscapeHeight(index, height),
+                                ? getPotraitHeight(index, height,isTablet)
+                                : getLandscapeHeight(index, height,isTablet),
                           ),
                           child: RotatedBox(
                             quarterTurns: widget.isPortrait ? 0 : 1,
@@ -250,8 +260,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ),
                 ],
               ),
-            ],
-          ));
+                          ],
+                        ));
         });
   }
 
@@ -427,22 +437,22 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     }
   }
 
-  double getPotraitHeight(int index, double height) {
+  double getPotraitHeight(int index, double height,bool isTablet) {
     switch (index) {
       case 0:
-        return height * 0.015;
+        return isTablet?height * 0.06: height * 0.015;
       case 1:
-        return height * 0.055;
+        return isTablet?height * 0.07: height * 0.055;
       case 2:
-        return height * 0.065;
+        return  isTablet?height * 0.068:height * 0.065;
       case 3:
-        return height * 0.065;
+        return  isTablet?height * 0.07:height * 0.065;
       case 4:
-        return height * 0.056;
+        return  isTablet?height * 0.065:height * 0.056;
       case 5:
       case 6:
       case 7:
-        return height * 0.062;
+        return  isTablet?height * 0.065: height * 0.062;
       case 8:
       case 9:
       case 10:
@@ -450,49 +460,50 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       case 12:
       case 13:
       case 14:
-        return height * 0.061;
+        return  isTablet?height * 0.07:height * 0.061;
       default:
-        return height * 0.055;
+        return  isTablet?height * 0.07:height * 0.055;
     }
   }
 
-  double getLandscapeHeight(int index, double height) {
+  double getLandscapeHeight(int index, double height,bool isTablet) {
     switch (index) {
       case 0:
-        return height * 0.035;
+        return isTablet?height * 0.07:height * 0.035;
       case 1:
-        return height * 0.065;
+        return isTablet?height * 0.075:height * 0.065;
       case 2:
-        return height * 0.068;
+        return isTablet?height * 0.075:height * 0.068;
       case 3:
-        return height * 0.070;
+        return isTablet?height * 0.075:height * 0.070;
       case 4:
-        return height * 0.072;
+        return isTablet?height * 0.075:height * 0.072;
       case 5:
       case 6:
       case 7:
       case 8:
-        return height * 0.075;
+        return isTablet?height * 0.075:height * 0.075;
       case 9:
-        return height * 0.055;
+        return isTablet?height * 0.075:height * 0.055;
       case 10:
-        return height * 0.065;
+        return isTablet?height * 0.075:height * 0.065;
       case 11:
-        return height * 0.070;
+        return isTablet?height * 0.075:height * 0.070;
       case 12:
       case 13:
       case 14:
-        return height * 0.065;
+        return isTablet?height * 0.075:height * 0.065;
       default:
-        return height * 0.05;
+        return isTablet?height * 0.075:height * 0.05;
     }
   }
 }
 
 class StringsNameWidget extends StatelessWidget {
-  const StringsNameWidget({super.key, required this.width, this.isPortrait});
+  const StringsNameWidget({super.key, required this.width, this.isPortrait, this.isTablet});
 
   final bool? isPortrait;
+  final bool? isTablet;
   final double width;
 
   @override
