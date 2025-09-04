@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
@@ -19,7 +18,6 @@ class PortraitBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     return AnimatedScale(
@@ -69,7 +67,7 @@ class PortraitBoard extends StatelessWidget {
               padding: EdgeInsets.only(left: width * 0.070),
               child: IgnorePointer(
                 ignoring: !controller.isStart,
-                child:  const GuitarBoard(
+                child: const GuitarBoard(
                   isPortrait: true,
                 ),
               ),

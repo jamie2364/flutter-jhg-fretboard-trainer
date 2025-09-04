@@ -327,7 +327,7 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
             height: width * 0.020,
             decoration: BoxDecoration(
               color: isColor == true
-                  ? JHGColors.secondryBlack.withOpacity(0.5)
+                  ? JHGColors.secondryBlack.withValues(alpha:  0.5)
                   : Colors.transparent,
               shape: BoxShape.circle,
             ),

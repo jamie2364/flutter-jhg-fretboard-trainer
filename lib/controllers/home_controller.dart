@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:fretboard/main.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
@@ -535,7 +534,7 @@ class HomeController extends GetxController {
       isActive = bool.parse(uri.queryParameters['active'].toString());
       update();
     } on Exception {
-      if (userNameWeb == null || userNameWeb == "null") {
+      if (userNameWeb == "null") {
         userNameWeb.value = "DefaultUserName";
       }
     }
