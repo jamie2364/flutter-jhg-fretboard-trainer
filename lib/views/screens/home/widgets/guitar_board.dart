@@ -38,19 +38,27 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         builder: (controller) {
           return SingleChildScrollView(
               child: Column(
-                          children: [
+            children: [
               Center(
                 child: Container(
-                  padding:isPortrait? EdgeInsets.only(right: width * 0.11):EdgeInsets.zero,
+                  padding: isPortrait
+                      ? EdgeInsets.only(right: width * 0.11)
+                      : EdgeInsets.zero,
                   margin:
                       EdgeInsets.only(right: isPortrait ? 0 : width * 0.170),
                   child: Padding(
-                    padding:isPortrait? EdgeInsets.only(right:0):EdgeInsets.only(left:isTablet?70:30),
-
-
-
+                    padding: isPortrait
+                        ? EdgeInsets.only(right: 0)
+                        : EdgeInsets.only(left: isTablet ? 70 : 30),
                     child: StringsNameWidget(
-                      width: width * (isPortrait ? isTablet? 0.3: 0.55 : isTablet? 0.3:0.47),
+                      width: width *
+                          (isPortrait
+                              ? isTablet
+                                  ? 0.3
+                                  : 0.55
+                              : isTablet
+                                  ? 0.3
+                                  : 0.47),
                       isPortrait: isPortrait,
                       isTablet: isTablet,
                     ),
@@ -63,7 +71,14 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 children: [
                   // fretboard
                   Container(
-                    width: width * (isPortrait ? isTablet? 0.3: 0.55 : isTablet? 0.3:0.47),
+                    width: width *
+                        (isPortrait
+                            ? isTablet
+                                ? 0.3
+                                : 0.55
+                            : isTablet
+                                ? 0.3
+                                : 0.47),
                     constraints: BoxConstraints(maxHeight: height * 1.2),
                     alignment: Alignment.center,
                     child: Stack(
@@ -225,9 +240,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                     ),
                   ),
                   //SPACER
-                  SizedBox(
-                    width: width * 0.05,
-                  ),
+                  SizedBox(width: 20),
                   // NUMBERS
                   Container(
                     // color: Colors.red,
@@ -241,8 +254,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         return Padding(
                           padding: EdgeInsets.only(
                             bottom: widget.isPortrait == true
-                                ? getPotraitHeight(index, height,isTablet)
-                                : getLandscapeHeight(index, height,isTablet),
+                                ? getPotraitHeight(index, height, isTablet)
+                                : getLandscapeHeight(index, height, isTablet),
                           ),
                           child: RotatedBox(
                             quarterTurns: widget.isPortrait ? 0 : 1,
@@ -260,8 +273,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ),
                 ],
               ),
-                          ],
-                        ));
+            ],
+          ));
         });
   }
 
@@ -437,22 +450,22 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     }
   }
 
-  double getPotraitHeight(int index, double height,bool isTablet) {
+  double getPotraitHeight(int index, double height, bool isTablet) {
     switch (index) {
       case 0:
-        return isTablet?height * 0.06: height * 0.015;
+        return isTablet ? height * 0.06 : height * 0.015;
       case 1:
-        return isTablet?height * 0.07: height * 0.055;
+        return isTablet ? height * 0.07 : height * 0.055;
       case 2:
-        return  isTablet?height * 0.068:height * 0.065;
+        return isTablet ? height * 0.068 : height * 0.065;
       case 3:
-        return  isTablet?height * 0.07:height * 0.065;
+        return isTablet ? height * 0.07 : height * 0.065;
       case 4:
-        return  isTablet?height * 0.065:height * 0.056;
+        return isTablet ? height * 0.065 : height * 0.056;
       case 5:
       case 6:
       case 7:
-        return  isTablet?height * 0.065: height * 0.062;
+        return isTablet ? height * 0.065 : height * 0.062;
       case 8:
       case 9:
       case 10:
@@ -460,47 +473,48 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       case 12:
       case 13:
       case 14:
-        return  isTablet?height * 0.07:height * 0.061;
+        return isTablet ? height * 0.07 : height * 0.061;
       default:
-        return  isTablet?height * 0.07:height * 0.055;
+        return isTablet ? height * 0.07 : height * 0.055;
     }
   }
 
-  double getLandscapeHeight(int index, double height,bool isTablet) {
+  double getLandscapeHeight(int index, double height, bool isTablet) {
     switch (index) {
       case 0:
-        return isTablet?height * 0.07:height * 0.035;
+        return isTablet ? height * 0.07 : height * 0.035;
       case 1:
-        return isTablet?height * 0.075:height * 0.065;
+        return isTablet ? height * 0.075 : height * 0.065;
       case 2:
-        return isTablet?height * 0.075:height * 0.068;
+        return isTablet ? height * 0.075 : height * 0.068;
       case 3:
-        return isTablet?height * 0.075:height * 0.070;
+        return isTablet ? height * 0.075 : height * 0.070;
       case 4:
-        return isTablet?height * 0.075:height * 0.072;
+        return isTablet ? height * 0.075 : height * 0.072;
       case 5:
       case 6:
       case 7:
       case 8:
-        return isTablet?height * 0.075:height * 0.075;
+        return isTablet ? height * 0.075 : height * 0.075;
       case 9:
-        return isTablet?height * 0.075:height * 0.055;
+        return isTablet ? height * 0.075 : height * 0.055;
       case 10:
-        return isTablet?height * 0.075:height * 0.065;
+        return isTablet ? height * 0.075 : height * 0.065;
       case 11:
-        return isTablet?height * 0.075:height * 0.070;
+        return isTablet ? height * 0.075 : height * 0.070;
       case 12:
       case 13:
       case 14:
-        return isTablet?height * 0.075:height * 0.065;
+        return isTablet ? height * 0.075 : height * 0.065;
       default:
-        return isTablet?height * 0.075:height * 0.05;
+        return isTablet ? height * 0.075 : height * 0.05;
     }
   }
 }
 
 class StringsNameWidget extends StatelessWidget {
-  const StringsNameWidget({super.key, required this.width, this.isPortrait, this.isTablet});
+  const StringsNameWidget(
+      {super.key, required this.width, this.isPortrait, this.isTablet});
 
   final bool? isPortrait;
   final bool? isTablet;
@@ -508,14 +522,15 @@ class StringsNameWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isLand=false;
-    if(isPortrait != null){
-      isLand=!isPortrait!;
+    bool isLand = false;
+    if (isPortrait != null) {
+      isLand = !isPortrait!;
     }
     return SizedBox(
       width: width,
       child: Padding(
-        padding: EdgeInsets.only(bottom:  10, left:  isLand?0:10, right: isLand?5: 10),
+        padding: EdgeInsets.only(
+            bottom: 10, left: isLand ? 0 : 10, right: isLand ? 5 : 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: AppStrings.guitarStrings
@@ -525,9 +540,7 @@ class StringsNameWidget extends StatelessWidget {
                   : RotatedBox(
                       quarterTurns: isPortrait! ? 0 : 1,
                       child: Text(e,
-
                           style: const TextStyle(
-
                               color: Colors.red, fontSize: 20))))
               .toList(),
         ),

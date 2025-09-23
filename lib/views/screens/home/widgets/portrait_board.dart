@@ -64,7 +64,7 @@ class PortraitBoard extends StatelessWidget {
           // BOARD WITH NUMBER
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: width * 0.070),
+              padding: EdgeInsets.only(left: 45.8),
               child: IgnorePointer(
                 ignoring: !controller.isStart,
                 child: const GuitarBoard(
@@ -186,20 +186,6 @@ class PortraitBoard extends StatelessWidget {
                 ],
               ),
             ),
-          // : const SizedBox(
-          //     height: 23,
-          //   ),
-          !controller.leaderboardMode
-              ? SizedBox(height: 14)
-              : Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'You can\'t change settings in leaderboard',
-                    style: TextStyle(
-                      color: JHGColors.primary,
-                    ),
-                  ),
-                ),
         ],
       ),
     );
