@@ -15,42 +15,60 @@ class SettingsDefaultTimer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Padding(
-            //   padding: const EdgeInsets.only(top: 20),
-            //   child: Row(
-            //     children: [
-            //       const Expanded(
-            //         flex: 2,
-            //         child: Text(
-            //           "Default Timer",
-            //           style: JHGTextStyles.subLabelStyle,
-            //         ),
-            //       ),
-            //       Expanded(
-            //           flex: 2,
-            //           child: JHGDropDown<String>(
-            //             value: controller.defaultTimerSelectedValue.value,
-            //             items: controller.defaultTimer,
-            //             onChanged: (String? value) {
-            //               if (value != null) {
-            //                 controller.selectedDropDownValue.value = value;
-            //                 controller.defaultTimerSelectedValue.value = value;
-            //               }
-            //             },
-            //           )),
-            //     ],
-            //   ),
-            // ),
-
-            ExpansionPanelDropdown<String>(
-              label: "Default Timer",
-              value: controller.defaultTimerSelectedValue.value,
-              items: controller.defaultTimer,
-              onChanged: (value) async {
-                controller.defaultTimerSelectedValue.value = value;
-                controller.selectedDropDownValue.value = value;
-              },
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      height: 56,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Default Timer',
+                        style: JHGTextStyles.subLabelStyle,
+                      ),
+                    ),
+                  ),
+                  // Expanded(
+                  //   flex: 2,
+                  //   child: JHGDropDown<String>(
+                  //     value: controller.defaultTimerSelectedValue.value,
+                  //     items: controller.defaultTimer,
+                  //     onChanged: (String? value) {
+                  //       if (value != null) {
+                  //         controller.selectedDropDownValue.value = value;
+                  //         controller.defaultTimerSelectedValue.value = value;
+                  //       }
+                  //     },
+                  //   ),
+                  // ),
+                  Expanded(
+                    flex: 2,
+                    child: ExpansionPanelDropdown<String>(
+                      // label: 'Default Timer',
+                      value: controller.defaultTimerSelectedValue.value,
+                      items: controller.defaultTimer,
+                      onChanged: (value) async {
+                        controller.defaultTimerSelectedValue.value = value;
+                        controller.selectedDropDownValue.value = value;
+                      },
+                    ),
+                  )
+                ],
+              ),
             ),
+
+            // ExpansionPanelDropdown<String>(
+            //   label: "Default Timer",
+            //   value: controller.defaultTimerSelectedValue.value,
+            //   items: controller.defaultTimer,
+            //   onChanged: (value) async {
+            //     controller.defaultTimerSelectedValue.value = value;
+            //     controller.selectedDropDownValue.value = value;
+            //   },
+            // ),
             Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: JHGExpandableSection(

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 
 class ExpansionPanelDropdown<T> extends StatefulWidget {
-  final String label;
+  final String? label;
   final T value;
   final List<T> items;
   final ValueChanged<T> onChanged;
 
   const ExpansionPanelDropdown({
     super.key,
-    required this.label,
+    this.label,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -37,16 +37,14 @@ class _ExpansionPanelDropdownState<T> extends State<ExpansionPanelDropdown<T>> {
               return ListTile(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadiusGeometry.circular(12)),
-                onTap: () {
-                  setState(() => _expanded = !_expanded);
-                },
+                onTap: () => setState(() => _expanded = !_expanded),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(widget.label),
+                    if (widget.label != null) Text(widget.label!),
                     Text(
                       widget.value.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      // style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
