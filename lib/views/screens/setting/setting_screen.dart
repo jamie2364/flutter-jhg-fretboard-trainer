@@ -75,9 +75,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 iosAppIdentifier: AppStrings.iOSBuildId,
                 appStoreId: AppStrings.appStoreId,
                 appName: AppStrings.appName,
-                viewMoreAppsUrl: Platform.isAndroid
-                    ? kJhgPlayStoreUrl
-                    : null,
+                viewMoreAppsUrl: Platform.isAndroid ? kJhgPlayStoreUrl : null,
                 bodyAppBar: JHGAppBar(
                   isResponsive: true,
                   title: Text(

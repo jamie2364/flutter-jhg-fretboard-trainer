@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/views/widgets/add_sub_button.dart';
-import 'package:fretboard/views/widgets/expansion_tile_dropdown.dart';
 import 'package:get/get.dart';
 
 class SettingsDefaultTimer extends StatelessWidget {
@@ -46,7 +45,7 @@ class SettingsDefaultTimer extends StatelessWidget {
                   // ),
                   Expanded(
                     flex: 2,
-                    child: ExpansionPanelDropdown<String>(
+                    child: JHGInlineDropDown<String>(
                       // label: 'Default Timer',
                       value: controller.defaultTimerSelectedValue.value,
                       items: controller.defaultTimer,
