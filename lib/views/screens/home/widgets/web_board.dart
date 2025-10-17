@@ -39,7 +39,7 @@ class WebBoard extends StatelessWidget {
         leadingWidget: JHGIconButton(
             childPadding: EdgeInsets.all(6),
             enabled: true,
-            svgImg: AppAssets.iconTropy,
+            iconData: LucideIcons.trophy,
             onTap: () {
               Get.to(() => LeadershipScreen(),
                   transition: Transition.leftToRight);
@@ -161,8 +161,7 @@ class WebBoard extends StatelessWidget {
                   ? JHGIconButton(
                   childPadding: EdgeInsets.all(4),
                   enabled: true,
-                  size: 40,
-                  svgImg: AppAssets.iconStopwatch,
+                  iconData: LucideIcons.timerReset,
                   onTap: () {
                     controller.setGameMode(
                         timer: true, leaderboard: false);
@@ -182,8 +181,7 @@ class WebBoard extends StatelessWidget {
                       controller.resetTimer();
                     },
                     childPadding: EdgeInsets.all(4),
-                    size: 29,
-                    svgImg: AppAssets.iconTimer,
+                    iconData: LucideIcons.timer,
                   ),
                 ),
                 decoration: BoxDecoration(
@@ -196,10 +194,9 @@ class WebBoard extends StatelessWidget {
               // ICON LEADERBOARD
               controller.leaderboardMode == true
                   ? JHGIconButton(
-                  size: 40,
                   childPadding: EdgeInsets.all(6),
                   enabled: true,
-                  svgImg: AppAssets.iconTropy,
+                  iconData: LucideIcons.trophy,
                   onTap: () {
                     controller.setGameMode(
                         timer: false, leaderboard: false);
@@ -240,8 +237,7 @@ class WebBoard extends StatelessWidget {
               JHGIconButton(
                   childPadding: EdgeInsets.all(4),
                   enabled: true,
-                  svgImg: AppAssets.iconRotate,
-                  size: 40,
+                  iconData: LucideIcons.rotateCcw,
                   onTap: () {
                     controller.toggleOrientation();
                   }),

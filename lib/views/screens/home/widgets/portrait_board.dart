@@ -34,7 +34,7 @@ class PortraitBoard extends StatelessWidget {
             leadingWidget: JHGIconButton(
               childPadding: EdgeInsets.all(3),
               enabled: true,
-              svgImg: AppAssets.iconTropy,
+              iconData: LucideIcons.trophy,
               onTap: () {
                 Get.to(() => LeadershipScreen(),
                     transition: Transition.leftToRight);
@@ -98,8 +98,7 @@ class PortraitBoard extends StatelessWidget {
                 : controller.timerMode == false &&
                         controller.leaderboardMode == false
                     ? JHGIconButton(
-                        size: 36,
-                        svgImg: AppAssets.iconStopwatch,
+                        iconData: LucideIcons.timerReset,
                         enabled: true,
                         onTap: () {
                           controller.setGameMode(
@@ -108,9 +107,8 @@ class PortraitBoard extends StatelessWidget {
                         })
                     : controller.timerMode == true
                         ? JHGIconButton(
-                            size: 36,
                             enabled: true,
-                            svgImg: AppAssets.iconTimer,
+                            iconData: LucideIcons.timer,
                             onTap: () {
                               controller.setGameMode(
                                   timer: false, leaderboard: true);
@@ -119,9 +117,8 @@ class PortraitBoard extends StatelessWidget {
                         : controller.leaderboardMode == true
                             ? JHGIconButton(
                                 childPadding: EdgeInsets.all(3),
-                                size: 36,
                                 enabled: true,
-                                svgImg: AppAssets.iconTropy,
+                                iconData: LucideIcons.trophy,
                                 onTap: () {
                                   controller.setGameMode(
                                       timer: false, leaderboard: false);
@@ -152,8 +149,7 @@ class PortraitBoard extends StatelessWidget {
                     },
                   ),
             trailingWidget: JHGIconButton(
-                svgImg: AppAssets.iconRotate,
-                size: 36,
+                iconData: LucideIcons.rotateCcw,
                 enabled: true,
                 childPadding: EdgeInsets.all(2),
                 onTap: () {

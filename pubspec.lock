@@ -249,6 +249,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  dropdown_button2:
+    dependency: transitive
+    description:
+      name: dropdown_button2
+      sha256: e232a1c09212e460358f121d01e739b94ac0a4339993a34a77923fa991413e33
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0-beta.23"
   equatable:
     dependency: transitive
     description:
@@ -298,8 +306,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: b20b3b236f2cfc916e57f931101c651a5f5c893a
+      ref: lucid-icon
+      resolved-ref: "2189591ba5d405e869c3e8b236494d485b92c02b"
       url: "https://github.com/jamie2364/flutter_jhg_elements"
     source: git
     version: "0.0.1"
@@ -529,6 +537,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  lucide_flutter:
+    dependency: transitive
+    description:
+      name: lucide_flutter
+      sha256: "71827d15c2d6ac152d0745e769e71d93f96526425087d45799c2faa11634e423"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.545.0"
+  lucide_icons_flutter:
+    dependency: transitive
+    description:
+      name: lucide_icons_flutter
+      sha256: "9847474128d2c419beb3621cc564c7daf80382db76ba2716f47f24b0b068700b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.4"
   matcher:
     dependency: transitive
     description:
