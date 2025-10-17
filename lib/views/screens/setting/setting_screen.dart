@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show Platform;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -26,6 +26,7 @@ class _SettingScreenState extends State<SettingScreen> {
   DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
 
   Future<void> getDeviceInfo() async {
+    if (kIsWeb) return;
     if (Platform.isAndroid) {
       final device = await deviceInfoPlugin.androidInfo;
       deviceName = "${device.manufacturer} ${device.model}";
@@ -75,7 +76,11 @@ class _SettingScreenState extends State<SettingScreen> {
                 iosAppIdentifier: AppStrings.iOSBuildId,
                 appStoreId: AppStrings.appStoreId,
                 appName: AppStrings.appName,
-                viewMoreAppsUrl: Platform.isAndroid ? kJhgPlayStoreUrl : null,
+                viewMoreAppsUrl: kIsWeb
+                    ? ""
+                    : Platform.isAndroid
+                        ? kJhgPlayStoreUrl
+                        : null,
                 bodyAppBar: JHGAppBar(
                   isResponsive: true,
                   title: Text(

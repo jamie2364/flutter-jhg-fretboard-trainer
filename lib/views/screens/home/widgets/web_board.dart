@@ -171,10 +171,8 @@ class WebBoard extends StatelessWidget {
 
               // ICON TIMER
               controller.timerMode == true
-                  ? Container(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: JHGIconButton(
+                  ? JHGIconButton(
+                    enabled: true,
                     onTap: () {
                       controller.setGameMode(
                           timer: false, leaderboard: true);
@@ -182,13 +180,7 @@ class WebBoard extends StatelessWidget {
                     },
                     childPadding: EdgeInsets.all(4),
                     iconData: LucideIcons.timer,
-                  ),
-                ),
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.whiteGrey),
-                padding: EdgeInsets.all(4),
-              )
+                  )
                   :
 
               // ICON LEADERBOARD
@@ -268,17 +260,6 @@ class WebBoard extends StatelessWidget {
                   : const SizedBox(),
             ),
           ),
-          !controller.leaderboardMode
-              ? SizedBox.shrink()
-              : Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'You can\'t change settings in leaderboard',
-                    style: TextStyle(
-                      color: JHGColors.primary,
-                    ),
-                  ),
-                ),
         ],
       ),
     );
