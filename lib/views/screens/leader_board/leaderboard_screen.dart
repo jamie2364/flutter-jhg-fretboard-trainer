@@ -60,7 +60,7 @@ class LeaderPortraitView extends StatelessWidget {
         trailingWidget: JHGIconButton(
           size: 24,
           onTap: () => Get.back(),
-          iconData: Icons.close,
+          iconData: LucideIcons.x300,
         ),
         bottom: leaderBoardTitleWidget(),
       ),
@@ -160,7 +160,7 @@ class LeaderLandscapeView extends StatelessWidget {
               trailingWidget: JHGIconButton(
                 size: 24,
                 onTap: () => Get.back(),
-                iconData: Icons.arrow_forward_ios,
+                iconData: LucideIcons.chevronRight300,
               ),
               bottom: leaderBoardTitleWidget(),
             ),
@@ -271,7 +271,7 @@ class LeaderWebView extends StatelessWidget {
           trailingWidget: JHGIconButton(
             size: 24,
             onTap: () => Get.back(),
-            iconData: Icons.close,
+            iconData: LucideIcons.x300,
           ),
           bottom: leaderBoardTitleWidget(),
         ),

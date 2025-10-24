@@ -187,7 +187,7 @@ class TimerWidget extends StatelessWidget {
                           ? JHGIconButton(
                               onTap: onInfoTap,
                               childPadding: const EdgeInsets.only(left: 8),
-                              iconData: Icons.info_outline_rounded,
+                              iconData: LucideIcons.info300,
                               iconColor: JHGColors.white,
                               size: 20,
                             )

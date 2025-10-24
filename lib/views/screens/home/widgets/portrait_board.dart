@@ -34,7 +34,7 @@ class PortraitBoard extends StatelessWidget {
             leadingWidget: JHGIconButton(
               childPadding: EdgeInsets.all(3),
               enabled: true,
-              iconData: LucideIcons.trophy,
+              iconData: LucideIcons.trophy300,
               onTap: () {
                 Get.to(() => LeadershipScreen(),
                     transition: Transition.leftToRight);
@@ -98,7 +98,7 @@ class PortraitBoard extends StatelessWidget {
                 : controller.timerMode == false &&
                         controller.leaderboardMode == false
                     ? JHGIconButton(
-                        iconData: LucideIcons.timerReset,
+                        iconData: LucideIcons.timer300,
                         enabled: true,
                         onTap: () {
                           controller.setGameMode(
@@ -108,7 +108,7 @@ class PortraitBoard extends StatelessWidget {
                     : controller.timerMode == true
                         ? JHGIconButton(
                             enabled: true,
-                            iconData: LucideIcons.timer,
+                            iconData: LucideIcons.timer300,
                             onTap: () {
                               controller.setGameMode(
                                   timer: false, leaderboard: true);
@@ -118,7 +118,7 @@ class PortraitBoard extends StatelessWidget {
                             ? JHGIconButton(
                                 childPadding: EdgeInsets.all(3),
                                 enabled: true,
-                                iconData: LucideIcons.trophy,
+                                iconData: LucideIcons.trophy300,
                                 onTap: () {
                                   controller.setGameMode(
                                       timer: false, leaderboard: false);
@@ -149,7 +149,7 @@ class PortraitBoard extends StatelessWidget {
                     },
                   ),
             trailingWidget: JHGIconButton(
-                iconData: LucideIcons.rotateCcw,
+                iconData: LucideIcons.rotateCcw300,
                 enabled: true,
                 childPadding: EdgeInsets.all(2),
                 onTap: () {

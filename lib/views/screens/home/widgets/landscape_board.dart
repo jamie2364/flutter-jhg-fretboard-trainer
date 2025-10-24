@@ -52,7 +52,7 @@ class LandscapeBoard extends StatelessWidget {
                                   controller.isPortrait == true ? 0 : 1,
                               child: JHGIconButton(
                                   enabled: true,
-                                  iconData: LucideIcons.timerReset,
+                                  iconData: LucideIcons.timer300,
                                   onTap: () {
                                     controller.setGameMode(
                                         timer: true, leaderboard: false);
@@ -62,7 +62,7 @@ class LandscapeBoard extends StatelessWidget {
                           : controller.timerMode == true
                               ? JHGIconButton(
                                   enabled: true,
-                                  iconData: LucideIcons.timer,
+                                  iconData: LucideIcons.timer300,
                                   onTap: () {
                                     controller.setGameMode(
                                         timer: false, leaderboard: true);
@@ -71,7 +71,7 @@ class LandscapeBoard extends StatelessWidget {
                               : controller.leaderboardMode == true
                                   ? JHGIconButton(
                                       enabled: true,
-                                      iconData: LucideIcons.trophy,
+                                      iconData: LucideIcons.trophy300,
                                       onTap: () {
                                         controller.setGameMode(
                                             timer: false, leaderboard: false);
@@ -80,7 +80,7 @@ class LandscapeBoard extends StatelessWidget {
                                   : SizedBox(),
                   JHGIconButton(
                       enabled: true,
-                      iconData: LucideIcons.trophy,
+                      iconData: LucideIcons.trophy300,
                       onTap: () {
                         Get.to(() => LeadershipScreen(),
                             transition: Transition.leftToRight);
@@ -227,13 +227,13 @@ class LandscapeBoard extends StatelessWidget {
                       size: 36,
                       enabled: true,
                       childPadding: EdgeInsets.all(1),
-                      iconData: LucideIcons.rotateCcw,
+                      iconData: LucideIcons.rotateCcw300,
                       onTap: () {
                         controller.toggleOrientation();
                       }),
                   JHGIconButton(
                     enabled: true,
-                    iconData: LucideIcons.settings,
+                    iconData: LucideIcons.settings300,
                     iconColor: controller.leaderboardMode == true
                         ? JHGColors.whiteGrey
                         : JHGColors.white,

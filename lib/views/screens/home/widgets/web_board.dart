@@ -39,7 +39,7 @@ class WebBoard extends StatelessWidget {
         leadingWidget: JHGIconButton(
             childPadding: EdgeInsets.all(6),
             enabled: true,
-            iconData: LucideIcons.trophy,
+            iconData: LucideIcons.trophy300,
             onTap: () {
               Get.to(() => LeadershipScreen(),
                   transition: Transition.leftToRight);
@@ -161,7 +161,7 @@ class WebBoard extends StatelessWidget {
                   ? JHGIconButton(
                   childPadding: EdgeInsets.all(4),
                   enabled: true,
-                  iconData: LucideIcons.timerReset,
+                  iconData: LucideIcons.timerReset300,
                   onTap: () {
                     controller.setGameMode(
                         timer: true, leaderboard: false);
@@ -179,7 +179,7 @@ class WebBoard extends StatelessWidget {
                       controller.resetTimer();
                     },
                     childPadding: EdgeInsets.all(4),
-                    iconData: LucideIcons.timer,
+                    iconData: LucideIcons.timer300,
                   )
                   :
 
@@ -188,7 +188,7 @@ class WebBoard extends StatelessWidget {
                   ? JHGIconButton(
                   childPadding: EdgeInsets.all(6),
                   enabled: true,
-                  iconData: LucideIcons.trophy,
+                  iconData: LucideIcons.trophy300,
                   onTap: () {
                     controller.setGameMode(
                         timer: false, leaderboard: false);
@@ -229,7 +229,7 @@ class WebBoard extends StatelessWidget {
               JHGIconButton(
                   childPadding: EdgeInsets.all(4),
                   enabled: true,
-                  iconData: LucideIcons.rotateCcw,
+                  iconData: LucideIcons.rotateCcw300,
                   onTap: () {
                     controller.toggleOrientation();
                   }),

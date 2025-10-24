@@ -27,9 +27,9 @@ class AddAndSubtractButton extends StatelessWidget {
         child: Center(
             child:
                 isAdd == true?
-            Icon(Icons.add,color: JHGColors.white,
+            Icon(LucideIcons.plus300,color: JHGColors.white,
               size: height*0.025,
-            ) :    Icon(Icons.remove,color: JHGColors.white,
+            ) :    Icon(LucideIcons.minus300, color: JHGColors.white,
                   size: height*0.025,)
         ),
       ),
@@ -63,12 +63,12 @@ class WebAddAndSubtractButton extends StatelessWidget {
             child:
             isAdd == true?
             Icon(
-              Icons.add,
+              LucideIcons.plus300,
               color: JHGColors.white,
               size: 2.w,
             ) :
             Icon(
-              Icons.remove,
+              LucideIcons.plus300,
               color: JHGColors.white,
               size: 2.w,
               )

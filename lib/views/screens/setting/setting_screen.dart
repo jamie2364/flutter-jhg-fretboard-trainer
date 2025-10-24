@@ -225,8 +225,8 @@ class _SettingScreenState extends State<SettingScreen> {
                 expansionStream.sink.add(!val);
               },
               arrowIcon: val
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
+                  ? LucideIcons.chevronUp300
+                  :LucideIcons.chevronDown300,
             ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20),
