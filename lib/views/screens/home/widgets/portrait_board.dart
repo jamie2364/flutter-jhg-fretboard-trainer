@@ -149,7 +149,7 @@ class PortraitBoard extends StatelessWidget {
                     },
                   ),
             trailingWidget: JHGIconButton(
-                iconData: LucideIcons.rotateCcw300,
+                iconData: LucideIcons.ratio300,
                 enabled: true,
                 childPadding: EdgeInsets.all(2),
                 onTap: () {

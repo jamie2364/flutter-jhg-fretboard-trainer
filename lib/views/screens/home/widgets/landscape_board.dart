@@ -268,7 +268,7 @@ class LandscapeBoard extends StatelessWidget {
                       child: JHGIconButton(
                           enabled: true,
                           childPadding: EdgeInsets.all(1),
-                          iconData: LucideIcons.rotateCcw300, // Rotate icon
+                          iconData: LucideIcons.ratio300, // Rotate icon
                           onTap: () {
                             controller.toggleOrientation();
                           }),
