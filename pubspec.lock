@@ -307,7 +307,7 @@ packages:
     description:
       path: "."
       ref: lucid-icon
-      resolved-ref: "9dd45a57ca46b6d84fbe064bdf395c6f7d82a483"
+      resolved-ref: b36c36908aef1f37e2e0aeb73c91879b6cc74798
       url: "https://github.com/jamie2364/flutter_jhg_elements"
     source: git
     version: "0.0.1"
@@ -774,7 +774,7 @@ packages:
     description:
       path: "."
       ref: master
-      resolved-ref: e85d153e02b62aafdfc01fa79ce41df36a5bc9c6
+      resolved-ref: "7ee39604f31d8a1ca648adb66cd619e99b187f50"
       url: "https://github.com/jamie2364/flutter-jhg-reg-page"
     source: git
     version: "0.0.1"

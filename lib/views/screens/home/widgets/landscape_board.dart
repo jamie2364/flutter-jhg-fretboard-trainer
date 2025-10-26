@@ -19,8 +19,7 @@ class LandscapeBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    // Define a consistent size for the icon buttons
-    const double iconButtonSize = 36.0; // Adjusted size for potentially better fit
+    // Removed fixed iconButtonSize
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 1000),
@@ -32,87 +31,81 @@ class LandscapeBoard extends StatelessWidget {
         children: [
           // TROPHY AND Timer ICON
           Container(
-            height: iconButtonSize + 8, // Adjust container height based on button size + padding
+             // Let the AppBar determine the height, or adjust based on content
+            // height: JHGAppBar.height, // Using default AppBar height might work
             //color: Colors.amber, // Debug color
             child: Padding(
               padding: EdgeInsets.only(
                 left: width * 0.08,
                 right: width * 0.1,
+                top: 8, // Add some top padding if needed without fixed height
+                bottom: 4 // Add some bottom padding if needed
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center, // Center icons vertically
                 children: [
                   // Top-left icon area (Reset/Timer/Stopwatch/Trophy)
-                   SizedBox(
-                     height: iconButtonSize,
-                     width: iconButtonSize,
-                     child: controller.isStart == true
-                         ? JHGResetBtn(
-                             onTap: () {
-                               controller.setGameMode(
-                                   timer: false, leaderboard: false);
-                               controller.resetGame(false);
-                             },
-                             enabled: true, // Assuming enabled when visible
-                           )
-                         : controller.timerMode == false &&
-                                 controller.leaderboardMode == false
-                             ? RotatedBox(
-                                 quarterTurns: 1, // Rotate Stopwatch icon
-                                 child: JHGIconButton(
-                                     enabled: true,
-                                     iconData: LucideIcons.timer300, // Stopwatch icon
-                                     onTap: () {
-                                       controller.setGameMode(
-                                           timer: true, leaderboard: false);
-                                       controller.resetTimer();
-                                     }),
-                               )
-                             : controller.timerMode == true
-                                 ? SizedBox( // Wrap in SizedBox for explicit sizing
-                                      height: iconButtonSize,
-                                      width: iconButtonSize,
-                                      child: JHGIconButton(
-                                        enabled: true,
-                                        iconData: LucideIcons.clock300, // Timer/Clock icon (already rotates by default?)
-                                        onTap: () {
-                                          controller.setGameMode(
-                                              timer: false, leaderboard: true);
-                                          controller.resetTimer();
-                                        }))
-                                 : controller.leaderboardMode == true
-                                     ? RotatedBox( // Rotate Trophy icon
-                                         quarterTurns: 1,
-                                         child: JHGIconButton(
-                                             enabled: true,
-                                             iconData: LucideIcons.trophy300, // Trophy icon
-                                             onTap: () {
-                                               controller.setGameMode(
-                                                   timer: false,
-                                                   leaderboard: false);
-                                               controller.resetTimer();
-                                             }),
-                                       )
-                                     : SizedBox(), // Fallback
-                   ),
+                  // Removed SizedBox wrapper
+                   controller.isStart == true
+                       ? JHGResetBtn( // JHGResetBtn might have its own size logic
+                           onTap: () {
+                             controller.setGameMode(
+                                 timer: false, leaderboard: false);
+                             controller.resetGame(false);
+                           },
+                           enabled: true,
+                         )
+                       : controller.timerMode == false &&
+                               controller.leaderboardMode == false
+                           ? RotatedBox(
+                               quarterTurns: 1, // Rotate Stopwatch icon
+                               child: JHGIconButton(
+                                   enabled: true,
+                                   iconData: LucideIcons.timer300, // Stopwatch icon
+                                   onTap: () {
+                                     controller.setGameMode(
+                                         timer: true, leaderboard: false);
+                                     controller.resetTimer();
+                                   }),
+                             )
+                           : controller.timerMode == true
+                               ? JHGIconButton( // Removed SizedBox
+                                      enabled: true,
+                                      iconData: LucideIcons.clock300, // Timer/Clock icon
+                                      onTap: () {
+                                        controller.setGameMode(
+                                            timer: false, leaderboard: true);
+                                        controller.resetTimer();
+                                      })
+                               : controller.leaderboardMode == true
+                                   ? RotatedBox( // Rotate Trophy icon
+                                       quarterTurns: 1,
+                                       child: JHGIconButton( // Removed SizedBox
+                                           enabled: true,
+                                           iconData: LucideIcons.trophy300, // Trophy icon
+                                           onTap: () {
+                                             controller.setGameMode(
+                                                 timer: false,
+                                                 leaderboard: false);
+                                             controller.resetTimer();
+                                           }),
+                                     )
+                                   : SizedBox(), // Fallback remains SizedBox
                   // Top-right icon (Leadership Screen)
-                  SizedBox( // Wrap in SizedBox for explicit sizing
-                    height: iconButtonSize,
-                    width: iconButtonSize,
-                    child: RotatedBox( // Rotate Trophy icon
-                      quarterTurns: 1,
-                      child: JHGIconButton(
-                          enabled: true,
-                          iconData: LucideIcons.trophy300,
-                          onTap: () {
-                            Get.to(() => LeadershipScreen(),
-                                transition: Transition.leftToRight);
-                            if (isFreePlan) {
-                              controller.interstitialAds?.showInterstitial();
-                            }
-                          }),
-                    ),
+                  // Removed SizedBox wrapper
+                  RotatedBox( // Rotate Trophy icon
+                    quarterTurns: 1,
+                    child: JHGIconButton(
+                        enabled: true,
+                        iconData: LucideIcons.trophy300,
+                        onTap: () {
+                          Get.to(() => LeadershipScreen(),
+                              transition: Transition.leftToRight);
+                          if (isFreePlan) {
+                            controller.interstitialAds?.showInterstitial();
+                          }
+                        }),
                   ),
                 ],
               ),
@@ -249,63 +242,60 @@ class LandscapeBoard extends StatelessWidget {
 
           // BOTTOM ICON ROW
           Container(
-             height: iconButtonSize + 8, // Match top container height
+             // Let the AppBar determine the height, or adjust based on content
+             // height: JHGAppBar.height, // Using default AppBar height might work
             child: Padding(
               padding: EdgeInsets.only(
                 left: width * 0.1,
                 right: width * 0.08,
+                 bottom: 8, // Add some bottom padding
+                 top: 4 // Add some top padding
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center, // Center icons vertically
                 children: [
                    // Rotate Icon
-                  SizedBox( // Wrap in SizedBox for explicit sizing
-                    height: iconButtonSize,
-                    width: iconButtonSize,
-                    child: RotatedBox( // Rotate the icon
-                      quarterTurns: 1,
-                      child: JHGIconButton(
-                          enabled: true,
-                          childPadding: EdgeInsets.all(1),
-                          iconData: LucideIcons.ratio300, // Rotate icon
-                          onTap: () {
-                            controller.toggleOrientation();
-                          }),
-                    ),
+                  // Removed SizedBox wrapper
+                  RotatedBox( // Rotate the icon
+                    quarterTurns: 1,
+                    child: JHGIconButton(
+                        enabled: true,
+                        childPadding: EdgeInsets.all(1), // You might need to adjust internal padding if available
+                        iconData: LucideIcons.ratio300, // Rotate icon
+                        onTap: () {
+                          controller.toggleOrientation();
+                        }),
                   ),
                   // Settings Icon
-                  SizedBox( // Wrap in SizedBox for explicit sizing
-                    height: iconButtonSize,
-                    width: iconButtonSize,
-                    child: RotatedBox( // Rotate the icon
-                      quarterTurns: 1,
-                      child: JHGIconButton(
-                        enabled: true,
-                        iconData: LucideIcons.settings300,
-                        iconColor: controller.leaderboardMode == true
-                            ? JHGColors.whiteGrey
-                            : JHGColors.white,
-                        onTap: () {
-                          if (controller.leaderboardMode == true) {
-                            return;
-                          } else {
-                            controller.resetGame(false);
-                            Get.to(() => SettingScreen(),
-                                transition: Transition.rightToLeft);
-                            if (isFreePlan) {
-                              controller.interstitialAds?.showInterstitial();
-                            }
+                  // Removed SizedBox wrapper
+                  RotatedBox( // Rotate the icon
+                    quarterTurns: 1,
+                    child: JHGIconButton(
+                      enabled: true,
+                      iconData: LucideIcons.settings300,
+                      iconColor: controller.leaderboardMode == true
+                          ? JHGColors.whiteGrey
+                          : JHGColors.white,
+                      onTap: () {
+                        if (controller.leaderboardMode == true) {
+                          return;
+                        } else {
+                          controller.resetGame(false);
+                          Get.to(() => SettingScreen(),
+                              transition: Transition.rightToLeft);
+                          if (isFreePlan) {
+                            controller.interstitialAds?.showInterstitial();
                           }
-                        },
-                      ),
+                        }
+                      },
                     ),
                   )
                 ],
               ),
             ),
           ),
-           SizedBox(height: height * 0.01), // Small bottom padding
+           // SizedBox(height: height * 0.01), // Removed redundant bottom spacer, padding added above
         ],
       ),
     );
