@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
-import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
@@ -38,22 +37,23 @@ class PortraitBoard extends StatelessWidget {
               onTap: () {
                 Get.to(() => LeadershipScreen(),
                     transition: Transition.leftToRight);
-                // if (isFreePlan) {
-                //   controller.interstitialAds?.showInterstitial();
-                // }
+                if (isFreePlan) {
+                   controller.interstitialAds?.showInterstitial();
+                }
               },
             ),
             trailingWidget: JHGSettingsOptBtn(
-              btnEnabled: !controller.leaderboardMode,
+              // ** Updated condition **
+              btnEnabled: controller.currentGameMode.value != 'leaderboard',
               onTap: () {
-                controller.resetGame(false);
-                Get.to(() => SettingScreen(),
-                    transition: Transition.rightToLeft);
-                if (isFreePlan) {
-                  controller.interstitialAds?.showInterstitial();
-                }
-                // Get.to(() => SettingScreen(),
-                //     transition: Transition.rightToLeft);
+                 if (controller.currentGameMode.value != 'leaderboard') {
+                    controller.resetGame(false);
+                    Get.to(() => SettingScreen(),
+                        transition: Transition.rightToLeft);
+                    if (isFreePlan) {
+                      controller.interstitialAds?.showInterstitial();
+                    }
+                 }
               },
             ),
           ),
@@ -79,107 +79,87 @@ class PortraitBoard extends StatelessWidget {
           ),
           // TIMER
           CountTimerWidget(),
-          // //TIMER , STOPWATCH , ROTATE ICON
           SizedBox(
             height: height * 0.010,
           ),
-          JHGAppBar(
-            isBottom: true,
-            isResponsive: true,
-            // crossAxisAlignment: CrossAxisAlignment.end,
-            leadingWidget: controller.isStart == true
-                ? JHGResetBtn(
-                    onTap: () {
-                      controller.setGameMode(timer: false, leaderboard: false);
-                      controller.resetGame(false);
-                    },
-                    enabled: true,
-                  )
-                : controller.timerMode == false &&
-                        controller.leaderboardMode == false
-                    ? JHGIconButton(
-                        iconData: LucideIcons.timer300,
-                        enabled: true,
+          // ** Updated Bottom AppBar Logic **
+          Obx(() => JHGAppBar(
+                isBottom: true,
+                isResponsive: true,
+                leadingWidget: controller.isStart
+                    ? JHGResetBtn(
                         onTap: () {
-                          controller.setGameMode(
-                              timer: true, leaderboard: false);
-                          controller.resetTimer();
-                        })
-                    : controller.timerMode == true
-                        ? JHGIconButton(
-                            enabled: true,
-                            iconData: LucideIcons.clock300,
-                            onTap: () {
-                              controller.setGameMode(
-                                  timer: false, leaderboard: true);
-                              controller.resetTimer();
-                            })
-                        : controller.leaderboardMode == true
-                            ? JHGIconButton(
-                                childPadding: EdgeInsets.all(3),
-                                enabled: true,
-                                iconData: LucideIcons.trophy300,
-                                onTap: () {
-                                  controller.setGameMode(
-                                      timer: false, leaderboard: false);
-                                  controller.resetTimer();
-                                })
-                            : SizedBox(),
-            centerWidget: controller.isStart == true
-                ? Container(
-                    height: height * 0.060,
-                    width: width * 0.45,
-                    alignment: Alignment.topCenter,
-                    //color: Colors.red,
-                    child: Text(
-                      "    ${controller.highlightNode ?? ""}",
-                      textAlign: TextAlign.center,
-                      style: JHGTextStyles.mdlabelStyle.copyWith(
-                        color: JHGColors.primary,
+                          controller.resetGame(false); // Only reset state
+                        },
+                        enabled: true,
+                      )
+                    : JHGIconButton( // Mode Cycle Button
+                          iconData: controller.currentGameMode.value == 'stopwatch'
+                              ? LucideIcons.timer300 // Next is Countdown
+                              : controller.currentGameMode.value == 'countdown'
+                                ? LucideIcons.clock300 // Next is Leaderboard
+                                : LucideIcons.trophy300, // Next is Stopwatch
+                          enabled: !controller.isStart, // Cannot change mode mid-game
+                          onTap: () {
+                              if (!controller.isStart) {
+                                controller.cycleGameMode();
+                              }
+                            }
+                        ),
+                centerWidget: controller.isStart
+                    ? Container(
+                        height: height * 0.060,
+                        width: width * 0.45,
+                        alignment: Alignment.topCenter,
+                        child: Text(
+                          "    ${controller.highlightNode ?? ""}",
+                          textAlign: TextAlign.center,
+                          style: JHGTextStyles.mdlabelStyle.copyWith(
+                            color: JHGColors.primary,
+                          ),
+                        ),
+                      )
+                    : JHGPrimaryBtn(
+                        label: AppStrings.start,
+                        height: 50,
+                        width: width * 0.45,
+                        onPressed: () {
+                          controller.startTimer();
+                          controller.startTheGame();
+                        },
                       ),
-                    ),
-                  )
-                : JHGPrimaryBtn(
-                    label: AppStrings.start,
-                    height: 50,
-                    width: width * 0.45,
-                    onPressed: () {
-                      controller.startTimer();
-                      controller.startTheGame();
-                    },
-                  ),
-            trailingWidget: JHGIconButton(
-                iconData: LucideIcons.ratio300,
-                enabled: true,
-                childPadding: EdgeInsets.all(2),
-                onTap: () {
-                  controller.toggleOrientation();
-                }),
-          ),
+                trailingWidget: JHGIconButton(
+                    iconData: LucideIcons.ratio300,
+                    enabled: true,
+                    childPadding: EdgeInsets.all(2),
+                    onTap: () {
+                      controller.toggleOrientation();
+                    }),
+              )),
 
           //SCORE
-
           if (controller.isStart)
-            // == true
-            //     ?
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    AppStrings.scoreText,
-                    style: JHGTextStyles.labelStyle.copyWith(
-                      fontSize: 16,
+            Padding( // Add padding to separate from bottom bar
+              padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      AppStrings.scoreText,
+                      style: JHGTextStyles.labelStyle.copyWith(
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  Text(
-                    controller.score.toString(),
-                    style: JHGTextStyles.subLabelStyle.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    Text(
+                      controller.score.toString(),
+                      style: JHGTextStyles.subLabelStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],

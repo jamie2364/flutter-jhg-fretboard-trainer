@@ -1,6 +1,101 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/views/widgets/duration_picker.dart';
+import 'package:get/get.dart';
+
+class SettingsDefaultTimer extends StatelessWidget {
+  const SettingsDefaultTimer({super.key, required this.controller});
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center, // Vertically center items
+                children: [
+                  const Expanded(
+                    flex: 2,
+                    child: SizedBox( // Ensure text aligns center vertically
+                      height: 56, // Match dropdown height
+                      child: Align(
+                         alignment: Alignment.centerLeft,
+                         child: Text(
+                          'Default Timer',
+                          style: JHGTextStyles.labelStyle, // Changed from subLabelStyle
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: JHGInlineDropDown<String>( // Keeping Inline for now, can change later
+                      value: controller.defaultTimerSelectedValue.value,
+                      items: controller.defaultTimer,
+                      onChanged: (value) async {
+                        controller.defaultTimerSelectedValue.value = value;
+                        controller.selectedDropDownValue.value = value;
+                        // Reset timer value when mode changes if needed, or keep last selected
+                        // if (value == 'Stopwatch') {
+                        //    controller.timerIntervalValue.value = 120; // Default Stopwatch time
+                        // } else {
+                        //    controller.timerIntervalValue.value = 120; // Default Countdown time
+                        // }
+                      },
+                    ),
+                  )
+                ],
+              ),
+            ),
+
+            // ** Replaced Expandable Section with LabeledDurationPicker inside Visibility **
+            Padding(
+              padding: const EdgeInsets.only(top: 10), // Reduced top padding
+              child: Visibility( // Use Visibility for conditional rendering
+                // ** Show only when Countdown is selected **
+                visible: controller.defaultTimerSelectedValue.value == controller.defaultTimer[1], // Index 1 is "Countdown"
+                child: LabeledDurationPicker(
+                  label: 'Interval Time',
+                  subLabel: 'Set the countdown duration', // Updated sublabel
+                  controller: controller, // Pass controller
+                  currentSeconds: controller.timerIntervalValue.value,
+                  onSelected: (int m, int s) {
+                    debugPrint("Picked: $m min, $s sec");
+                    // Update the single value in HomeController (total seconds)
+                    controller.timerIntervalValue.value = m * 60 + s;
+                     // Ensure minimum 1 second
+                    if (controller.timerIntervalValue.value == 0) {
+                      controller.timerIntervalValue.value = 1;
+                    }
+                  },
+                ),
+              ),
+            ),
+          ],
+        ));
+  }
+}
+
+// Removed TimerWidget as it's replaced by LabeledDurationPicker
+// class TimerWidget extends StatelessWidget { ... }
+
+// Removed JHGValueChangeWidget as it's replaced by LabeledDurationPicker
+// class JHGValueChangeWidget extends StatelessWidget { ... }
+
+
+
+
+
+
+
+/*import 'package:flutter/material.dart';
+import 'package:flutter_jhg_elements/jhg_elements.dart';
+import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/views/widgets/add_sub_button.dart';
 import 'package:get/get.dart';
 
@@ -285,3 +380,4 @@ class JHGValueChangeWidget extends StatelessWidget {
     );
   }
 }
+*/
