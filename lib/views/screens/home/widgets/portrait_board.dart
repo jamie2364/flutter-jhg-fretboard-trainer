@@ -108,7 +108,7 @@ class PortraitBoard extends StatelessWidget {
                     : controller.timerMode == true
                         ? JHGIconButton(
                             enabled: true,
-                            iconData: LucideIcons.timer300,
+                            iconData: LucideIcons.clock300,
                             onTap: () {
                               controller.setGameMode(
                                   timer: false, leaderboard: true);
