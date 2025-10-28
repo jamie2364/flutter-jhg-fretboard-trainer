@@ -42,6 +42,32 @@ class LandscapeBoard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Mode Cycle Icon
+                Obx(() {
+                  IconData icon;
+                  // ** Corrected Logic: Show icon for the NEXT mode **
+                  if (controller.currentGameMode.value == 'stopwatch') {
+                    icon = LucideIcons.timer300; // Next is Countdown
+                  } else if (controller.currentGameMode.value == 'countdown') {
+                    icon = LucideIcons.trophy300; // Next is Leaderboard
+                  } else { // leaderboard
+                    icon = LucideIcons.clock300; // Next is Stopwatch
+                  }
+                  return RotatedBox(
+                    quarterTurns: 1,
+                    child: JHGIconButton(
+                      enabled: !controller.isStart,
+                      iconData: icon,
+                      tooltipMsg: controller.isStart ? "Cannot change mode during game" : "",
+                      onTap: () {
+                        if (!controller.isStart) {
+                          controller.cycleGameMode();
+                        }
+                      },
+                    ),
+                  );
+                }
+                ),
                 // Top-left icon area (Reset Button or Placeholder)
                 controller.isStart
                     ? JHGResetBtn(
@@ -124,7 +150,7 @@ class LandscapeBoard extends StatelessWidget {
                               )
                             : RotatedBox( // Only rotate button when game not started
                                 quarterTurns: 1,
-                                child: Column(
+                                child: Flexible(child:  Column(
                                  mainAxisSize: MainAxisSize.min, // Fit content vertically
                                  children: [
                                    JHGPrimaryBtn(
@@ -152,7 +178,7 @@ class LandscapeBoard extends StatelessWidget {
                                                                                ),
                                        ),
                                  ],
-                                ),
+                                ),),
                               ),
                       ],
                     ),
@@ -204,32 +230,6 @@ class LandscapeBoard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                 // Mode Cycle Icon
-                 Obx(() {
-                     IconData icon;
-                     // ** Corrected Logic: Show icon for the NEXT mode **
-                     if (controller.currentGameMode.value == 'stopwatch') {
-                       icon = LucideIcons.timer300; // Next is Countdown
-                     } else if (controller.currentGameMode.value == 'countdown') {
-                       icon = LucideIcons.trophy300; // Next is Leaderboard
-                     } else { // leaderboard
-                       icon = LucideIcons.clock300; // Next is Stopwatch
-                     }
-                     return RotatedBox(
-                       quarterTurns: 1,
-                       child: JHGIconButton(
-                         enabled: !controller.isStart,
-                         iconData: icon,
-                         tooltipMsg: controller.isStart ? "Cannot change mode during game" : "",
-                         onTap: () {
-                           if (!controller.isStart) {
-                             controller.cycleGameMode();
-                           }
-                         },
-                       ),
-                     );
-                   }
-                 ),
                 // Settings Icon
                 RotatedBox(
                   quarterTurns: 1,
