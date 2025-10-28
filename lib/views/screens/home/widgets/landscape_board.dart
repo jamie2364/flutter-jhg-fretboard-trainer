@@ -105,7 +105,7 @@ class LandscapeBoard extends StatelessWidget {
               children: [
                 // START BUTTON / SCORE AREA
                 Container(
-                  margin: const EdgeInsets.only(left: 20),
+                  margin: const EdgeInsets.only(left: 10),
                   width: width * 0.12,
                   padding: EdgeInsets.only(left: width * 0.01),
                   child: Column(
