@@ -70,11 +70,11 @@ class LandscapeBoard extends StatelessWidget {
                 // Reset button or placeholder
                 controller.isStart
                     ? JHGResetBtn(
-                  onTap: () {
-                    controller.resetGame(false);
-                  },
-                  enabled: true,
-                )
+                        onTap: () {
+                          controller.resetGame(false);
+                        },
+                        enabled: true,
+                      )
                     : const SizedBox(width: placeholderWidth),
 
                 // Leaderboard icon
@@ -158,41 +158,41 @@ class LandscapeBoard extends StatelessWidget {
                       else
                         RotatedBox(
                           quarterTurns: 1,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              JHGPrimaryBtn(
-                                label: AppStrings.start,
-                                height: 50,
-                                width: width * 0.40,
-                                onPressed: () {
-                                  controller.startTimer();
-                                  controller.startTheGame();
-                                },
-                              ),
-                              SizedBox(
-                                height: controller.currentGameMode.value ==
-                                    'leaderboard'
-                                    ? 6
-                                    : 10,
-                              ),
-                              if (controller.currentGameMode.value ==
-                                  'leaderboard')
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'You can\'t change settings in leaderboard',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color:
-                                      JHGColors.primary.withValues(alpha: 204),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          child: JHGPrimaryBtn(
+                            label: AppStrings.start,
+                            height: 50,
+                            width: width * 0.40,
+                            onPressed: () {
+                              controller.startTimer();
+                              controller.startTheGame();
+                            },
                           ),
                         ),
+
+                      RotatedBox(
+                        quarterTurns: 1,
+                        child: SizedBox(
+                          height:
+                              controller.currentGameMode.value == 'leaderboard'
+                                  ? 6
+                                  : 10,
+                        ),
+                      ),
+                      if (controller.currentGameMode.value == 'leaderboard')
+                        RotatedBox(
+                          quarterTurns: 1,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'You can\'t change settings in leaderboard',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: JHGColors.primary.withValues(alpha: 204),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        )
                     ],
                   ),
                 ),
@@ -248,9 +248,9 @@ class LandscapeBoard extends StatelessWidget {
                         ? JHGColors.whiteGrey
                         : JHGColors.white,
                     tooltipMsg:
-                    controller.currentGameMode.value == 'leaderboard'
-                        ? "Settings disabled in Leaderboard mode"
-                        : "",
+                        controller.currentGameMode.value == 'leaderboard'
+                            ? "Settings disabled in Leaderboard mode"
+                            : "",
                     onTap: () {
                       if (controller.currentGameMode.value != 'leaderboard') {
                         controller.resetGame(false);
