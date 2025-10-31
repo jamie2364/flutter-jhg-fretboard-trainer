@@ -166,9 +166,9 @@ class HomeController extends GetxController {
   int getRandomIndex() {
     Random random = Random();
     int randomIndex;
-    do {
+    // do {
       randomIndex = random.nextInt(fretList.length);
-    } while (getStringStatus(fretList[randomIndex].string!) == false);
+    // } while (getStringStatus(fretList[randomIndex].string!) == false);
     return randomIndex;
   }
 
