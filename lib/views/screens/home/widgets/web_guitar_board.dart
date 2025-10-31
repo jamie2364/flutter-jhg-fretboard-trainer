@@ -192,23 +192,24 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
                                 padding: EdgeInsets.zero,
                                 physics: const NeverScrollableScrollPhysics(),
                                 crossAxisCount: 6,
-                                mainAxisSpacing: width * 0.0035,
+                                mainAxisSpacing: width * 0.0080,
                                 crossAxisSpacing: 4,
                                 itemBuilder: (context, index) {
                                   final noteIndex = fretList[index];
                                   return MouseRegion(
                                       cursor: SystemMouseCursors.click,
                                       child: GestureDetector(
-                                        onTap: () {
-                                          controller.playSound(
-                                              index,
-                                              noteIndex.note!,
-                                              noteIndex.string!,
-                                              fretList[index].fretSound!);
-                                        },
-                                        child: stringLandscapePress(
-                                            index: index, width: width),
-                                      ));
+                                          onTap: () {
+                                            controller.playSound(
+                                                index,
+                                                noteIndex.note!,
+                                                noteIndex.string!,
+                                                fretList[index].fretSound!);
+                                          },
+                                          child: Container(
+                                            child: stringLandscapePress(
+                                                index: index, width: width),
+                                          )));
                                 },
                               ),
                             ),
@@ -367,35 +368,35 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     if (index == 0) {
       return width * 0.0045;
     } else if (index == 1) {
-      return width * 0.0225;
+      return width * 0.0430;
     } else if (index == 2) {
-      return width * 0.0450;
+      return width * 0.0500;
     } else if (index == 3) {
-      return width * 0.0473;
+      return width * 0.0500;
     } else if (index == 4) {
-      return width * 0.0473;
+      return width * 0.0500;
     } else if (index == 5) {
-      return width * 0.0473;
+      return width * 0.0540;
     } else if (index == 6) {
-      return width * 0.0443;
+      return width * 0.0500;
     } else if (index == 7) {
-      return width * 0.0428;
+      return width * 0.0520;
     } else if (index == 8) {
-      return width * 0.0405;
+      return width * 0.0550;
     } else if (index == 9) {
-      return width * 0.0390;
+      return width * 0.0500;
     } else if (index == 10) {
-      return width * 0.0360;
+      return width * 0.0470;
     } else if (index == 11) {
-      return width * 0.0315;
+      return width * 0.0440;
     } else if (index == 12) {
-      return width * 0.0300;
+      return width * 0.0430;
     } else if (index == 13) {
-      return width * 0.0300;
+      return width * 0.0450;
     } else if (index == 14) {
-      return width * 0.0285;
+      return width * 0.0470;
     } else {
-      return width * 0.0233;
+      return width * 0.0490;
     }
   }
 
@@ -406,35 +407,35 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     if (index == 0) {
       return width * 0.0548;
     } else if (index == 1) {
-      return width * 0.0525;
+      return width * 0.0548;
     } else if (index == 2) {
-      return width * 0.0510;
+      return width * 0.0548;
     } else if (index == 3) {
-      return width * 0.0495;
+      return width * 0.0548;
     } else if (index == 4) {
-      return width * 0.0480;
+      return width * 0.0548;
     } else if (index == 5) {
-      return width * 0.0465;
+      return width * 0.0548;
     } else if (index == 6) {
-      return width * 0.0450;
+      return width * 0.0548;
     } else if (index == 7) {
-      return width * 0.0428;
+      return width * 0.0548;
     } else if (index == 8) {
-      return width * 0.0413;
+      return width * 0.0548;
     } else if (index == 9) {
-      return width * 0.0398;
+      return width * 0.0548;
     } else if (index == 10) {
-      return width * 0.0383;
+      return width * 0.0548;
     } else if (index == 11) {
-      return width * 0.0368;
+      return width * 0.0548;
     } else if (index == 12) {
-      return width * 0.0353;
+      return width * 0.0548;
     } else if (index == 13) {
-      return width * 0.0338;
+      return width * 0.0548;
     } else if (index == 14) {
-      return width * 0.0323;
+      return width * 0.0548;
     } else {
-      return width * 0.0308;
+      return width * 0.0548;
     }
   }
 
@@ -539,19 +540,19 @@ class _WebLandscapeGuitarBoardState extends State<WebLandscapeGuitarBoard> {
     } else if (index >= 48 && index <= 53) {
       return width * 0.042;
     } else if (index >= 54 && index <= 59) {
-      return width * 0.0405;
+      return width * 0.0600;
     } else if (index >= 60 && index <= 65) {
-      return width * 0.0383;
+      return width * 0.0500;
     } else if (index >= 66 && index <= 71) {
-      return width * 0.0375;
+      return width * 0.0480;
     } else if (index >= 72 && index <= 77) {
-      return width * 0.0368;
+      return width * 0.0500;
     } else if (index >= 78 && index <= 83) {
-      return width * 0.0345;
+      return width * 0.0500;
     } else if (index >= 84 && index <= 89) {
-      return width * 0.0323;
+      return width * 0.0480;
     } else {
-      return width * 0.0323;
+      return width * 0.0500;
     }
   }
 
