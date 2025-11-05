@@ -6,10 +6,12 @@ import 'package:flutter_sizer/flutter_sizer.dart';
 showCustomToast(
     {required BuildContext context,
     required String message,
-     bool isError = true}) {
+    bool isError = true}) {
   ScaffoldMessenger.of(context).removeCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    width: kIsWeb ? MediaQuery.of(context).size.width* .65 : MediaQuery.of(context).size.width * .90,
+    width: kIsWeb
+        ? MediaQuery.of(context).size.width * .65
+        : MediaQuery.of(context).size.width * .90,
     content: Text(
       message,
       textAlign: TextAlign.center,

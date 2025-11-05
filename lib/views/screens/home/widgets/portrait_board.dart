@@ -38,7 +38,7 @@ class PortraitBoard extends StatelessWidget {
                 Get.to(() => LeadershipScreen(),
                     transition: Transition.leftToRight);
                 if (isFreePlan) {
-                   controller.interstitialAds?.showInterstitial();
+                  controller.interstitialAds?.showInterstitial();
                 }
               },
             ),
@@ -46,14 +46,14 @@ class PortraitBoard extends StatelessWidget {
               // ** Updated condition **
               btnEnabled: controller.currentGameMode.value != 'leaderboard',
               onTap: () {
-                 if (controller.currentGameMode.value != 'leaderboard') {
-                    controller.resetGame(false);
-                    Get.to(() => SettingScreen(),
-                        transition: Transition.rightToLeft);
-                    if (isFreePlan) {
-                      controller.interstitialAds?.showInterstitial();
-                    }
-                 }
+                if (controller.currentGameMode.value != 'leaderboard') {
+                  controller.resetGame(false);
+                  Get.to(() => SettingScreen(),
+                      transition: Transition.rightToLeft);
+                  if (isFreePlan) {
+                    controller.interstitialAds?.showInterstitial();
+                  }
+                }
               },
             ),
           ),
@@ -93,19 +93,21 @@ class PortraitBoard extends StatelessWidget {
                         },
                         enabled: true,
                       )
-                    : JHGIconButton( // Mode Cycle Button
-                          iconData: controller.currentGameMode.value == 'stopwatch'
-                              ? LucideIcons.timer300 // Next is Countdown
-                              : controller.currentGameMode.value == 'countdown'
+                    : JHGIconButton(
+                        // Mode Cycle Button
+                        iconData: controller.currentGameMode.value ==
+                                'stopwatch'
+                            ? LucideIcons.timer300 // Next is Countdown
+                            : controller.currentGameMode.value == 'countdown'
                                 ? LucideIcons.clock300 // Next is Leaderboard
                                 : LucideIcons.trophy300, // Next is Stopwatch
-                          enabled: !controller.isStart, // Cannot change mode mid-game
-                          onTap: () {
-                              if (!controller.isStart) {
-                                controller.cycleGameMode();
-                              }
-                            }
-                        ),
+                        enabled:
+                            !controller.isStart, // Cannot change mode mid-game
+                        onTap: () {
+                          if (!controller.isStart) {
+                            controller.cycleGameMode();
+                          }
+                        }),
                 centerWidget: controller.isStart
                     ? Container(
                         height: height * 0.060,
@@ -139,7 +141,8 @@ class PortraitBoard extends StatelessWidget {
 
           //SCORE
           if (controller.isStart)
-            Padding( // Add padding to separate from bottom bar
+            Padding(
+              // Add padding to separate from bottom bar
               padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
               child: Center(
                 child: Row(

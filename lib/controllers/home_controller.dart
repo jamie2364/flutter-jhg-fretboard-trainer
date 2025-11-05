@@ -8,25 +8,28 @@ import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:reg_page/reg_page.dart';
-// import 'package:universal_html/html.dart'; // Keep commented if not needed elsewhere
-
-import 'leaderboard_controller.dart';
 
 class HomeController extends GetxController {
   var userNameWeb = 'DefaultUserName'.obs;
 
-  List<String> defaultTimer = ['Stopwatch', "Countdown"]; // Index 0: Stopwatch, Index 1: Countdown
+  List<String> defaultTimer = [
+    'Stopwatch',
+    "Countdown"
+  ]; // Index 0: Stopwatch, Index 1: Countdown
   RxString selectedDropDownValue = "".obs; // For dropdown UI
   RxString defaultTimerSelectedValue = "Stopwatch".obs; // For saving preference
 
   // ** Replaced booleans with a single mode state **
-  RxString currentGameMode = 'stopwatch'.obs; // 'stopwatch', 'countdown', 'leaderboard'
+  RxString currentGameMode =
+      'stopwatch'.obs; // 'stopwatch', 'countdown', 'leaderboard'
 
   void onDefaultTimerInitialized() {
     initLocalDbData().then((_) {
       selectedDropDownValue.value = defaultTimerSelectedValue.value;
       // Set initial currentGameMode based on saved default
-      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' ? 'countdown' : 'stopwatch';
+      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+          ? 'countdown'
+          : 'stopwatch';
       resetTimer(); // Apply initial time
     });
   }
@@ -38,7 +41,8 @@ class HomeController extends GetxController {
   int? selectedString;
   String? userName;
 
-  RxInt timerIntervalValue = 120.obs; // Default to 120 seconds (2:00) for Countdown
+  RxInt timerIntervalValue =
+      120.obs; // Default to 120 seconds (2:00) for Countdown
 
   JHGInterstitialAd? interstitialAds;
   RxBool isExpanded = RxBool(false);
@@ -71,7 +75,9 @@ class HomeController extends GetxController {
     // Load saved settings first
     await initLocalDbData();
     // Set current game mode based on loaded default preference
-    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' ? 'countdown' : 'stopwatch';
+    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+        ? 'countdown'
+        : 'stopwatch';
     resetTimer(); // Apply the time for the initial mode
     await getUserName();
     update();
@@ -167,7 +173,7 @@ class HomeController extends GetxController {
     Random random = Random();
     int randomIndex;
     // do {
-      randomIndex = random.nextInt(fretList.length);
+    randomIndex = random.nextInt(fretList.length);
     // } while (getStringStatus(fretList[randomIndex].string!) == false);
     return randomIndex;
   }
@@ -203,7 +209,9 @@ class HomeController extends GetxController {
 
     if (resetAll) {
       // If resetting everything, revert to the saved default mode
-      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' ? 'countdown' : 'stopwatch';
+      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+          ? 'countdown'
+          : 'stopwatch';
     }
     // Keep the current mode if resetAll is false
 
@@ -217,7 +225,8 @@ class HomeController extends GetxController {
       secondsRemaining.value = 120;
     } else if (currentGameMode.value == 'countdown') {
       secondsRemaining.value = timerIntervalValue.value;
-    } else { // stopwatch
+    } else {
+      // stopwatch
       secondsRemaining.value = 0;
     }
     update();
@@ -238,7 +247,8 @@ class HomeController extends GetxController {
       startLeaderBoardCountDownTimer();
     } else if (currentGameMode.value == 'countdown') {
       startCountDownTimer();
-    } else { // stopwatch
+    } else {
+      // stopwatch
       startCountUpTimer();
     }
   }
@@ -249,13 +259,13 @@ class HomeController extends GetxController {
       currentGameMode.value = 'countdown';
     } else if (currentGameMode.value == 'countdown') {
       currentGameMode.value = 'leaderboard';
-    } else { // leaderboard
+    } else {
+      // leaderboard
       currentGameMode.value = 'stopwatch';
     }
     resetTimer(); // Set the correct time for the new mode
     update(); // Update UI to reflect new mode icon etc.
   }
-
 
   String formatTime(int seconds) {
     int minutes = seconds ~/ 60;
@@ -263,26 +273,29 @@ class HomeController extends GetxController {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  bool getStringStatus(int id) { /* ... unchanged ... */ return false; }
+  bool getStringStatus(int id) {
+    /* ... unchanged ... */ return false;
+  }
+
   List offString = [true, true, true, true, true, true];
   bool string1 = true;
-  void setString1(int index) { /* ... */ }
+  void setString1(int index) {/* ... */}
   bool string2 = true;
-  void setString2(int index) { /* ... */ }
+  void setString2(int index) {/* ... */}
   bool string3 = true;
-  void setString3(int index) { /* ... */ }
+  void setString3(int index) {/* ... */}
   bool string4 = true;
-  void setString4(int index) { /* ... */ }
+  void setString4(int index) {/* ... */}
   bool string5 = true;
-  void setString5(int index) { /* ... */ }
+  void setString5(int index) {/* ... */}
   bool string6 = true;
-  void setString6(int index) { /* ... */ }
+  void setString6(int index) {/* ... */}
 
   Rx<int> secondsRemaining = Rx(0); // This is the RUNTIME timer value
 
-  void startLeaderBoardCountDownTimer() { /* ... unchanged ... */ }
-  void startCountDownTimer() { /* ... unchanged ... */ }
-  void startCountUpTimer() { /* ... unchanged ... */ }
+  void startLeaderBoardCountDownTimer() {/* ... unchanged ... */}
+  void startCountDownTimer() {/* ... unchanged ... */}
+  void startCountUpTimer() {/* ... unchanged ... */}
 
   void onClickSave(BuildContext context) async {
     int seconds = timerIntervalValue.value;
@@ -297,20 +310,24 @@ class HomeController extends GetxController {
     popup(context);
   }
 
-  Future<void> saveStrings() async { /* ... unchanged ... */ }
+  Future<void> saveStrings() async {/* ... unchanged ... */}
 
   void popup(BuildContext context) {
-     // Apply potentially newly saved settings to the current state
-    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' ? 'countdown' : 'stopwatch';
+    // Apply potentially newly saved settings to the current state
+    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+        ? 'countdown'
+        : 'stopwatch';
     resetTimer();
     Get.back();
   }
 
-  void getUserNameFromRL() async { /* ... unchanged ... */ }
+  void getUserNameFromRL() async {/* ... unchanged ... */}
 
   Future<void> initLocalDbData() async {
-    defaultTimerSelectedValue.value = await SharedPrefHelper.instance.getDefaultTimerType() ?? 'Stopwatch';
-    timerIntervalValue.value = await SharedPrefHelper.instance.getTimerInterval();
+    defaultTimerSelectedValue.value =
+        await SharedPrefHelper.instance.getDefaultTimerType() ?? 'Stopwatch';
+    timerIntervalValue.value =
+        await SharedPrefHelper.instance.getTimerInterval();
     string1 = await SharedPrefHelper.instance.getString1();
     string2 = await SharedPrefHelper.instance.getString2();
     string3 = await SharedPrefHelper.instance.getString3();

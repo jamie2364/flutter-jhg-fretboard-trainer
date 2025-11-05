@@ -43,20 +43,18 @@ class WebBoard extends StatelessWidget {
                   transition: Transition.leftToRight);
             }),
         trailingWidget: JHGSettingsOptBtn(
-           // ** Updated condition **
+          // ** Updated condition **
           btnEnabled: controller.currentGameMode.value != 'leaderboard',
           onTap: () {
             if (controller.currentGameMode.value != 'leaderboard') {
               controller.resetGame(false);
-              Get.to(() => SettingScreen(),
-                  transition: Transition.rightToLeft);
-             }
+              Get.to(() => SettingScreen(), transition: Transition.rightToLeft);
+            }
           },
         ),
       ),
       body: Column(
         children: [
-
           Expanded(
             child: Column(
               children: [
@@ -80,7 +78,9 @@ class WebBoard extends StatelessWidget {
                             children: [
                               controller.isPortrait == true
                                   ? SizedBox.shrink()
-                                  : StringsNameWidget(width: width * 0.21, ),
+                                  : StringsNameWidget(
+                                      width: width * 0.21,
+                                    ),
                               controller.isPortrait == true
                                   ? SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,
@@ -115,9 +115,9 @@ class WebBoard extends StatelessWidget {
                                       child: SingleChildScrollView(
                                         scrollDirection: Axis.horizontal,
                                         child: Container(
-                                          alignment: Alignment.topCenter,
-                                          child:
-                                              const WebPortraitGuitarBoard()),
+                                            alignment: Alignment.topCenter,
+                                            child:
+                                                const WebPortraitGuitarBoard()),
                                       ),
                                     ),
                             ],
@@ -135,30 +135,34 @@ class WebBoard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 5.0),
             // ** Updated Bottom AppBar Logic **
-            child: Obx(()=> JHGAppBar(
+            child: Obx(() => JHGAppBar(
                   isResponsive: true,
                   isBottom: true,
                   crossAxisAlignment: CrossAxisAlignment.end,
-                   leadingWidget: controller.isStart
-                    ? JHGResetBtn(
-                        enabled: true,
-                        onTap: () {
-                           controller.resetGame(false); // Only reset state
-                        })
-                    : JHGIconButton( // Mode Cycle Button
-                          iconData: controller.currentGameMode.value == 'stopwatch'
+                  leadingWidget: controller.isStart
+                      ? JHGResetBtn(
+                          enabled: true,
+                          onTap: () {
+                            controller.resetGame(false); // Only reset state
+                          })
+                      : JHGIconButton(
+                          // Mode Cycle Button
+                          iconData: controller.currentGameMode.value ==
+                                  'stopwatch'
                               ? LucideIcons.timer300 // Next is Countdown
                               : controller.currentGameMode.value == 'countdown'
-                                ? LucideIcons.trophy300 // Next is Leaderboard
-                                : LucideIcons.clock300, // Next is Stopwatch
-                          enabled: !controller.isStart, // Cannot change mode mid-game
-                           tooltipMsg: controller.isStart ? "Cannot change mode during game" : "",
+                                  ? LucideIcons.trophy300 // Next is Leaderboard
+                                  : LucideIcons.clock300, // Next is Stopwatch
+                          enabled: !controller
+                              .isStart, // Cannot change mode mid-game
+                          tooltipMsg: controller.isStart
+                              ? "Cannot change mode during game"
+                              : "",
                           onTap: () {
-                              if (!controller.isStart) {
-                                controller.cycleGameMode();
-                              }
+                            if (!controller.isStart) {
+                              controller.cycleGameMode();
                             }
-                        ),
+                          }),
                   centerWidget: controller.isStart
                       ? Container(
                           height: 40,

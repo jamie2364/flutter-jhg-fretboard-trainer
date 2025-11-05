@@ -7,9 +7,7 @@ class AppBindings extends Bindings {
   void dependencies() {
     Get.lazyPut(() => LeaderBoardController(), fenix: true);
     Get.lazyPut(() => HomeController(), fenix: true);
-
   }
 }
 
 //controllers
-

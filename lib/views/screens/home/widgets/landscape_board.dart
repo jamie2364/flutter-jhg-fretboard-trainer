@@ -168,7 +168,6 @@ class LandscapeBoard extends StatelessWidget {
                             },
                           ),
                         ),
-
                       RotatedBox(
                         quarterTurns: 1,
                         child: SizedBox(

@@ -224,9 +224,8 @@ class _SettingScreenState extends State<SettingScreen> {
               onArrowDownTap: () {
                 expansionStream.sink.add(!val);
               },
-              arrowIcon: val
-                  ? LucideIcons.chevronUp300
-                  :LucideIcons.chevronDown300,
+              arrowIcon:
+                  val ? LucideIcons.chevronUp300 : LucideIcons.chevronDown300,
             ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20),

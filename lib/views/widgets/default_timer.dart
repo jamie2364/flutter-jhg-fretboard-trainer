@@ -24,8 +24,8 @@ class SettingsDefaultTimer extends StatelessWidget {
                     child: SizedBox(
                       height: 56, // Match standard dropdown height
                       child: Align(
-                         alignment: Alignment.centerLeft,
-                         child: Text(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
                           'Default Timer',
                           style: JHGTextStyles.labelStyle,
                         ),
@@ -56,11 +56,11 @@ class SettingsDefaultTimer extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Visibility(
-                visible: controller.defaultTimerSelectedValue.value == controller.defaultTimer[1], // Show only for "Countdown"
+                visible: controller.defaultTimerSelectedValue.value ==
+                    controller.defaultTimer[1], // Show only for "Countdown"
                 child: LabeledDurationPicker(
                   label: 'Interval Time',
                   subLabel: 'Set the countdown duration',
@@ -70,7 +70,8 @@ class SettingsDefaultTimer extends StatelessWidget {
                     debugPrint("Picked: $m min, $s sec");
                     controller.timerIntervalValue.value = m * 60 + s;
                     if (controller.timerIntervalValue.value == 0) {
-                      controller.timerIntervalValue.value = 1; // Ensure minimum 1 second
+                      controller.timerIntervalValue.value =
+                          1; // Ensure minimum 1 second
                     }
                   },
                 ),

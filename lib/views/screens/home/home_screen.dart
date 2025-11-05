@@ -82,8 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         height: height,
                         color: JHGColors.secondryBlack,
                         child: controller.isPortrait == true
-                            ? 
-                            JHGBody(
+                            ? JHGBody(
                                 body: PortraitBoard(controller: controller))
                             : JHGBody(
                                 padding: EdgeInsets.symmetric(vertical: 24),

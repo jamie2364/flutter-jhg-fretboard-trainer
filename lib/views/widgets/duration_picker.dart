@@ -147,9 +147,10 @@ class LabeledDurationPicker extends StatelessWidget {
                           Navigator.of(context).pop();
                           // Ensure at least 1 second is selected
                           if (selectedMinute == 0 && selectedSecond == 0) {
-                             onSelected(0, 1); // Default to 1 second if 0:00 selected
+                            onSelected(
+                                0, 1); // Default to 1 second if 0:00 selected
                           } else {
-                             onSelected(selectedMinute, selectedSecond);
+                            onSelected(selectedMinute, selectedSecond);
                           }
                         },
                         label: "OK",

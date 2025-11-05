@@ -13,12 +13,15 @@ class CountTimerWidget extends StatelessWidget {
     // ** Get HomeController instead of TimerController **
     final controller = Get.find<HomeController>();
     return Obx(
-      () => controller.currentGameMode.value == 'countdown' // ** Check currentGameMode **
+      () => controller.currentGameMode.value ==
+              'countdown' // ** Check currentGameMode **
           ? JHGTimerWidget(
               isEnabled: !controller.isStart, // ** Use HomeController state **
-              initialValue: controller.secondsRemaining.value, // ** Use HomeController state **
+              initialValue: controller
+                  .secondsRemaining.value, // ** Use HomeController state **
               onChanged: (value) {
-                controller.secondsRemaining.value = value; // ** Use HomeController state **
+                controller.secondsRemaining.value =
+                    value; // ** Use HomeController state **
               },
             )
           : Text(
