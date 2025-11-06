@@ -8,7 +8,7 @@ import 'package:fretboard/views/screens/home/widgets/guitar_board.dart'
     show StringsNameWidget;
 import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
-import 'package:fretboard/views/screens/setting/setting_screen.dart';
+import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:get/get.dart';
 
 import '../../../widgets/count_timer_widget.dart';
