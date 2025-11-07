@@ -194,6 +194,7 @@ class _SettingScreenState extends State<SettingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             buildSettingsUi(controller),
+            SimpleDropdownButton(),
             SizedBox(
               height: width * 0.04,
             ),
@@ -290,6 +291,44 @@ class _SettingScreenState extends State<SettingScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class SimpleDropdownButton extends StatefulWidget {
+  @override
+  _SimpleDropdownButtonState createState() => _SimpleDropdownButtonState();
+}
+
+class _SimpleDropdownButtonState extends State<SimpleDropdownButton> {
+  String? _selectedItem; // Stores the currently selected item
+
+  List<String> _dropdownItems = [
+    'Option 1',
+    'Option 2',
+    'Option 3',
+    'Option 4'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: DropdownButton<String>(
+        value: _selectedItem, // The currently selected value
+        hint: Text(
+            'Select an option'), // Placeholder text when no item is selected
+        items: _dropdownItems.map((String item) {
+          return DropdownMenuItem<String>(
+            value: item,
+            child: Text(item),
+          );
+        }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _selectedItem = newValue; // Update the selected item
+          });
+        },
+      ),
     );
   }
 }

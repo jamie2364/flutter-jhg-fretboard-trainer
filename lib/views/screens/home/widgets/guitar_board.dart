@@ -530,7 +530,7 @@ class StringsNameWidget extends StatelessWidget {
       width: width,
       child: Padding(
         padding: EdgeInsets.only(
-            bottom: 10, left: isLand ? 0 : 10, right: isLand ? 5 : 10),
+            bottom: 10, left: isLand ? 0 : 10, right: isLand ? 0 : 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: AppStrings.guitarStrings
