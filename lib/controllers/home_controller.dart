@@ -65,10 +65,10 @@ class HomeController extends GetxController {
     score = 0;
     timer = null;
     secondsRemaining.value = 0;
-    
+
     await initLocalDbData();
-    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' 
-        ? 'countdown' 
+    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+        ? 'countdown'
         : 'stopwatch';
     resetTimer();
     await getUserName();
@@ -198,13 +198,13 @@ class HomeController extends GetxController {
     previousHighlightFret = null;
     previousHighlightNode = null;
     score = 0;
-    
+
     if (resetAll) {
-      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' 
-          ? 'countdown' 
+      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+          ? 'countdown'
           : 'stopwatch';
     }
-    
+
     resetTimer();
     update();
   }
@@ -421,24 +421,26 @@ class HomeController extends GetxController {
     int minutes = minutesValue.value;
     saveStrings();
     if (defaultTimerSelectedValue.value == "Countdown") {
-      SharedPrefHelper.instance.storeDefaultTimerType(defaultTimerSelectedValue.value);
+      SharedPrefHelper.instance
+          .storeDefaultTimerType(defaultTimerSelectedValue.value);
       SharedPrefHelper.instance.storeTimerInterval(seconds);
       SharedPrefHelper.instance.storeDefaultTimerMinutes(minutes);
       popup(context);
     } else {
-      SharedPrefHelper.instance.storeDefaultTimerType(defaultTimerSelectedValue.value);
+      SharedPrefHelper.instance
+          .storeDefaultTimerType(defaultTimerSelectedValue.value);
       popup(context);
     }
   }
 
   Future<void> saveStrings() async {
-    await SharedPrefHelper.instance.saveStrings(
-        string1, string2, string3, string4, string5, string6);
+    await SharedPrefHelper.instance
+        .saveStrings(string1, string2, string3, string4, string5, string6);
   }
 
   void popup(BuildContext context) {
-    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown' 
-        ? 'countdown' 
+    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+        ? 'countdown'
         : 'stopwatch';
     resetTimer();
     Get.back();
@@ -458,11 +460,11 @@ class HomeController extends GetxController {
   }
 
   Future<void> initLocalDbData() async {
-    defaultTimerSelectedValue.value = 
+    defaultTimerSelectedValue.value =
         await SharedPrefHelper.instance.getDefaultTimerType() ?? 'Stopwatch';
-    minutesValue.value = 
+    minutesValue.value =
         await SharedPrefHelper.instance.getDefaultTimerMinutes();
-    timerIntervalValue.value = 
+    timerIntervalValue.value =
         await SharedPrefHelper.instance.getTimerInterval();
     string1 = await SharedPrefHelper.instance.getString1();
     string2 = await SharedPrefHelper.instance.getString2();

@@ -86,6 +86,7 @@ class PortraitBoard extends StatelessWidget {
           Obx(() => JHGAppBar(
                 isBottom: true,
                 isResponsive: true,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 leadingWidget: controller.isStart
                     ? JHGResetBtn(
                         onTap: () {
@@ -108,28 +109,38 @@ class PortraitBoard extends StatelessWidget {
                             controller.cycleGameMode();
                           }
                         }),
-                centerWidget: controller.isStart
-                    ? Container(
-                        height: height * 0.060,
-                        width: width * 0.45,
-                        alignment: Alignment.topCenter,
-                        child: Text(
-                          "    ${controller.highlightNode ?? ""}",
-                          textAlign: TextAlign.center,
-                          style: JHGTextStyles.mdlabelStyle.copyWith(
-                            color: JHGColors.primary,
+                centerWidget: SizedBox(
+                  height: 65,
+                  child: controller.isStart
+                      ? Column(
+                          children: [
+                            Container(
+                              alignment: Alignment.topCenter,
+                              child: Text(
+                                "${controller.highlightNode ?? ""}",
+                                textAlign: TextAlign.center,
+                                style: JHGTextStyles.mdlabelStyle.copyWith(
+                                  color: JHGColors.primary,
+                                ),
+                              ),
+                            ),
+                            buildScoreCount(),
+                          ],
+                        )
+                      : Container(
+                          height: 58,
+                          alignment: Alignment.center,
+                          child: JHGPrimaryBtn(
+                            label: AppStrings.start,
+                            height: 50,
+                            width: width * 0.45,
+                            onPressed: () {
+                              controller.startTimer();
+                              controller.startTheGame();
+                            },
                           ),
                         ),
-                      )
-                    : JHGPrimaryBtn(
-                        label: AppStrings.start,
-                        height: 50,
-                        width: width * 0.45,
-                        onPressed: () {
-                          controller.startTimer();
-                          controller.startTheGame();
-                        },
-                      ),
+                ),
                 trailingWidget: JHGIconButton(
                     iconData: LucideIcons.ratio300,
                     enabled: true,
@@ -138,35 +149,29 @@ class PortraitBoard extends StatelessWidget {
                       controller.toggleOrientation();
                     }),
               )),
-
-          //SCORE
-          if (controller.isStart)
-            Padding(
-              // Add padding to separate from bottom bar
-              padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      AppStrings.scoreText,
-                      style: JHGTextStyles.labelStyle.copyWith(
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      controller.score.toString(),
-                      style: JHGTextStyles.subLabelStyle.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
+    );
+  }
+
+  Widget buildScoreCount() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          AppStrings.scoreText,
+          style: JHGTextStyles.labelStyle.copyWith(
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          controller.score.toString(),
+          style: JHGTextStyles.subLabelStyle.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
