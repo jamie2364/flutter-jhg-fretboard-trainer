@@ -50,6 +50,10 @@ class LandscapeBoard extends StatelessWidget {
                   } else {
                     icon = LucideIcons.clock300; // Next is Stopwatch
                   }
+                  if (controller.isStart)
+                    return JHGResetBtn(
+                        onTap: () => controller.resetGame(false),
+                        enabled: true);
                   return RotatedBox(
                     quarterTurns: 1,
                     child: JHGIconButton(
@@ -66,16 +70,6 @@ class LandscapeBoard extends StatelessWidget {
                     ),
                   );
                 }),
-
-                // Reset button or placeholder
-                controller.isStart
-                    ? JHGResetBtn(
-                        onTap: () {
-                          controller.resetGame(false);
-                        },
-                        enabled: true,
-                      )
-                    : const SizedBox(width: placeholderWidth),
 
                 // Leaderboard icon
                 RotatedBox(
