@@ -107,8 +107,3 @@ flutter:
     - web/assets/audio/str_4/
     - web/assets/audio/str_5/
     - web/assets/audio/str_6/
-dependency_overrides:
-  flutter_jhg_elements:
-    git:
-      url: https://github.com/jamie2364/flutter_jhg_elements
-      ref: lucid-icon

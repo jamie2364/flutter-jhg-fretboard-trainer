@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
@@ -21,36 +20,12 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  HomeController homeController = Get.find<HomeController>();
-  String deviceName = 'Unknown';
-  DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
-
-  Future<void> getDeviceInfo() async {
-    if (kIsWeb) return;
-    if (Platform.isAndroid) {
-      final device = await deviceInfoPlugin.androidInfo;
-      deviceName = "${device.manufacturer} ${device.model}";
-    } else if (Platform.isIOS) {
-      final device = await deviceInfoPlugin.iosInfo;
-      deviceName = device.name;
-    } else if (Platform.isWindows) {
-      print("window");
-    } else if (Platform.isMacOS) {
-      print("mac");
-    }
-  }
+  late HomeController homeController;
 
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) {
-      _initPackageInfo();
-    }
-    homeController.onDefaultTimerInitialized();
-  }
-
-  Future<void> _initPackageInfo() async {
-    await getDeviceInfo();
+    homeController = Get.find<HomeController>()..onDefaultTimerInitialized();
   }
 
   bool toggle = true;
@@ -70,109 +45,97 @@ class _SettingScreenState extends State<SettingScreen> {
     return GetBuilder<HomeController>(
       init: HomeController(),
       builder: (controller) {
-        return controller.isPortrait || kIsWeb
-            ? JHGSettings(
-                androidAppIdentifier: AppStrings.androidBuildId,
-                iosAppIdentifier: AppStrings.iOSBuildId,
-                appStoreId: AppStrings.appStoreId,
-                appName: AppStrings.appName,
-                viewMoreAppsUrl: kIsWeb
-                    ? ""
-                    : Platform.isAndroid
-                        ? kJhgPlayStoreUrl
-                        : null,
-                bodyAppBar: JHGAppBar(
-                  isResponsive: true,
-                  title: Text(
-                    'Settings',
-                    style: JHGTextStyles.smlabelStyle,
+        return
+            //  controller.isPortrait || kIsWeb
+            //     ?
+            JHGSettings(
+          androidAppIdentifier: AppStrings.androidBuildId,
+          iosAppIdentifier: AppStrings.iOSBuildId,
+          appStoreId: AppStrings.appStoreId,
+          appName: AppStrings.appName,
+          viewMoreAppsUrl: kIsWeb
+              ? ""
+              : Platform.isAndroid
+                  ? kJhgPlayStoreUrl
+                  : null,
+          bodyAppBar: JHGAppBar(
+            isResponsive: true,
+            title: Text(
+              'Settings',
+              style: JHGTextStyles.smlabelStyle,
+            ),
+            rowHeight: JHGAppBar.height,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            trailingWidget: kIsWeb
+                ? null
+                : JHGReportAnIssueBtn(
+                    onPressed: () => Nav.to(BugReportScreen()),
                   ),
-                  rowHeight: JHGAppBar.height,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  trailingWidget: kIsWeb
-                      ? null
-                      : JHGReportAnIssueBtn(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BugReportScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                trailing: isFreePlan
-                    ? Padding(
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        child: JHGBannerAd(adId: bannerAdId)
-                        // JHGNativeBanner(
-                        //   adID: nativeBannerAdId,
-                        // ),
-                        )
-                    : const SizedBox(),
-                body: settingPortrait(
-                    controller: controller, height: height, width: width),
-                onTapSave: () => controller.onClickSave(context),
-                onTapLogout: () async {
-                  await LocalDB.clearLocalDB();
-                  // ignore: use_build_context_synchronously
-                  Navigator.pushAndRemoveUntil(context,
-                      MaterialPageRoute(builder: (context) {
-                    return WelcomeScreen();
-                  }), (route) => false);
-                },
-              )
-            : JHGSettingsLandscape(
-                androidAppIdentifier: AppStrings.androidBuildId,
-                iosAppIdentifier: AppStrings.iOSBuildId,
-                appStoreId: AppStrings.appStoreId,
-                appName: AppStrings.appName,
-                isExpanded: expansionStream.stream,
-                bodyAppBar: JHGAppBar(
-                  isResponsive: true,
-                  title: Text(
-                    'Settings',
-                    style: JHGTextStyles.smlabelStyle,
-                  ),
-                  trailingWidget: kIsWeb
-                      ? null
-                      : JHGReportAnIssueBtn(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BugReportScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                trailing: isFreePlan
-                    ? Padding(
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        child: JHGBannerAd(adId: bannerAdId))
-                    : const SizedBox(),
-                body: settingLandscape(
-                    controller: controller, height: height, width: width),
-                onTapSave: () => controller.onClickSave(context),
-                onTapLogout: () async {
-                  await LocalDB.clearLocalDB();
-                  // ignore: use_build_context_synchronously
-                  Navigator.pushAndRemoveUntil(context,
-                      MaterialPageRoute(builder: (context) {
-                    return WelcomeScreen();
-                  }), (route) => false);
-                },
-              );
+          ),
+          trailing: isFreePlan
+              ? Padding(
+                  padding: EdgeInsets.symmetric(vertical: 15),
+                  child: JHGBannerAd(adId: bannerAdId)
+                  // JHGNativeBanner(
+                  //   adID: nativeBannerAdId,
+                  // ),
+                  )
+              : const SizedBox(),
+          body: settingPortrait(
+              controller: controller, height: height, width: width),
+          onTapSave: () => controller.onClickSave(context),
+          onTapLogout: () async {
+            await LocalDB.clearLocalDB();
+            Nav.offAll(WelcomeScreen());
+          },
+        );
+        // : JHGSettingsLandscape(
+        //     androidAppIdentifier: AppStrings.androidBuildId,
+        //     iosAppIdentifier: AppStrings.iOSBuildId,
+        //     appStoreId: AppStrings.appStoreId,
+        //     appName: AppStrings.appName,
+        //     isExpanded: expansionStream.stream,
+        //     bodyAppBar: JHGAppBar(
+        //       isResponsive: true,
+        //       title: Text(
+        //         'Settings',
+        //         style: JHGTextStyles.smlabelStyle,
+        //       ),
+        //       trailingWidget: kIsWeb
+        //           ? null
+        //           : JHGReportAnIssueBtn(
+        //               onPressed: () {
+        //                 Navigator.push(
+        //                   context,
+        //                   MaterialPageRoute(
+        //                     builder: (context) => BugReportScreen(),
+        //                   ),
+        //                 );
+        //               },
+        //             ),
+        //     ),
+        //     trailing: isFreePlan
+        //         ? Padding(
+        //             padding: EdgeInsets.symmetric(vertical: 15),
+        //             child: JHGBannerAd(adId: bannerAdId))
+        //         : const SizedBox(),
+        //     body: settingLandscape(
+        //         controller: controller, height: height, width: width),
+        //     onTapSave: () => controller.onClickSave(context),
+        //     onTapLogout: () async {
+        //       await LocalDB.clearLocalDB();
+        //       Nav.offAll(WelcomeScreen());
+        //     },
+        //   );
       },
     );
   }
 
-  Widget settingPortrait(
-      {required HomeController controller,
-      required double height,
-      required double width}) {
+  Widget settingPortrait({
+    required HomeController controller,
+    required double height,
+    required double width,
+  }) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,25 +145,7 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Widget settingLandscape(
-      {required HomeController controller,
-      required double height,
-      required double width}) {
-    return Container(
-        width: height,
-        color: JHGColors.secondryBlack,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            buildSettingsUi(controller),
-            SimpleDropdownButton(),
-            SizedBox(
-              height: width * 0.04,
-            ),
-          ],
-        ));
-  }
+
 
   Widget buildSettingsUi(HomeController controller) {
     return StreamBuilder<bool>(
@@ -210,9 +155,7 @@ class _SettingScreenState extends State<SettingScreen> {
         bool val = snapshot.data ?? false;
         return Column(
           children: [
-            SizedBox(
-              height: 20,
-            ),
+            SizedBox(height: 20),
             JHGHeadWithActions(
               AppStrings.strings,
               margin: EdgeInsets.only(top: 6),
@@ -239,96 +182,53 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Column(
                   children: [
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string6,
-                        value: controller.string6,
-                        onChanged: (val) {
-                          controller.setString6(0);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string6,
+                      value: controller.string6,
+                      onChanged: (val) => controller.setString6(0),
+                    ),
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string5,
-                        value: controller.string5,
-                        onChanged: (val) {
-                          controller.setString5(1);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string5,
+                      value: controller.string5,
+                      onChanged: (val) => controller.setString5(1),
+                    ),
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string4,
-                        value: controller.string4,
-                        onChanged: (val) {
-                          controller.setString4(2);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string4,
+                      value: controller.string4,
+                      onChanged: (val) => controller.setString4(2),
+                    ),
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string3,
-                        value: controller.string3,
-                        onChanged: (val) {
-                          controller.setString3(3);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string3,
+                      value: controller.string3,
+                      onChanged: (val) => controller.setString3(3),
+                    ),
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string2,
-                        value: controller.string2,
-                        onChanged: (val) {
-                          controller.setString2(4);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string2,
+                      value: controller.string2,
+                      onChanged: (val) => controller.setString2(4),
+                    ),
                     JHGSwitchInfoTile(
-                        paddingTop: 0,
-                        title: AppStrings.string1,
-                        value: controller.string1,
-                        onChanged: (val) {
-                          controller.setString1(5);
-                        }),
+                      paddingTop: 0,
+                      title: AppStrings.string1,
+                      value: controller.string1,
+                      onChanged: (val) => controller.setString1(5),
+                    ),
                   ],
                 ),
               ),
             ),
             SizedBox(height: 20),
             SizedBox(
-                width: MediaQuery.sizeOf(context).height * 0.85,
-                child: SettingsDefaultTimer(controller: controller)),
+              width: MediaQuery.sizeOf(context).height * 0.85,
+              child: SettingsDefaultTimer(controller: controller),
+            ),
           ],
         );
       },
-    );
-  }
-}
-
-class SimpleDropdownButton extends StatefulWidget {
-  @override
-  _SimpleDropdownButtonState createState() => _SimpleDropdownButtonState();
-}
-
-class _SimpleDropdownButtonState extends State<SimpleDropdownButton> {
-  String? _selectedItem; // Stores the currently selected item
-
-  List<String> _dropdownItems = [
-    'Option 1',
-    'Option 2',
-    'Option 3',
-    'Option 4'
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: DropdownButton<String>(
-        value: _selectedItem, // The currently selected value
-        hint: Text(
-            'Select an option'), // Placeholder text when no item is selected
-        items: _dropdownItems.map((String item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(item),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          setState(() {
-            _selectedItem = newValue; // Update the selected item
-          });
-        },
-      ),
     );
   }
 }

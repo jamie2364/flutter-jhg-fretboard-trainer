@@ -1,40 +1,39 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/controllers/leaderboard_controller.dart';
 import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/leader_board/widgets/leaderboard_widget.dart';
 import 'package:get/get.dart';
 
-// ignore: must_be_immutable
 class LeadershipScreen extends StatelessWidget {
-  String? intervalType;
+  final String? intervalType;
   LeadershipScreen({this.intervalType, super.key});
 
-  LeaderBoardController controller = Get.find<LeaderBoardController>();
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<LeaderBoardController>();
     return Scaffold(
       backgroundColor: JHGColors.secondryBlack,
       body: GetBuilder<LeaderBoardController>(builder: (con) {
         return LayoutBuilder(builder: (context, constraints) {
-          if (constraints.maxWidth >= 450) {
+          if (constraints.maxWidth >= 450 && kIsWeb) {
             return LeaderWebView(
               controller: controller,
             );
           } else {
-            if (Get.find<HomeController>().isPortrait) {
-              return LeaderPortraitView(
-                controller: controller,
-              );
-            } else {
-              return LeaderLandscapeView(
-                controller: controller,
-              );
-            }
+            // if (Get.find<HomeController>().isPortrait) {
+            return LeaderPortraitView(
+              controller: controller,
+            );
+            // } else {
+            //   return LeaderLandscapeView(
+            //     controller: controller,
+            //   );
+            // }
           }
         });
       }),

@@ -115,10 +115,10 @@ class HomeController extends GetxController {
   double scale = 1;
   bool isPortrait = true;
 
-  void toggleOrientation() {
+  void toggleOrientation([bool? value]) {
     scale = 0.5;
     Future.delayed(const Duration(milliseconds: 100), () {
-      isPortrait = !isPortrait;
+      isPortrait = value ?? !isPortrait;
       update();
     });
     Future.delayed(const Duration(milliseconds: 300), () {
