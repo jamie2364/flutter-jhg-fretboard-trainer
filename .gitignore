@@ -45,6 +45,7 @@ app.*.map.json
 /android/app/.cxx
 /android/app/profile
 /android/app/release
-
+/android/fastlane/*
+/ios/fastlane/*
 # FVM Version Cache
 .fvm/
