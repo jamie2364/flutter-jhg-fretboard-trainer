@@ -157,7 +157,7 @@ class _SettingScreenState extends State<SettingScreen> {
           children: [
             SizedBox(height: 20),
             JHGHeadWithActions(
-              AppStrings.strings,
+              'Manage ${AppStrings.strings}',
               margin: EdgeInsets.only(top: 6),
               subLabel: AppStrings.stringDescriptionLandscape,
               titleStyle: JHGTextStyles.labelStyle,

@@ -37,6 +37,7 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+     Nav.key = navKey;
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // Transparent status bar
       statusBarBrightness: Brightness.dark, // Dark text for status bar
