@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
-import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widgets/count_timer_widget.dart';
 
@@ -18,160 +18,326 @@ class PortraitBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
-    return AnimatedScale(
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.linearToEaseOut,
-      scale: 1,
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return SafeArea(
+      bottom: false,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // TROPHY AND SETTING ICON
-          JHGAppBar(
-            isResponsive: true,
-            leadingWidget: JHGIconButton(
-              childPadding: EdgeInsets.all(3),
-              enabled: true,
-              iconData: LucideIcons.trophy300,
-              onTap: () {
-                Get.to(() => LeadershipScreen(),
-                    transition: Transition.leftToRight);
-                if (isFreePlan) {
-                  controller.interstitialAds?.showInterstitial();
-                }
-              },
-            ),
-            trailingWidget: JHGSettingsOptBtn(
-              // ** Updated condition **
-              btnEnabled: controller.currentGameMode.value != 'leaderboard',
-              onTap: () {
-                if (controller.currentGameMode.value != 'leaderboard') {
-                  controller.resetGame(false);
-                  Get.to(() => SettingScreen(),
-                      transition: Transition.rightToLeft);
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // ─── TOP NAV ──────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Trophy / Leaderboard
+              GestureDetector(
+                onTap: () {
+                  Get.to(() => LeadershipScreen(),
+                      transition: Transition.leftToRight);
                   if (isFreePlan) {
                     controller.interstitialAds?.showInterstitial();
                   }
-                }
-              },
-            ),
-          ),
-          SizedBox(
-            height: height * 0.01,
-          ),
-
-          // BOARD WITH NUMBER
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 45.8),
-              child: IgnorePointer(
-                ignoring: !controller.isStart,
-                child: const GuitarBoard(
-                  isPortrait: true,
+                },
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2C2C),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.trophy300,
+                      color: Colors.white70, size: 20),
                 ),
               ),
+
+              // Mode indicator pill — tap to cycle when not playing
+              Obx(() => GestureDetector(
+                    onTap: controller.isStart
+                        ? null
+                        : () => controller.cycleGameMode(),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2C),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: controller.isStart
+                              ? Colors.transparent
+                              : JHGColors.primary.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _modeIcon(controller.currentGameMode.value),
+                            color: controller.isStart
+                                ? Colors.white38
+                                : JHGColors.primary,
+                            size: 13,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _modeLabel(controller.currentGameMode.value),
+                            style: GoogleFonts.inter(
+                              color: controller.isStart
+                                  ? Colors.white38
+                                  : Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+
+              // Settings
+              Obx(() => GestureDetector(
+                    onTap: controller.currentGameMode.value != 'leaderboard'
+                        ? () {
+                            controller.resetGame(false);
+                            Get.to(() => SettingScreen(),
+                                transition: Transition.rightToLeft);
+                            if (isFreePlan) {
+                              controller.interstitialAds?.showInterstitial();
+                            }
+                          }
+                        : null,
+                    child: Container(
+                      height: 44,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2C),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        LucideIcons.settings300,
+                        color: controller.currentGameMode.value != 'leaderboard'
+                            ? Colors.white70
+                            : Colors.white24,
+                        size: 20,
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ),
+
+        // ─── GUITAR BOARD ─────────────────────────────────────────────
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 45.8),
+            child: IgnorePointer(
+              ignoring: !controller.isStart,
+              child: const GuitarBoard(isPortrait: true),
             ),
           ),
-          //SPACER
-          SizedBox(
-            height: height * 0.02,
+        ),
+
+        SizedBox(height: height * 0.01),
+
+        // Timer lives OUTSIDE the panel so it never eats into the fretboard
+        CountTimerWidget(),
+
+        SizedBox(height: height * 0.006),
+
+        // ─── BOTTOM PANEL ─────────────────────────────────────────────
+        Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF2C2C2C),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          // TIMER
-          CountTimerWidget(),
-          SizedBox(
-            height: height * 0.010,
-          ),
-          // ** Updated Bottom AppBar Logic **
-          Obx(() => JHGAppBar(
-                isBottom: true,
-                isResponsive: true,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                leadingWidget: controller.isStart
-                    ? JHGResetBtn(
-                        onTap: () {
-                          controller.resetGame(false); // Only reset state
-                        },
-                        enabled: true,
-                      )
-                    : JHGIconButton(
-                        // Mode Cycle Button
-                        iconData: controller.currentGameMode.value ==
-                                'stopwatch'
-                            ? LucideIcons.timer300 // Next is Countdown
-                            : controller.currentGameMode.value == 'countdown'
-                                ? LucideIcons.clock300 // Next is Leaderboard
-                                : LucideIcons.trophy300, // Next is Stopwatch
-                        enabled:
-                            !controller.isStart, // Cannot change mode mid-game
-                        onTap: () {
-                          if (!controller.isStart) {
-                            controller.cycleGameMode();
-                          }
-                        }),
-                centerWidget: SizedBox(
-                  height: 65,
-                  child: controller.isStart
-                      ? Column(
-                          children: [
-                            Container(
-                              alignment: Alignment.topCenter,
-                              child: Text(
-                                "${controller.highlightNode ?? ""}",
-                                textAlign: TextAlign.center,
-                                style: JHGTextStyles.mdlabelStyle.copyWith(
-                                  color: JHGColors.primary,
-                                ),
-                              ),
-                            ),
-                            buildScoreCount(),
-                          ],
-                        )
-                      : Container(
-                          height: 58,
-                          alignment: Alignment.center,
-                          child: JHGPrimaryBtn(
-                            label: AppStrings.start,
-                            height: 50,
-                            width: width * 0.45,
-                            onPressed: () {
-                              controller.startTimer();
-                              controller.startTheGame();
-                            },
+          padding: EdgeInsets.fromLTRB(20, 14, 20, bottomInset > 0 ? bottomInset : 20),
+          child: Column(
+            children: [
+              // Note target + score — no Rx here, parent GetBuilder rebuilds on isStart change
+              if (controller.isStart)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: JHGColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: JHGColors.primary.withValues(alpha: 0.45),
                           ),
                         ),
+                        child: Text(
+                          '${controller.highlightNode ?? ""}',
+                          style: GoogleFonts.poppins(
+                            color: JHGColors.primary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'SCORE',
+                              style: GoogleFonts.inter(
+                                color: Colors.white38,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              controller.score.toString(),
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                trailingWidget: JHGIconButton(
-                    iconData: LucideIcons.ratio300,
-                    enabled: true,
-                    childPadding: EdgeInsets.all(2),
-                    onTap: () {
-                      controller.toggleOrientation();
-                    }),
-              )),
-        ],
+
+              // Action row — Obx valid: always reads currentGameMode.value first
+              Obx(() {
+                final mode = controller.currentGameMode.value;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Left: Reset (playing) or Mode-cycle icon (idle)
+                      GestureDetector(
+                        onTap: controller.isStart
+                            ? () => controller.resetGame(false)
+                            : () => controller.cycleGameMode(),
+                        child: Container(
+                          height: 52,
+                          width: 52,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                          child: Icon(
+                            controller.isStart
+                                ? Icons.refresh_rounded
+                                : _modeIcon(mode),
+                            color: Colors.white54,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+
+                      // Center: Play / Stop circle
+                      GestureDetector(
+                        onTap: controller.isStart
+                            ? () => controller.resetGame(false)
+                            : () {
+                                controller.startTimer();
+                                controller.startTheGame();
+                              },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 68,
+                          width: 68,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: JHGColors.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: JHGColors.primary.withValues(
+                                  alpha: controller.isStart ? 0.40 : 0.15,
+                                ),
+                                blurRadius: controller.isStart ? 22 : 10,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            controller.isStart
+                                ? Icons.stop_rounded
+                                : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                      ),
+
+                      // Right: Orientation toggle
+                      GestureDetector(
+                        onTap: () => controller.toggleOrientation(),
+                        child: Container(
+                          height: 52,
+                          width: 52,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                          child: const Icon(LucideIcons.ratio300,
+                              color: Colors.white54, size: 22),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ],
       ),
     );
   }
 
-  Widget buildScoreCount() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          AppStrings.scoreText,
-          style: JHGTextStyles.labelStyle.copyWith(
-            fontSize: 16,
-          ),
-        ),
-        Text(
-          controller.score.toString(),
-          style: JHGTextStyles.subLabelStyle.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
+  IconData _modeIcon(String mode) {
+    switch (mode) {
+      case 'stopwatch':
+        return LucideIcons.timer300;
+      case 'countdown':
+        return LucideIcons.clock300;
+      case 'leaderboard':
+        return LucideIcons.trophy300;
+      default:
+        return LucideIcons.timer300;
+    }
+  }
+
+  String _modeLabel(String mode) {
+    switch (mode) {
+      case 'stopwatch':
+        return 'STOPWATCH';
+      case 'countdown':
+        return 'COUNTDOWN';
+      case 'leaderboard':
+        return 'LEADERBOARD';
+      default:
+        return 'STOPWATCH';
+    }
   }
 }

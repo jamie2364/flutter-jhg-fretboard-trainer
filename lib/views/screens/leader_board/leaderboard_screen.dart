@@ -8,6 +8,7 @@ import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/leader_board/widgets/leaderboard_widget.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LeadershipScreen extends StatelessWidget {
   final String? intervalType;
@@ -21,23 +22,12 @@ class LeadershipScreen extends StatelessWidget {
       body: GetBuilder<LeaderBoardController>(builder: (con) {
         return LayoutBuilder(builder: (context, constraints) {
           if (constraints.maxWidth >= 450 && kIsWeb) {
-            return LeaderWebView(
-              controller: controller,
-            );
+            return LeaderWebView(controller: controller);
           } else {
-            // if (Get.find<HomeController>().isPortrait) {
-            return LeaderPortraitView(
-              controller: controller,
-            );
-            // } else {
-            //   return LeaderLandscapeView(
-            //     controller: controller,
-            //   );
-            // }
+            return LeaderPortraitView(controller: controller);
           }
         });
       }),
-      // bottomNavigationBar: leaderBoardButton(),
     );
   }
 }
@@ -45,91 +35,184 @@ class LeadershipScreen extends StatelessWidget {
 class LeaderPortraitView extends StatelessWidget {
   const LeaderPortraitView({super.key, required this.controller});
   final LeaderBoardController controller;
+
   @override
   Widget build(BuildContext context) {
-    return JHGBody(
-      bodyAppBar: JHGAppBar(
-        autoImplyLeading: false,
-        isResponsive: true,
-        centerWidget: SvgPicture.asset(
-          AppAssets.svg_trophyIcon,
-          height: 8.w,
-          width: 8.w,
-        ),
-        trailingWidget: JHGIconButton(
-          size: 24,
-          onTap: () => Get.back(),
-          iconData: LucideIcons.x300,
-        ),
-        bottom: leaderBoardTitleWidget(),
-      ),
-      body: Column(
+    return SafeArea(
+      bottom: false,
+      child: Column(
         children: [
-          controller.isLoading.value
-              ? Padding(
-                  padding: EdgeInsets.only(top: 30.0.h),
-                  child: const Center(
-                      child: CircularProgressIndicator(
-                    color: JHGColors.primary,
-                  )),
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                          top: 20.dp, left: 10.0.dp, right: 10.0.dp),
-                      child: Container(
-                        width: 90.w,
-                        height: 10.h,
-                        padding: EdgeInsets.only(left: 15.dp, right: 15.dp),
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(12),
-                          ),
-                          border: Border.all(
-                            color: JHGColors.charcolGray,
-                          ),
-                          color: JHGColors.charcolGray,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            leaderBoardTextWidget('Current Leader',
-                                controller.leader.value.username ?? ''),
-                            leaderBoardTextWidget('Score',
-                                controller.leader.value.score.toString()),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                          top: 20.dp, left: 10.0.dp, right: 10.0.dp),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 30.dp),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  AppStrings.user,
-                                  style: JHGTextStyles.subLabelStyle,
-                                ),
-                                Text(
-                                  AppStrings.scoreTemp,
-                                  style: JHGTextStyles.subLabelStyle,
-                                )
-                              ],
-                            ),
-                          ),
-                          populateScoreList(controller.scoreList),
-                        ],
-                      ),
-                    )
-                  ],
+          // ─── TOP NAV ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Trophy icon
+                Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: JHGColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: JHGColors.primary.withValues(alpha: 0.35)),
+                  ),
+                  child: const Icon(LucideIcons.trophy300,
+                      color: JHGColors.primary, size: 20),
                 ),
+
+                // Title
+                Text(
+                  'Leaderboard',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                // Close button
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2C2C2C),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(LucideIcons.x300,
+                        color: Colors.white70, size: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── CONTENT ────────────────────────────────────────────────
+          Expanded(
+            child: controller.isLoading.value
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: JHGColors.primary,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Current leader card
+                        _buildLeaderCard(),
+                        const SizedBox(height: 16),
+
+                        // Section header
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'RANKINGS',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              Text(
+                                AppStrings.scoreTemp.toUpperCase(),
+                                style: GoogleFonts.inter(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Score list
+                        populateScoreList(controller.scoreList),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeaderCard() {
+    final username = controller.leader.value.username ?? '—';
+    final score = controller.leader.value.score?.toString() ?? '0';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: JHGColors.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border:
+            Border.all(color: JHGColors.primary.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 44,
+            width: 44,
+            decoration: BoxDecoration(
+              color: JHGColors.primary.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(LucideIcons.trophy300,
+                color: JHGColors.primary, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CURRENT LEADER',
+                  style: GoogleFonts.inter(
+                    color: JHGColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  username,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: JHGColors.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              score,
+              style: GoogleFonts.poppins(
+                color: JHGColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -166,8 +249,6 @@ class LeaderLandscapeView extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     controller.isLoading.value
                         ? Container(
@@ -181,7 +262,9 @@ class LeaderLandscapeView extends StatelessWidget {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(
-                                    top: 20.dp, left: 10.0.dp, right: 10.0.dp),
+                                    top: 20.dp,
+                                    left: 10.0.dp,
+                                    right: 10.0.dp),
                                 child: Container(
                                   width: 80.w,
                                   height: 10.h,
@@ -207,7 +290,9 @@ class LeaderLandscapeView extends StatelessWidget {
                               ),
                               Padding(
                                 padding: EdgeInsets.only(
-                                    top: 20.dp, left: 10.0.dp, right: 10.0.dp),
+                                    top: 20.dp,
+                                    left: 10.0.dp,
+                                    right: 10.0.dp),
                                 child: Container(
                                   width: 80.w,
                                   child: Column(
@@ -256,98 +341,6 @@ class LeaderWebView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
-    return JHGBody(
-      bodyAppBar: Padding(
-        padding: EdgeInsets.only(
-            left: width * 0.020, right: width * 0.020, top: height * 0.030),
-        child: JHGAppBar(
-          autoImplyLeading: false,
-          centerWidget: SvgPicture.asset(
-            AppAssets.svg_trophyIcon,
-          ),
-          trailingWidget: JHGIconButton(
-            size: 24,
-            onTap: () => Get.back(),
-            iconData: LucideIcons.x300,
-          ),
-          bottom: leaderBoardTitleWidget(),
-        ),
-      ),
-      body: Column(
-        children: [
-          controller.isLoading.value
-              ? Padding(
-                  padding: EdgeInsets.only(top: 30.0.h),
-                  child: const Center(
-                      child: CircularProgressIndicator(
-                    color: JHGColors.primary,
-                  )),
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                          top: 20.dp, left: 10.0.dp, right: 10.0.dp),
-                      child: Container(
-                        width: 40.w,
-                        height: 10.h,
-                        padding: EdgeInsets.only(left: 15.dp, right: 15.dp),
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(12),
-                          ),
-                          border: Border.all(
-                            color: JHGColors.charcolGray,
-                          ),
-                          color: JHGColors.charcolGray,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            leaderBoardTextWidget('Current Leader',
-                                controller.leader.value.username ?? ''),
-                            leaderBoardTextWidget('Score',
-                                controller.leader.value.score.toString()),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                          top: 20.dp, left: 10.0.dp, right: 10.0.dp),
-                      child: Container(
-                        width: 40.w,
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 30.dp),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    AppStrings.user,
-                                    style: JHGTextStyles.subLabelStyle,
-                                  ),
-                                  Text(
-                                    AppStrings.scoreTemp,
-                                    style: JHGTextStyles.subLabelStyle,
-                                  )
-                                ],
-                              ),
-                            ),
-                            populateScoreList(controller.scoreList),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-        ],
-      ),
-    );
+    return LeaderPortraitView(controller: controller);
   }
 }
