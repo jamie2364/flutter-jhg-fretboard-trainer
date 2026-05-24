@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/controllers/leaderboard_controller.dart';
@@ -31,6 +32,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     final homeController = Get.find<HomeController>();
+    if (!kIsWeb) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
     Get.find<LeaderBoardController>().getLeaderBoard();
     homeController.initializeData();
     if (kIsWeb) {
@@ -67,6 +74,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       body: GetBuilder<HomeController>(
           init: HomeController(),
           builder: (controller) {
+            final isPortraitViewport = height >= width;
+
             return GestureDetector(
               child: AbsorbPointer(
                 absorbing: kIsWeb ? !controller.isActive : false,
@@ -81,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         width: width,
                         height: height,
                         color: JHGColors.secondryBlack,
-                        child: controller.isPortrait == true
+                        child: isPortraitViewport
                             ? PortraitBoard(controller: controller)
                             : LandscapeBoard(controller: controller),
                       ),

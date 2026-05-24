@@ -34,21 +34,14 @@ class SettingsDefaultTimer extends StatelessWidget {
                   ),
                   Expanded(
                     flex: 2,
-                    // ** Replaced JHGInlineDropDown with JHGDropDown **
-                    child: JHGDropDown<String>(
+                    child: _SettingsTimerDropdown(
                       value: controller.defaultTimerSelectedValue.value,
                       items: controller.defaultTimer,
-                      hint: 'Select Timer', // Added a hint
                       onChanged: (String? value) {
                         if (value != null) {
                           controller.selectedDropDownValue.value = value;
                           controller.defaultTimerSelectedValue.value = value;
-                          // Optional: Reset timer value when mode changes in settings
-                          // if (value == 'Stopwatch') {
-                          //    controller.timerIntervalValue.value = 120; // Default Stopwatch time
-                          // } else {
-                          //    controller.timerIntervalValue.value = 120; // Default Countdown time
-                          // }
+                          controller.saveTimerSettings();
                         }
                       },
                     ),
@@ -73,11 +66,102 @@ class SettingsDefaultTimer extends StatelessWidget {
                       controller.timerIntervalValue.value =
                           1; // Ensure minimum 1 second
                     }
+                    controller.minutesValue.value =
+                        controller.timerIntervalValue.value ~/ 60;
+                    controller.saveTimerSettings();
                   },
                 ),
               ),
             ),
           ],
         ));
+  }
+}
+
+class _SettingsTimerDropdown extends StatelessWidget {
+  const _SettingsTimerDropdown({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return PopupMenuButton<String>(
+          initialValue: value,
+          onSelected: onChanged,
+          position: PopupMenuPosition.under,
+          offset: const Offset(0, 8),
+          color: JHGColors.darkBackground,
+          elevation: 8,
+          constraints: BoxConstraints.tightFor(width: constraints.maxWidth),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: JHGColors.white.withValues(alpha: 0.06),
+            ),
+          ),
+          itemBuilder: (context) {
+            return items.map((item) {
+              return PopupMenuItem<String>(
+                value: item,
+                height: 48,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  color: Colors.transparent,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    item,
+                    style: JHGTextStyles.labelStyle.copyWith(
+                      color: JHGColors.whiteText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: JHGColors.darkBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: JHGColors.white.withValues(alpha: 0.06),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: JHGTextStyles.labelStyle.copyWith(
+                      color: JHGColors.whiteText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  LucideIcons.chevronDown300,
+                  color: JHGColors.whiteGrey,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

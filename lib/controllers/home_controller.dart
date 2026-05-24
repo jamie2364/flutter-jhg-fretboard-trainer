@@ -25,8 +25,9 @@ class HomeController extends GetxController {
 
   void onDefaultTimerInitialized() {
     selectedDropDownValue.value = defaultTimerSelectedValue.value;
-    timerIntervalValue.value = 1; // Fixed: Reset to 1 as in old code
-    minutesValue.value = 2;
+    if (timerIntervalValue.value <= 0) {
+      timerIntervalValue.value = 1;
+    }
   }
 
   var isActive = true;
@@ -112,21 +113,6 @@ class HomeController extends GetxController {
     }
   }
 
-  double scale = 1;
-  bool isPortrait = true;
-
-  void toggleOrientation([bool? value]) {
-    scale = 0.5;
-    Future.delayed(const Duration(milliseconds: 100), () {
-      isPortrait = value ?? !isPortrait;
-      update();
-    });
-    Future.delayed(const Duration(milliseconds: 300), () {
-      scale = 1;
-      update();
-    });
-  }
-
   int score = 0;
 
   void incrementScore() {
@@ -144,6 +130,7 @@ class HomeController extends GetxController {
   }
 
   bool isStart = false;
+  bool isPaused = false;
   int? highlightFret;
   int? highlightString;
   String? highlightNode;
@@ -171,6 +158,7 @@ class HomeController extends GetxController {
 
   void startTheGame() {
     isStart = true;
+    isPaused = false;
     int randomIndex = getRandomIndex();
     highlightFret = randomIndex;
     previousHighlightFret = highlightFret;
@@ -189,6 +177,7 @@ class HomeController extends GetxController {
       timer = null;
     }
     isStart = false;
+    isPaused = false;
     selectedFret = null;
     selectedString = null;
     selectedNote = null;
@@ -211,7 +200,8 @@ class HomeController extends GetxController {
 
   void resetTimer() {
     if (currentGameMode.value == 'countdown') {
-      secondsRemaining.value = 60 * minutesValue.value;
+      secondsRemaining.value =
+          timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
     } else if (currentGameMode.value == 'leaderboard') {
       secondsRemaining.value = 120;
     } else {
@@ -220,7 +210,7 @@ class HomeController extends GetxController {
     update();
   }
 
-  void startTimer() {
+  void startTimer({bool resume = false}) {
     debugLog('debug timer Started - Mode: ${currentGameMode.value}');
     if (currentGameMode.value == 'countdown') {
       startCountDownTimer();
@@ -235,8 +225,26 @@ class HomeController extends GetxController {
       notifyChildrens();
       startLeaderBoardCountDownTimer();
     } else {
-      startCountUpTimer();
+      startCountUpTimer(resume: resume);
     }
+  }
+
+  void pauseGame() {
+    timer?.cancel();
+    timer = null;
+    isStart = false;
+    isPaused = true;
+    update();
+  }
+
+  void resumeGame() {
+    isStart = true;
+    isPaused = false;
+    if (highlightFret == null || highlightNode == null) {
+      highLightTheGame();
+    }
+    startTimer(resume: true);
+    update();
   }
 
   void cycleGameMode() {
@@ -367,7 +375,8 @@ class HomeController extends GetxController {
 
   void startCountDownTimer() {
     if (secondsRemaining.value == 0) {
-      secondsRemaining.value = 60 * minutesValue.value;
+      secondsRemaining.value =
+          timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
     }
     update();
     if (timer != null) {
@@ -384,53 +393,40 @@ class HomeController extends GetxController {
     });
   }
 
-  void startCountUpTimer() async {
-    final minutes = await SharedPrefHelper.instance.getDefaultTimerMinutes();
-    final interval = await SharedPrefHelper.instance.getTimerInterval();
-    secondsRemaining.value = minutes * 60;
-    int totalSeconds = minutes * 60;
+  void startCountUpTimer({bool resume = false}) async {
+    if (!resume) {
+      secondsRemaining.value = 0;
+    }
     update();
     if (timer != null) {
       timer!.cancel();
     }
-    int elapsed = 0;
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      elapsed++;
-      totalSeconds--;
-
-      if (elapsed % interval == 0) {
-        secondsRemaining.value -= interval;
-        if (secondsRemaining.value <= 0) {
-          secondsRemaining.value = 0;
-          update();
-          timer.cancel();
-          resetGame(false);
-          return;
-        }
-        update();
-      } else if (totalSeconds <= 0) {
-        timer.cancel();
-        resetGame(false);
-        update();
-      }
+      secondsRemaining.value++;
+      update();
     });
   }
 
   void onClickSave(BuildContext context) async {
+    await saveTimerSettings();
+    Get.back();
+  }
+
+  Future<void> saveTimerSettings() async {
     int seconds = timerIntervalValue.value;
-    int minutes = minutesValue.value;
-    saveStrings();
+    int minutes = seconds ~/ 60;
+    minutesValue.value = minutes;
+    await saveStrings();
+    await SharedPrefHelper.instance
+        .storeDefaultTimerType(defaultTimerSelectedValue.value);
     if (defaultTimerSelectedValue.value == "Countdown") {
-      SharedPrefHelper.instance
-          .storeDefaultTimerType(defaultTimerSelectedValue.value);
-      SharedPrefHelper.instance.storeTimerInterval(seconds);
-      SharedPrefHelper.instance.storeDefaultTimerMinutes(minutes);
-      popup(context);
-    } else {
-      SharedPrefHelper.instance
-          .storeDefaultTimerType(defaultTimerSelectedValue.value);
-      popup(context);
+      await SharedPrefHelper.instance.storeTimerInterval(seconds);
+      await SharedPrefHelper.instance.storeDefaultTimerMinutes(minutes);
     }
+    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+        ? 'countdown'
+        : 'stopwatch';
+    resetTimer();
   }
 
   Future<void> saveStrings() async {

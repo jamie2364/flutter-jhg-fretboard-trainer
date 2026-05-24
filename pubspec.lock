@@ -314,8 +314,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: main
-      resolved-ref: efeddc54022e8d5f99fc6d4745c8ba63c92616eb
+      ref: NewUIElements
+      resolved-ref: bc8161ed072803145bff1dc81be712b04a481430
       url: "https://github.com/jamie2364/flutter_jhg_elements"
     source: git
     version: "0.0.1"
@@ -581,10 +581,10 @@ packages:
     dependency: transitive
     description:
       name: lucide_icons_flutter
-      sha256: f9fc191c852901b7f8d0d5739166327bd71a0fc32ae32c1ba07501d16b966a1a
+      sha256: "2d30a7bdd308b853f04e4eefc755e00df34d645c6c08b5591271cf38127e75f1"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.10"
+    version: "3.1.13"
   matcher:
     dependency: transitive
     description:

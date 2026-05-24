@@ -24,40 +24,44 @@ class LabeledDurationPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use Obx to rebuild when timerIntervalValue changes
-    return Obx(() => JHGHeadAndSubHWidget(
-          label,
-          subLabel: subLabel,
-          actions: [
-            InkWell(
-              onTap: () {
-                // Read the current value directly from the controller
-                int currentTotalSeconds = controller.timerIntervalValue.value;
-                showIntervalTimeDialog(
-                  context,
-                  initialMinutes: currentTotalSeconds ~/ 60,
-                  initialSeconds: currentTotalSeconds % 60,
-                  onSelected: onSelected,
-                );
-              },
-              child: Container(
-                width: 180, // Consider making this responsive if needed
-                padding: EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: JHGColors.boxBorder)),
-                child: Text(
-                  // Use the value from the controller for display
-                  formatTime(controller.timerIntervalValue.value),
-                  textAlign: TextAlign.center,
-                  style: JHGTextStyles.lrlabelStyle.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return Obx(
+      () => JHGHeadAndSubHWidget(
+        label,
+        subLabel: subLabel,
+        actions: [
+          InkWell(
+            onTap: () {
+              // Read the current value directly from the controller
+              int currentTotalSeconds = controller.timerIntervalValue.value;
+              showIntervalTimeDialog(
+                context,
+                initialMinutes: currentTotalSeconds ~/ 60,
+                initialSeconds: currentTotalSeconds % 60,
+                onSelected: onSelected,
+              );
+            },
+            child: Container(
+              width: 180, // Consider making this responsive if needed
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: JHGColors.darkBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: JHGColors.boxBorder),
+              ),
+              child: Text(
+                // Use the value from the controller for display
+                formatTime(controller.timerIntervalValue.value),
+                textAlign: TextAlign.center,
+                style: JHGTextStyles.lrlabelStyle.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
   }
 
   String formatTime(int seconds) {
@@ -79,86 +83,115 @@ class LabeledDurationPicker extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: JHGColors.charcolGray,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: kBodyHrPadding),
-            height: 350, // Adjusted height slightly
+            height: 326,
             child: Column(
               children: [
                 const Padding(
-                  padding: EdgeInsets.all(12.0),
+                  padding: EdgeInsets.only(top: 20, bottom: 14),
                   child: Text(
-                    "Select Time", // Changed Title
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    "Select Time",
+                    style: JHGTextStyles.dialogTitleStyle,
                   ),
                 ),
-                Expanded(
+                Container(
+                  height: 178,
+                  decoration: BoxDecoration(
+                    color: JHGColors.darkBackground,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: Row(
                     children: [
                       Expanded(
                         child: CupertinoPicker(
                           scrollController: FixedExtentScrollController(
-                              initialItem: initialMinutes),
-                          itemExtent: 40,
-                          magnification: 1.2,
+                            initialItem: initialMinutes,
+                          ),
+                          itemExtent: 44,
+                          magnification: 1.15,
+                          selectionOverlay: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: JHGColors.greyPrimary.withValues(
+                                alpha: 0.42,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                           onSelectedItemChanged: (index) {
                             selectedMinute = index;
                           },
                           children: List.generate(
-                            60, // Limit minutes to 59
-                            (i) => Center(child: Text("$i min")),
+                            60,
+                            (i) => Center(
+                              child: Text(
+                                "$i min",
+                                style: JHGTextStyles.lrlabelStyle.copyWith(
+                                  color: JHGColors.whiteText,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       Expanded(
                         child: CupertinoPicker(
                           scrollController: FixedExtentScrollController(
-                              initialItem: initialSeconds),
-                          itemExtent: 40,
-                          magnification: 1.2,
+                            initialItem: initialSeconds,
+                          ),
+                          itemExtent: 44,
+                          magnification: 1.15,
+                          selectionOverlay: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: JHGColors.greyPrimary.withValues(
+                                alpha: 0.42,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                           onSelectedItemChanged: (index) {
                             selectedSecond = index;
                           },
                           children: List.generate(
-                            60, // Limit seconds to 59
-                            (i) => Center(child: Text("$i sec")),
+                            60,
+                            (i) => Center(
+                              child: Text(
+                                "$i sec",
+                                style: JHGTextStyles.lrlabelStyle.copyWith(
+                                  color: JHGColors.whiteText,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: JHGOutlinedBtn(
-                        height: 50,
-                        label: 'Cancel',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: JHGPrimaryBtn(
-                        height: 50,
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          // Ensure at least 1 second is selected
-                          if (selectedMinute == 0 && selectedSecond == 0) {
-                            onSelected(
-                                0, 1); // Default to 1 second if 0:00 selected
-                          } else {
-                            onSelected(selectedMinute, selectedSecond);
-                          }
-                        },
-                        label: "OK",
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 16),
+                JHGPrimaryBtn(
+                  height: 48,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    if (selectedMinute == 0 && selectedSecond == 0) {
+                      onSelected(0, 1);
+                    } else {
+                      onSelected(selectedMinute, selectedSecond);
+                    }
+                  },
+                  label: "Done",
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
               ],
             ),
           ),

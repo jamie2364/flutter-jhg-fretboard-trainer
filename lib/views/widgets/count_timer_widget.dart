@@ -1,12 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart'; // ** Import HomeController **
 import 'package:get/get.dart';
 
 class CountTimerWidget extends StatelessWidget {
-  const CountTimerWidget({
-    super.key,
-  });
+  const CountTimerWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +15,12 @@ class CountTimerWidget extends StatelessWidget {
     return Obx(
       () => controller.currentGameMode.value ==
               'countdown' // ** Check currentGameMode **
-          ? JHGTimerWidget(
-              isEnabled: !controller.isStart, // ** Use HomeController state **
-              initialValue: controller
-                  .secondsRemaining.value, // ** Use HomeController state **
+          ? _CountdownTimerAdjuster(
+              isEnabled: !controller.isStart && !controller.isPaused,
+              value: controller.secondsRemaining.value,
               onChanged: (value) {
-                controller.secondsRemaining.value =
-                    value; // ** Use HomeController state **
+                controller.secondsRemaining.value = value;
+                controller.timerIntervalValue.value = value;
               },
             )
           : Text(
@@ -29,6 +28,136 @@ class CountTimerWidget extends StatelessWidget {
               controller.formatTime(controller.secondsRemaining.value),
               style: JHGTextStyles.bigNumberStyle,
             ),
+    );
+  }
+}
+
+class _CountdownTimerAdjuster extends StatefulWidget {
+  const _CountdownTimerAdjuster({
+    required this.value,
+    required this.onChanged,
+    required this.isEnabled,
+  });
+
+  final int value;
+  final ValueChanged<int> onChanged;
+  final bool isEnabled;
+
+  @override
+  State<_CountdownTimerAdjuster> createState() =>
+      _CountdownTimerAdjusterState();
+}
+
+class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
+  Timer? _repeatTimer;
+
+  @override
+  void dispose() {
+    _repeatTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _TimerAdjustButton(
+          icon: LucideIcons.minus300,
+          enabled: widget.isEnabled,
+          onTap: _decrement,
+          onLongPressStart: () => _startRepeating(_decrement),
+          onLongPressEnd: _stopRepeating,
+        ),
+        SizedBox(
+          width: 144,
+          child: Text(
+            _formatSecondsToMMSS(widget.value),
+            textAlign: TextAlign.center,
+            style: JHGTextStyles.bigNumberStyle,
+          ),
+        ),
+        _TimerAdjustButton(
+          icon: LucideIcons.plus300,
+          enabled: widget.isEnabled,
+          onTap: _increment,
+          onLongPressStart: () => _startRepeating(_increment),
+          onLongPressEnd: _stopRepeating,
+        ),
+      ],
+    );
+  }
+
+  void _startRepeating(VoidCallback callback) {
+    if (!widget.isEnabled) return;
+    _repeatTimer?.cancel();
+    _repeatTimer = Timer.periodic(
+      const Duration(milliseconds: 120),
+      (_) => callback(),
+    );
+  }
+
+  void _stopRepeating() {
+    _repeatTimer?.cancel();
+    _repeatTimer = null;
+  }
+
+  void _increment() {
+    if (!widget.isEnabled) return;
+    widget.onChanged(widget.value + 10);
+  }
+
+  void _decrement() {
+    if (!widget.isEnabled || widget.value <= 0) return;
+    final nextValue = widget.value - 10;
+    widget.onChanged(nextValue < 0 ? 0 : nextValue);
+  }
+
+  String _formatSecondsToMMSS(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+}
+
+class _TimerAdjustButton extends StatelessWidget {
+  const _TimerAdjustButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+    required this.onLongPressStart,
+    required this.onLongPressEnd,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+  final VoidCallback onLongPressStart;
+  final VoidCallback onLongPressEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        enabled ? JHGColors.primary : JHGColors.white.withValues(alpha: 0.2);
+
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      onLongPressStart: (_) => onLongPressStart(),
+      onLongPressEnd: (_) => onLongPressEnd(),
+      child: Container(
+        height: 36,
+        width: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: enabled
+              ? JHGColors.primary.withValues(alpha: 0.14)
+              : Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 1),
+        ),
+        child: Icon(icon, color: color, size: 22),
+      ),
     );
   }
 }

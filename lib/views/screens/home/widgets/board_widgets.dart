@@ -7,8 +7,8 @@ Widget buildStringCharWeb(String text1, int i, HomeController controller) {
       Padding(
         padding: const EdgeInsets.only(left: 0.0, right: 0),
         child: SizedBox(
-          height: controller.isPortrait == true ? 42 : 20,
-          width: controller.isPortrait == true ? 42 : 20,
+          height: 32,
+          width: 32,
           child: Center(
             child: Text(
               text1,

@@ -48,10 +48,9 @@ dependencies:
       url: https://github.com/jamie2364/flutter-jhg-reg-page
       ref: master
   flutter_jhg_elements:
-    # path: ../flutter_jhg_elements
     git:
       url: https://github.com/jamie2364/flutter_jhg_elements
-      ref: main
+      ref: NewUIElements
 
   vs_scrollbar: ^1.0.0
 dev_dependencies:
@@ -107,3 +106,9 @@ flutter:
     - web/assets/audio/str_4/
     - web/assets/audio/str_5/
     - web/assets/audio/str_6/
+
+dependency_overrides:
+  flutter_jhg_elements:
+    git:
+      url: https://github.com/jamie2364/flutter_jhg_elements
+      ref: NewUIElements

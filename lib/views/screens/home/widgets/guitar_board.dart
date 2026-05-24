@@ -28,37 +28,39 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
 
   @override
   Widget build(BuildContext context) {
-    bool isTablet = MediaQuery.of(context).size.width < 1100 &&
+    bool isTablet =
+        MediaQuery.of(context).size.width < 1100 &&
         MediaQuery.of(context).size.width >= 701 &&
         !kIsWeb;
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
+    final boardWidthFactor = isPortrait
+        ? isTablet
+              ? 0.3
+              : 0.46
+        : isTablet
+        ? 0.3
+        : 0.47;
     return GetBuilder<HomeController>(
-        init: HomeController(),
-        builder: (controller) {
-          return SingleChildScrollView(
-              child: Column(
+      init: HomeController(),
+      builder: (controller) {
+        return SingleChildScrollView(
+          child: Column(
             children: [
               Center(
                 child: Container(
                   padding: isPortrait
                       ? EdgeInsets.only(right: width * 0.11)
                       : EdgeInsets.zero,
-                  margin:
-                      EdgeInsets.only(right: isPortrait ? 0 : width * 0.170),
+                  margin: EdgeInsets.only(
+                    right: isPortrait ? 0 : width * 0.170,
+                  ),
                   child: Padding(
                     padding: isPortrait
                         ? EdgeInsets.only(right: 0)
                         : EdgeInsets.only(left: isTablet ? 70 : 30),
                     child: StringsNameWidget(
-                      width: width *
-                          (isPortrait
-                              ? isTablet
-                                  ? 0.3
-                                  : 0.55
-                              : isTablet
-                                  ? 0.3
-                                  : 0.47),
+                      width: width * boardWidthFactor,
                       isPortrait: isPortrait,
                       isTablet: isTablet,
                     ),
@@ -71,14 +73,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 children: [
                   // fretboard
                   Container(
-                    width: width *
-                        (isPortrait
-                            ? isTablet
-                                ? 0.3
-                                : 0.55
-                            : isTablet
-                                ? 0.3
-                                : 0.47),
+                    width: width * boardWidthFactor,
                     constraints: BoxConstraints(maxHeight: height * 1.2),
                     alignment: Alignment.center,
                     child: Stack(
@@ -87,9 +82,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         // BOARD SIZE WITH COLOR
                         Column(
                           children: [
-                            SizedBox(
-                              height: height * 0.015,
-                            ),
+                            SizedBox(height: height * 0.015),
                             Expanded(
                               child: Container(
                                 width: width * 0.8,
@@ -107,10 +100,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                               width: double.infinity,
                               height: height * 0.015,
                               decoration: BoxDecoration(
-                                  color: JHGColors.black,
-                                  borderRadius: BorderRadius.only(
-                                      bottomLeft: Radius.circular(10),
-                                      bottomRight: Radius.circular(10))),
+                                color: JHGColors.black,
+                                borderRadius: BorderRadius.only(
+                                  bottomLeft: Radius.circular(10),
+                                  bottomRight: Radius.circular(10),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -137,17 +132,21 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                                     Expanded(child: SizedBox.shrink()),
                                     Expanded(
                                       child: blackCircle(
-                                          height: height,
-                                          isColor: index == 2 ||
-                                              index == 4 ||
-                                              index == 6 ||
-                                              index == 8 ||
-                                              index == 14),
+                                        height: height,
+                                        isColor:
+                                            index == 2 ||
+                                            index == 4 ||
+                                            index == 6 ||
+                                            index == 8 ||
+                                            index == 14,
+                                      ),
                                     ),
                                     Expanded(child: SizedBox.shrink()),
                                     Expanded(
                                       child: blackCircle(
-                                          height: height, isColor: index == 11),
+                                        height: height,
+                                        isColor: index == 11,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -169,21 +168,22 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         ),
 
                         // COLUMN
-
                         RotatedBox(
                           quarterTurns: 2,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: List.generate(6, (index) {
                               return colDivider(
-                                  width, index, controller.highlightString);
+                                width,
+                                index,
+                                controller.highlightString,
+                              );
                             }),
                           ),
                         ),
 
                         /// red green  With Grid
                         ///===========================================================
-
                         Align(
                           alignment: Alignment.topCenter,
                           child: AlignedGridView.count(
@@ -196,17 +196,17 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                             crossAxisSpacing: 7,
                             itemBuilder: (context, index) {
                               return redGreenCircle(
-                                  isColor: controller.selectedFret == index,
-                                  color: controller.selectedColor,
-                                  index: index,
-                                  height: height);
+                                isColor: controller.selectedFret == index,
+                                color: controller.selectedColor,
+                                index: index,
+                                height: height,
+                              );
                             },
                           ),
                         ),
 
                         /// Fret press With Grid
                         ///===========================================================
-
                         Align(
                           alignment: Alignment.topCenter,
                           child: AlignedGridView.count(
@@ -223,13 +223,17 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                               return GestureDetector(
                                 onTap: () {
                                   controller.playSound(
-                                      index,
-                                      noteIndex.note!,
-                                      noteIndex.string!,
-                                      fretList[index].fretSound!);
+                                    index,
+                                    noteIndex.note!,
+                                    noteIndex.string!,
+                                    fretList[index].fretSound!,
+                                  );
                                 },
                                 child: stringPress(
-                                    index: index, height: height, width: width),
+                                  index: index,
+                                  height: height,
+                                  width: width,
+                                ),
                               );
                             },
                           ),
@@ -274,8 +278,10 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 ],
               ),
             ],
-          ));
-        });
+          ),
+        );
+      },
+    );
   }
 
   Widget rowDivider(double height, int index) {
@@ -285,14 +291,15 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         height: height * 0.0038,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.whiteLight,
-                AppColors.whiteLight,
-                JHGColors.charcolGray,
-                JHGColors.secondryBlack
-              ]),
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.whiteLight,
+              AppColors.whiteLight,
+              JHGColors.charcolGray,
+              JHGColors.secondryBlack,
+            ],
+          ),
         ),
       ),
     );
@@ -301,82 +308,81 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   Widget colDivider(double width, int index, int? selectedString) {
     return Padding(
       padding: EdgeInsets.only(
-          left: index == 0 ? 12 : 0, right: index == 5 ? 12 : 0),
+        left: index == 0 ? 12 : 0,
+        right: index == 5 ? 12 : 0,
+      ),
       child: Container(
         width: index == 6
             ? width * 0.011
             : index == 5
-                ? width * 0.010
-                : index == 4
-                    ? width * 0.009
-                    : index == 3
-                        ? width * 0.008
-                        : index == 2
-                            ? width * 0.007
-                            : width * 0.006,
+            ? width * 0.010
+            : index == 4
+            ? width * 0.009
+            : index == 3
+            ? width * 0.008
+            : index == 2
+            ? width * 0.007
+            : width * 0.006,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: selectedString == index + 1
-                  ? [JHGColors.primary, JHGColors.primary]
-                  : [
-                      AppColors.whiteLight,
-                      AppColors.whiteLight,
-                      JHGColors.charcolGray,
-                      JHGColors.secondryBlack
-                    ]),
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: selectedString == index + 1
+                ? [JHGColors.primary, JHGColors.primary]
+                : [
+                    AppColors.whiteLight,
+                    AppColors.whiteLight,
+                    JHGColors.charcolGray,
+                    JHGColors.secondryBlack,
+                  ],
+          ),
         ),
       ),
     );
   }
 
   Widget blackCircle({bool? isColor, required double height}) => Center(
-        child: Container(
-          width: height * 0.024,
-          height: height * 0.024,
-          decoration: BoxDecoration(
-            color:
-                isColor == true ? JHGColors.secondryBlack : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
+    child: Container(
+      width: height * 0.024,
+      height: height * 0.024,
+      decoration: BoxDecoration(
+        color: isColor == true ? JHGColors.secondryBlack : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+    ),
+  );
 
   Widget redGreenCircle({
     bool? isColor,
     required color,
     required int index,
     required double height,
-  }) =>
-      Padding(
-        padding:
-            EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
-        child: Container(
-          width: height * 0.030,
-          height: height * 0.030,
-          decoration: BoxDecoration(
-            color: isColor == true ? color : Colors.transparent,
-            //color: Colors.red,
-            shape: BoxShape.circle,
-          ),
-          // child: Text("${fretList[index].note}",style: TextStyle(color: Colors.red),),
-        ),
-      );
+  }) => Padding(
+    padding: EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
+    child: Container(
+      width: height * 0.030,
+      height: height * 0.030,
+      decoration: BoxDecoration(
+        color: isColor == true ? color : Colors.transparent,
+        //color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      // child: Text("${fretList[index].note}",style: TextStyle(color: Colors.red),),
+    ),
+  );
 
   Widget stringPress({
     required int index,
     required double height,
     required double width,
-  }) =>
-      Container(
-        width: width * 0.040,
-        height: getFretPressBasedOnIndex(index, height),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          // color: Colors.green.withOpacity(0.5)
-        ),
-      );
+  }) => Container(
+    width: width * 0.040,
+    height: getFretPressBasedOnIndex(index, height),
+    decoration: BoxDecoration(
+      color: Colors.transparent,
+      // color: Colors.green.withOpacity(0.5)
+    ),
+  );
 
   double getHighLightBasedOnIndex(int index, double height) {
     if (index >= 0 && index <= 5) {
@@ -513,8 +519,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
 }
 
 class StringsNameWidget extends StatelessWidget {
-  const StringsNameWidget(
-      {super.key, required this.width, this.isPortrait, this.isTablet});
+  const StringsNameWidget({
+    super.key,
+    required this.width,
+    this.isPortrait,
+    this.isTablet,
+  });
 
   final bool? isPortrait;
   final bool? isTablet;
@@ -530,19 +540,77 @@ class StringsNameWidget extends StatelessWidget {
       width: width,
       child: Padding(
         padding: EdgeInsets.only(
-            bottom: 10, left: isLand ? 0 : 10, right: isLand ? 0 : 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: AppStrings.guitarStrings
-              .map((e) => isPortrait == null
-                  ? Text(e,
-                      style: const TextStyle(color: Colors.red, fontSize: 20))
-                  : RotatedBox(
-                      quarterTurns: isPortrait! ? 0 : 1,
-                      child: Text(e,
-                          style: const TextStyle(
-                              color: Colors.red, fontSize: 20))))
-              .toList(),
+          bottom: 10,
+          left: isLand ? 0 : 0,
+          right: isLand ? 0 : 0,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const chipSize = 28.0;
+            final leftStringInset = isLand ? 0.0 : 12.0;
+            final rightStringInset = isLand ? 0.0 : 12.0;
+            final stringSpan =
+                constraints.maxWidth - leftStringInset - rightStringInset;
+
+            return SizedBox(
+              height: chipSize,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: List.generate(AppStrings.guitarStrings.length, (i) {
+                  final centerX =
+                      leftStringInset +
+                      (stringSpan / (AppStrings.guitarStrings.length - 1)) * i;
+                  final chip = _StringNameChip(
+                    label: AppStrings.guitarStrings[i],
+                    size: chipSize,
+                  );
+
+                  return Positioned(
+                    left: centerX - chipSize / 2,
+                    top: 0,
+                    child: isPortrait == null
+                        ? chip
+                        : RotatedBox(
+                            quarterTurns: isPortrait! ? 0 : 1,
+                            child: chip,
+                          ),
+                  );
+                }),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _StringNameChip extends StatelessWidget {
+  const _StringNameChip({required this.label, required this.size});
+
+  final String label;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: size,
+      width: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: JHGColors.charcolGray,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: JHGColors.primary.withValues(alpha: 0.75),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: JHGTextStyles.labelStyle.copyWith(
+          color: JHGColors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

@@ -242,18 +242,18 @@ class LandscapeBoard extends StatelessWidget {
                       quarterTurns: 1,
                       child: _iconBtn(
                         LucideIcons.settings300,
-                        disabled: controller.currentGameMode.value ==
-                            'leaderboard',
+                        disabled:
+                            controller.currentGameMode.value == 'leaderboard',
                       ),
                     ),
                   )),
 
-              // Orientation toggle
+              // Full reset
               GestureDetector(
-                onTap: () => controller.toggleOrientation(),
+                onTap: () => controller.resetGame(true),
                 child: RotatedBox(
                   quarterTurns: 1,
-                  child: _iconBtn(LucideIcons.ratio300),
+                  child: _iconBtn(Icons.refresh_rounded),
                 ),
               ),
             ],
