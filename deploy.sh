@@ -4,7 +4,9 @@
 # Finds the jhg_deploy.sh script from the flutter_jhg_elements package
 # already downloaded in Flutter's pub-cache (via git dependency).
 # No GitHub token or internet connection needed beyond initial flutter pub get.
-flutter pub upgrade
+# Use pub get here, not pub upgrade. Deployment should use the versions already
+# resolved by pubspec.lock instead of moving dependencies right before release.
+flutter pub get
 PUB_CACHE_DIR="${PUB_CACHE:-$HOME/.pub-cache}"
 
 # Read the exact commit hash Flutter resolved for flutter_jhg_elements from pubspec.lock
