@@ -2,12 +2,12 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:reg_page/reg_page.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -31,7 +31,6 @@ class HomeController extends GetxController {
   }
 
   var isActive = true;
-  final player = AudioPlayer();
   int? selectedFret;
   String? selectedNote;
   int? selectedString;
@@ -71,6 +70,9 @@ class HomeController extends GetxController {
     currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
         ? 'countdown'
         : 'stopwatch';
+    if (kIsWeb) {
+      preloadFretSounds();
+    }
     resetTimer();
     await getUserName();
     update();
@@ -80,9 +82,9 @@ class HomeController extends GetxController {
 
   Future<void> playSound(int index, String note, int str, String tune) async {
     isPlayed = false;
-    player.stop();
-    final boardModel = fretList.firstWhereOrNull(
-        (element) => element.note == note && element.string == str);
+    final boardModel = index >= 0 && index < fretList.length
+        ? fretList[index]
+        : fretList.firstWhereOrNull((element) => element.fretSound == tune);
     if (boardModel != null) {
       if (!isPlayed) {
         final stringStatus = getStringStatus(boardModel.string!);
@@ -90,14 +92,14 @@ class HomeController extends GetxController {
           selectedFret = index;
           selectedString = str;
           selectedNote = note;
-          boardModel.playSound();
+          unawaited(boardModel.playSound());
           if (highlightNode == selectedNote &&
               selectedString == highlightString) {
             previousHighlightFret = highlightFret;
             previousHighlightNode = highlightNode;
             incrementScore();
             highLightTheGame();
-            Future.delayed(Duration(milliseconds: 300), () {
+            Future.delayed(const Duration(milliseconds: 300), () {
               selectedFret = null;
               selectedColor = Colors.transparent;
               update();
@@ -107,9 +109,15 @@ class HomeController extends GetxController {
           }
           update();
         } else {
-          boardModel.playSound();
+          unawaited(boardModel.playSound());
         }
       }
+    }
+  }
+
+  void preloadFretSounds() {
+    for (final boardModel in fretList) {
+      unawaited(boardModel.preloadSound());
     }
   }
 
