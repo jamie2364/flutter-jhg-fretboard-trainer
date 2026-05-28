@@ -1,567 +1,344 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/models/freth_list.dart';
-import 'package:fretboard/utils/app_colors.dart';
 import 'package:get/get.dart';
+
+const int _webFretCount = 23;
+const double _webParentWidth = 191.0;
+const double _webBoardWidth = 178.0;
+const double _webFretSpacing = 80.0;
+const double _webBoardContentHeight =
+    ((_webFretCount - 1) * _webFretSpacing) + 2;
+const double _webNutHeight = 15.0;
+const double _webStringStartX = 12.0;
+const double _webStringGap = 33.5;
+const List<double> _webStringWidths = [6, 5, 4, 3, 2, 1];
+const List<double> _webLabelCenters = [15.0, 48.5, 82.0, 115.5, 149.0, 182.5];
+const List<int> _singleDotFrets = [3, 5, 7, 9, 15, 17, 19, 21];
 
 class WebPortraitGuitarBoard extends StatefulWidget {
   const WebPortraitGuitarBoard({
     super.key,
     this.boardWidth,
     this.boardHeight,
+    this.boardContentHeight,
   });
 
   final double? boardWidth;
   final double? boardHeight;
+  final double? boardContentHeight;
+
+  static List<double> stringCenters(double width) {
+    return List<double>.from(_webLabelCenters);
+  }
 
   @override
   State<WebPortraitGuitarBoard> createState() => _WebPortraitGuitarBoardState();
 }
 
 class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
-    final boardWidth =
-        widget.boardWidth ?? (width * 0.13).clamp(210.0, 230.0).toDouble();
-    final boardHeight =
-        widget.boardHeight ?? (height * 0.52).clamp(430.0, 540.0).toDouble();
+    final parentWidth = widget.boardWidth ?? _webParentWidth;
+    const boardWidth = _webBoardWidth;
+    final viewportHeight =
+        widget.boardHeight ?? (height * 0.62).clamp(430.0, 760.0).toDouble();
+    final boardHeight = widget.boardContentHeight ?? _webBoardContentHeight;
+    const nutHeight = _webNutHeight;
+    const fretSpacing = _webFretSpacing;
+    final stringCenters = WebPortraitGuitarBoard.stringCenters(parentWidth);
+    const singleDotX = 2.5 * _webStringGap + 2;
+    const doubleDotLeftX = 1.5 * _webStringGap + 2;
+    const doubleDotRightX = 3.5 * _webStringGap + 2;
+
     return GetBuilder<HomeController>(builder: (controller) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //fretboard
-          Stack(
-            children: [
-              Container(
-                height: boardHeight,
-                width: boardWidth,
-                alignment: Alignment.center,
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
+      return SizedBox(
+        height: viewportHeight,
+        width: parentWidth + 31,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //fretboard
+                Stack(
                   children: [
-                    // BOARD SIZE WITH COLOR
-                    Column(
-                      children: [
-                        SizedBox(
-                          height: boardHeight * 0.026,
-                        ),
-                        Expanded(
-                          child: Container(
-                            width: boardWidth,
-                            color: AppColors.creamColor,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Align(
-                        alignment: Alignment.topCenter,
-                        child: RotatedBox(
-                          quarterTurns: 2,
-                          child: Container(
-                            width: boardWidth,
-                            height: boardHeight * 0.026,
-                            decoration: BoxDecoration(
-                                color: JHGColors.black,
-                                borderRadius: BorderRadius.only(
-                                  bottomRight: Radius.circular(15),
-                                  bottomLeft: Radius.circular(15),
-                                )),
-                          ),
-                        )),
-
-                    // BLACK CIRCE
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return Container(
-                            margin: EdgeInsets.symmetric(horizontal: 13),
-                            padding: EdgeInsets.only(
-                              top: getPortraitBlackSpace(index, boardHeight),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Container(
+                      height: boardHeight,
+                      width: parentWidth,
+                      alignment: Alignment.center,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(
+                            child: Column(
                               children: [
+                                Center(
+                                  child: Container(
+                                    width: boardWidth,
+                                    height: nutHeight,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black12,
+                                    ),
+                                  ),
+                                ),
                                 Expanded(
-                                    child: blackPortraitCircle(
-                                  height: boardHeight,
-                                  isColor: index == 11,
-                                )),
-                                Expanded(child: SizedBox.shrink()),
-                                Expanded(
-                                    child: blackPortraitCircle(
-                                        height: boardHeight,
-                                        isColor: index == 2 ||
-                                            index == 4 ||
-                                            index == 6 ||
-                                            index == 8 ||
-                                            index == 14)),
-                                Expanded(child: SizedBox.shrink()),
-                                Expanded(
-                                    child: blackPortraitCircle(
-                                        height: boardHeight,
-                                        isColor: index == 11)),
+                                  child: Center(
+                                    child: Container(
+                                      width: boardWidth,
+                                      color: const Color(0xfff2e5d9),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-                          );
-                        },
-                        itemCount: 15,
-                      ),
-                    ),
-
-                    // ROW
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: ListView.builder(
-                        itemCount: 15,
-                        shrinkWrap: true,
-                        primary: false,
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, pos) {
-                          return rowPortraitDivider(boardHeight, pos);
-                        },
-                      ),
-                    ),
-
-                    // COLUMN
-                    RotatedBox(
-                      quarterTurns: 2,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (index) {
-                          return colPortraitDivider(
-                              boardWidth, index, controller.highlightString);
-                        }),
-                      ),
-                    ),
-
-                    Align(
-                        alignment: Alignment.topCenter,
-                        child: AlignedGridView.count(
-                          itemCount: 96,
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 6,
-                          mainAxisSpacing: 0,
-                          crossAxisSpacing: 10,
-                          itemBuilder: (context, index) {
-                            return redGreenPortraitCircle(
-                                isColor: controller.selectedFret == index,
+                          ),
+                          for (int fret = 0; fret < _webFretCount; fret++)
+                            Positioned(
+                              left: 6,
+                              right: 6,
+                              top: fretSpacing * fret,
+                              child: Container(
+                                height: 2,
+                                color: fret == 0
+                                    ? Colors.transparent
+                                    : Colors.grey,
+                              ),
+                            ),
+                          for (int index = 0;
+                              index < stringCenters.length;
+                              index++)
+                            Positioned(
+                              top: 0,
+                              bottom: 0,
+                              left: _webStringStartX + (index * _webStringGap),
+                              child: Container(
+                                width: _webStringWidths[index],
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: controller.highlightString ==
+                                            6 - index
+                                        ? [
+                                            JHGColors.primary,
+                                            JHGColors.primary,
+                                          ]
+                                        : [
+                                            Color.fromRGBO(196, 196, 196, 1),
+                                            Color.fromRGBO(196, 196, 196, 1),
+                                            Colors.black54,
+                                            Colors.black87,
+                                          ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          for (final fret in _singleDotFrets)
+                            _FretMarkerDot(
+                              left: singleDotX,
+                              top: _fretCenterY(
+                                nutHeight,
+                                fretSpacing,
+                                fret,
+                              ),
+                            ),
+                          _FretMarkerDot(
+                            left: doubleDotLeftX,
+                            top: _fretCenterY(nutHeight, fretSpacing, 12),
+                          ),
+                          _FretMarkerDot(
+                            left: doubleDotRightX,
+                            top: _fretCenterY(nutHeight, fretSpacing, 12),
+                          ),
+                          for (final entry in fretList.asMap().entries)
+                            if (controller.selectedFret == entry.key)
+                              _SelectedNoteDot(
+                                left: _noteLeft(
+                                  _stringVisualIndex(
+                                    entry.value.string!,
+                                  ),
+                                ),
+                                top: _noteTop(entry.value.fret!),
                                 color: controller.selectedColor,
-                                index: index,
-                                height: boardHeight);
-                          },
-                        )),
-
-                    // /// Fret press With Grid
-                    // ///===========================================================
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: AlignedGridView.count(
-                        itemCount: 96,
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 6,
-                        mainAxisSpacing: 3,
-                        crossAxisSpacing: 4,
-                        itemBuilder: (context, index) {
-                          final noteIndex = fretList[index];
-                          return MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () {
-                                  controller.playSound(
-                                      index,
-                                      noteIndex.note!,
-                                      noteIndex.string!,
-                                      fretList[index].fretSound!);
-                                },
-                                child: stringPortraitPress(
-                                    index: index,
-                                    height: boardHeight,
-                                    width: boardWidth),
-                              ));
-                        },
+                              ),
+                          for (final entry in fretList.asMap().entries)
+                            Positioned(
+                              left: _noteLeft(
+                                    _stringVisualIndex(
+                                      entry.value.string!,
+                                    ),
+                                  ) -
+                                  8,
+                              top: _noteTop(entry.value.fret!) - 8,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    controller.playSound(
+                                      entry.key,
+                                      entry.value.note!,
+                                      entry.value.string!,
+                                      entry.value.fretSound!,
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 41,
+                                    height: 61,
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-
-                    // ///===========================================================
                   ],
                 ),
-              ),
-            ],
-          ),
-          //SPACER
-          SizedBox(width: 5),
-          // NUMBERS
-          Container(
-            height: boardHeight,
-            // color: Colors.red,
-            width: 18,
-            child: ListView.builder(
-              itemCount: 16,
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                return numberPortrait(boardHeight, index);
-              },
+                //SPACER
+                SizedBox(width: 5),
+                // NUMBERS
+                Container(
+                  height: boardHeight,
+                  // color: Colors.red,
+                  width: 26,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _FretNumberLabel(number: 0, height: 20),
+                      _FretNumberLabel(number: 1, height: 30),
+                      for (int fret = 2; fret <= 22; fret++)
+                        _FretNumberLabel(
+                          number: fret,
+                          height: _webFretSpacing,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       );
     });
   }
+}
 
-  Widget numberPortrait(double height, int index) {
-    return Padding(
-      padding: EdgeInsets.only(top: getNumberPortraitSpace(index, height)),
-      child: Container(
-          child: RotatedBox(
-        quarterTurns: 0,
+int _stringVisualIndex(int stringNumber) => 6 - stringNumber;
+
+double _fretCenterY(double nutHeight, double fretSpacing, int fret) {
+  return ((fret - 1) * fretSpacing) + 38;
+}
+
+double _noteTop(int fret) {
+  if (fret == 0) {
+    return -10;
+  }
+  if (fret == 1) {
+    return 18;
+  }
+  return ((fret - 1) * 81.0) + 10.0;
+}
+
+double _noteLeft(int visualStringIndex) {
+  return (visualStringIndex * 33.0) + 1;
+}
+
+class _FretNumberLabel extends StatelessWidget {
+  const _FretNumberLabel({
+    required this.number,
+    required this.height,
+  });
+
+  final int number;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Center(
         child: Text(
-          index.toString(),
-          style: JHGTextStyles.subLabelStyle.copyWith(fontSize: height * 0.022),
-        ),
-      )),
-    );
-  }
-
-  Widget rowPortraitDivider(double height, int index) {
-    return Padding(
-      padding: EdgeInsets.only(top: getPortraitSpace(index, height)),
-      child: Container(
-        height: height * 0.003,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.whiteLight,
-                AppColors.whiteLight,
-                JHGColors.charcolGray,
-                JHGColors.secondryBlack
-              ]),
+          '$number',
+          textAlign: TextAlign.center,
+          softWrap: false,
+          maxLines: 1,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                height: 1.2,
+              ),
         ),
       ),
     );
   }
+}
 
-  Widget colPortraitDivider(double width, int index, int? selectedString) {
-    return Padding(
-      padding: EdgeInsets.only(
-          left: index == 0 ? 12 : 0, right: index == 5 ? 12 : 0),
+class _FretMarkerDot extends StatelessWidget {
+  const _FretMarkerDot({
+    required this.left,
+    required this.top,
+  });
+
+  final double left;
+  final double top;
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 20.0;
+    return Positioned(
+      left: left,
+      top: top - size / 2,
       child: Container(
-        width: index == 6
-            ? width * 0.0045
-            : index == 5
-                ? width * 0.0040
-                : index == 4
-                    ? width * 0.0035
-                    : index == 3
-                        ? width * 0.0030
-                        : index == 2
-                            ? width * 0.0025
-                            : width * 0.002,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: selectedString == index + 1
-                  ? [JHGColors.primary, JHGColors.primary]
-                  : [
-                      AppColors.whiteLight,
-                      AppColors.whiteLight,
-                      JHGColors.charcolGray,
-                      JHGColors.secondryBlack
-                    ]),
-        ),
-      ),
-    );
-  }
-
-  Widget blackPortraitCircle({bool? isColor, required double height}) =>
-      Container(
-        width: height * 0.022,
-        height: height * 0.022,
-        decoration: BoxDecoration(
-          color: isColor == true ? JHGColors.secondryBlack : Colors.transparent,
+          color: JHGColors.secondryBlack,
           shape: BoxShape.circle,
         ),
-      );
+      ),
+    );
+  }
+}
 
-  Widget redGreenPortraitCircle(
-          {bool? isColor,
-          required color,
-          required int index,
-          required double height}) =>
-      Padding(
-        padding: EdgeInsets.only(
-            bottom: getPortraitHighLightBasedOnIndex(index, height)),
-        child: Container(
-          width: height * 0.028,
-          height: height * 0.028,
-          decoration: BoxDecoration(
-            color: isColor == true ? color : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-        ),
-      );
+class _SelectedNoteDot extends StatelessWidget {
+  const _SelectedNoteDot({
+    required this.left,
+    required this.top,
+    required this.color,
+  });
 
-  Widget stringPortraitPress({
-    required int index,
-    required double height,
-    required double width,
-  }) =>
-      Container(
-        width: width * 0.040,
-        height: getPortraitFretPressBasedOnIndex(index, height),
+  final double left;
+  final double top;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: left,
+      top: top,
+      child: Container(
+        width: 25,
+        height: 45,
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: color ?? JHGColors.primary,
+          shape: BoxShape.circle,
         ),
-      );
-
-  double getPortraitHighLightBasedOnIndex(int index, double height) {
-    if (index >= 0 && index <= 5) {
-      return height * 0.008;
-    } else if (index >= 6 && index <= 11) {
-      return height * 0.038;
-    } else if (index >= 12 && index <= 17) {
-      return height * 0.045;
-    } else if (index >= 18 && index <= 23) {
-      return height * 0.045;
-    } else if (index >= 24 && index <= 29) {
-      return height * 0.042;
-    } else if (index >= 30 && index <= 35) {
-      return height * 0.038;
-    } else if (index >= 36 && index <= 41) {
-      return height * 0.038;
-    } else if (index >= 42 && index <= 47) {
-      return height * 0.035;
-    } else if (index >= 48 && index <= 53) {
-      return height * 0.031;
-    } else if (index >= 54 && index <= 59) {
-      return height * 0.031;
-    } else if (index >= 60 && index <= 65) {
-      return height * 0.028;
-    } else if (index >= 66 && index <= 71) {
-      return height * 0.028;
-    } else if (index >= 72 && index <= 77) {
-      return height * 0.024;
-    } else if (index >= 78 && index <= 83) {
-      return height * 0.024;
-    } else if (index >= 84 && index <= 89) {
-      return height * 0.024;
-    } else {
-      return height * 0.024;
-    }
-  }
-
-  double getNumberPortraitSpace(
-    int index,
-    double height,
-  ) {
-    switch (index) {
-      case 0:
-        return height * 0.000;
-      case 1:
-        return height * 0.010;
-      case 2:
-        return height * 0.040;
-      case 3:
-        return height * 0.042;
-      case 4:
-        return height * 0.044;
-      case 5:
-        return height * 0.043;
-      case 6:
-        return height * 0.038;
-      case 7:
-        return height * 0.035;
-      case 8:
-        return height * 0.034;
-      case 9:
-        return height * 0.034;
-      case 10:
-        return height * 0.030;
-      case 11:
-        return height * 0.027;
-      case 12:
-        return height * 0.026;
-      case 13:
-        return height * 0.023;
-      case 14:
-        return height * 0.020;
-      case 15:
-        return height * 0.019;
-      default:
-        return height * 0.034;
-    }
-  }
-
-  double getPortraitSpace(
-    int index,
-    double height,
-  ) {
-    switch (index) {
-      case 0:
-        return height * 0.068;
-      case 1:
-        return height * 0.066;
-      case 2:
-        return height * 0.063;
-      case 3:
-        return height * 0.061;
-      case 4:
-        return height * 0.059;
-      case 5:
-        return height * 0.057;
-      case 6:
-        return height * 0.055;
-      case 7:
-        return height * 0.053;
-      case 8:
-        return height * 0.051;
-      case 9:
-        return height * 0.048;
-      case 10:
-        return height * 0.046;
-      case 11:
-        return height * 0.044;
-      case 12:
-        return height * 0.042;
-      case 13:
-        return height * 0.040;
-      case 14:
-        return height * 0.038;
-      case 15:
-        return height * 0.036;
-      default:
-        return height * 0.034;
-    }
-  }
-
-  double getPortraitBlackSpace(
-    int index,
-    double height,
-  ) {
-    if (index == 0) {
-      return height * 0.040;
-    } else if (index == 1) {
-      return height * 0.042;
-    } else if (index == 2) {
-      return height * 0.048;
-    } else if (index == 3) {
-      return height * 0.049;
-    } else if (index == 4) {
-      return height * 0.048;
-    } else if (index == 5) {
-      return height * 0.044;
-    } else if (index == 6) {
-      return height * 0.042;
-    } else if (index == 7) {
-      return height * 0.041;
-    } else if (index == 8) {
-      return height * 0.037;
-    } else if (index == 9) {
-      return height * 0.035;
-    } else if (index == 10) {
-      return height * 0.032;
-    } else if (index == 11) {
-      return height * 0.032;
-    } else if (index == 12) {
-      return height * 0.028;
-    } else if (index == 13) {
-      return height * 0.028;
-    } else if (index == 14) {
-      return height * 0.025;
-    } else {
-      return height * 0.025;
-    }
-  }
-
-  double getPortraitFretPressBasedOnIndex(int index, double height) {
-    if (index >= 0 && index <= 5) {
-      return height * 0.015;
-    } else if (index >= 6 && index <= 11) {
-      return height * 0.052;
-    } else if (index >= 12 && index <= 17) {
-      return height * 0.066;
-    } else if (index >= 18 && index <= 23) {
-      return height * 0.063;
-    } else if (index >= 24 && index <= 29) {
-      return height * 0.060;
-    } else if (index >= 30 && index <= 35) {
-      return height * 0.060;
-    } else if (index >= 36 && index <= 41) {
-      return height * 0.056;
-    } else if (index >= 42 && index <= 47) {
-      return height * 0.055;
-    } else if (index >= 48 && index <= 53) {
-      return height * 0.053;
-    } else if (index >= 54 && index <= 59) {
-      return height * 0.050;
-    } else if (index >= 60 && index <= 65) {
-      return height * 0.048;
-    } else if (index >= 66 && index <= 71) {
-      return height * 0.047;
-    } else if (index >= 72 && index <= 77) {
-      return height * 0.044;
-    } else if (index >= 78 && index <= 83) {
-      return height * 0.042;
-    } else if (index >= 84 && index <= 89) {
-      return height * 0.041;
-    } else {
-      return height * 0.039;
-    }
-  }
-
-  double getPotraitHeight(int index, double height) {
-    switch (index) {
-      case 0:
-        return height * 0.020;
-      case 1:
-        return height * 0.058;
-      case 2:
-        return height * 0.065;
-      case 3:
-        return height * 0.065;
-      case 4:
-        return height * 0.060;
-      case 5:
-        return height * 0.060;
-      case 6:
-        return height * 0.060;
-      case 7:
-        return height * 0.048;
-      case 8:
-        return height * 0.045;
-      case 9:
-        return height * 0.043;
-      case 10:
-        return height * 0.042;
-      case 11:
-        return height * 0.040;
-      case 12:
-        return height * 0.038;
-      case 13:
-        return height * 0.036;
-      case 14:
-        return height * 0.034;
-      default:
-        return height * 0.00;
-    }
+      ),
+    );
   }
 }

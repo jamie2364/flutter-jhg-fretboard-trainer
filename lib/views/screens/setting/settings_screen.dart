@@ -43,6 +43,8 @@ class _SettingScreenState extends State<SettingScreen> {
       appStoreId: AppStrings.appStoreId,
       enableSupportSection: !kIsWeb,
       enableReportIssueButton: !kIsWeb,
+      showSettingsLabel: !kIsWeb,
+      appBarLeading: kIsWeb ? const _CompactSettingsHeader() : null,
       horizontalPadding: _resolveHorizontalPadding(context),
       sectionSpacing: kIsWeb ? 20 : 24,
       sections: [
@@ -201,6 +203,41 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CompactSettingsHeader extends StatelessWidget {
+  const _CompactSettingsHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.pop(context),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              LucideIcons.chevronLeft,
+              color: Colors.white54,
+              size: 20,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              'Settings',
+              style: JHGTextStyles.labelStyle.copyWith(
+                color: Colors.white54,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

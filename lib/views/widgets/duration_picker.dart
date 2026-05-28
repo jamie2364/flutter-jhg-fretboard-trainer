@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 // ** Corrected Import Path **
@@ -82,28 +83,48 @@ class LabeledDurationPicker extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
+        final dialogWidth = kIsWeb
+            ? (MediaQuery.sizeOf(context).width - 96)
+                .clamp(360.0, 520.0)
+                .toDouble()
+            : null;
+        final dialogHeight = kIsWeb ? 256.0 : 326.0;
+        final pickerHeight = kIsWeb ? 126.0 : 178.0;
+        final pickerItemExtent = kIsWeb ? 34.0 : 44.0;
+        final pickerTextSize = kIsWeb ? 16.0 : 20.0;
+        final buttonHeight = kIsWeb ? 40.0 : 48.0;
+
         return Dialog(
           backgroundColor: JHGColors.charcolGray,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: kBodyHrPadding),
-            height: 326,
+            width: dialogWidth,
+            padding: EdgeInsets.symmetric(
+              horizontal: kIsWeb ? 18 : kBodyHrPadding,
+            ),
+            height: dialogHeight,
             child: Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 20, bottom: 14),
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: kIsWeb ? 14 : 20,
+                    bottom: kIsWeb ? 10 : 14,
+                  ),
                   child: Text(
                     "Select Time",
-                    style: JHGTextStyles.dialogTitleStyle,
+                    style: JHGTextStyles.dialogTitleStyle.copyWith(
+                      fontSize: kIsWeb ? 18 : null,
+                      height: 1,
+                    ),
                   ),
                 ),
                 Container(
-                  height: 178,
+                  height: pickerHeight,
                   decoration: BoxDecoration(
                     color: JHGColors.darkBackground,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(kIsWeb ? 12 : 14),
                   ),
                   child: Row(
                     children: [
@@ -112,15 +133,19 @@ class LabeledDurationPicker extends StatelessWidget {
                           scrollController: FixedExtentScrollController(
                             initialItem: initialMinutes,
                           ),
-                          itemExtent: 44,
-                          magnification: 1.15,
+                          itemExtent: pickerItemExtent,
+                          magnification: kIsWeb ? 1.05 : 1.15,
                           selectionOverlay: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            margin: EdgeInsets.symmetric(
+                              horizontal: kIsWeb ? 6 : 8,
+                            ),
                             decoration: BoxDecoration(
                               color: JHGColors.greyPrimary.withValues(
                                 alpha: 0.42,
                               ),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(
+                                kIsWeb ? 8 : 10,
+                              ),
                             ),
                           ),
                           onSelectedItemChanged: (index) {
@@ -133,7 +158,7 @@ class LabeledDurationPicker extends StatelessWidget {
                                 "$i min",
                                 style: JHGTextStyles.lrlabelStyle.copyWith(
                                   color: JHGColors.whiteText,
-                                  fontSize: 20,
+                                  fontSize: pickerTextSize,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -146,15 +171,19 @@ class LabeledDurationPicker extends StatelessWidget {
                           scrollController: FixedExtentScrollController(
                             initialItem: initialSeconds,
                           ),
-                          itemExtent: 44,
-                          magnification: 1.15,
+                          itemExtent: pickerItemExtent,
+                          magnification: kIsWeb ? 1.05 : 1.15,
                           selectionOverlay: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            margin: EdgeInsets.symmetric(
+                              horizontal: kIsWeb ? 6 : 8,
+                            ),
                             decoration: BoxDecoration(
                               color: JHGColors.greyPrimary.withValues(
                                 alpha: 0.42,
                               ),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(
+                                kIsWeb ? 8 : 10,
+                              ),
                             ),
                           ),
                           onSelectedItemChanged: (index) {
@@ -167,7 +196,7 @@ class LabeledDurationPicker extends StatelessWidget {
                                 "$i sec",
                                 style: JHGTextStyles.lrlabelStyle.copyWith(
                                   color: JHGColors.whiteText,
-                                  fontSize: 20,
+                                  fontSize: pickerTextSize,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -178,9 +207,9 @@ class LabeledDurationPicker extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: kIsWeb ? 12 : 16),
                 JHGPrimaryBtn(
-                  height: 48,
+                  height: buttonHeight,
                   onPressed: () {
                     Navigator.of(context).pop();
                     if (selectedMinute == 0 && selectedSecond == 0) {
@@ -191,7 +220,7 @@ class LabeledDurationPicker extends StatelessWidget {
                   },
                   label: "Done",
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: kIsWeb ? 10 : 12),
               ],
             ),
           ),
