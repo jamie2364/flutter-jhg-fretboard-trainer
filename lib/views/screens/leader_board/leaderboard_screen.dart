@@ -20,13 +20,13 @@ class LeadershipScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: JHGColors.secondryBlack,
       body: GetBuilder<LeaderBoardController>(builder: (con) {
-        return LayoutBuilder(builder: (context, constraints) {
-          if (constraints.maxWidth >= 450 && kIsWeb) {
-            return LeaderWebView(controller: controller);
-          } else {
-            return LeaderPortraitView(controller: controller);
-          }
-        });
+        if (!kIsWeb) return LeaderPortraitView(controller: controller);
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 568),
+            child: LeaderPortraitView(controller: controller),
+          ),
+        );
       }),
     );
   }

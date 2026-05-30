@@ -15,18 +15,8 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  static const double _webContentWidth = 520.0;
-
   late HomeController homeController;
   bool _stringsExpanded = false;
-
-  double _resolveHorizontalPadding(BuildContext context) {
-    if (!kIsWeb) return 24.0;
-    final width = MediaQuery.of(context).size.width;
-    return ((width - _webContentWidth) / 2)
-        .clamp(0.0, double.infinity)
-        .toDouble();
-  }
 
   @override
   void initState() {
@@ -36,17 +26,15 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return JHGSettingsScreenShell(
+    final shell = JHGSettingsScreenShell(
       appName: AppStrings.appName,
       iosAppIdentifier: AppStrings.iOSBuildId,
       androidAppIdentifier: AppStrings.androidBuildId,
       appStoreId: AppStrings.appStoreId,
       enableSupportSection: !kIsWeb,
-      enableReportIssueButton: !kIsWeb,
-      showSettingsLabel: !kIsWeb,
-      appBarLeading: kIsWeb ? const _CompactSettingsHeader() : null,
-      horizontalPadding: _resolveHorizontalPadding(context),
-      sectionSpacing: kIsWeb ? 20 : 24,
+      enableReportIssueButton: true,
+      horizontalPadding: kIsWeb ? 24 : null,
+      sectionSpacing: 24,
       sections: [
         JHGSettingsScreenSectionData(
           title: 'STRINGS',
@@ -204,38 +192,22 @@ class _SettingScreenState extends State<SettingScreen> {
         ),
       ],
     );
-  }
-}
 
-class _CompactSettingsHeader extends StatelessWidget {
-  const _CompactSettingsHeader();
+    if (!kIsWeb) return shell;
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.pop(context),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              LucideIcons.chevronLeft,
-              color: Colors.white54,
-              size: 20,
+    return Scaffold(
+      backgroundColor: const Color(0xFF1E1E1E),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 568),
+          child: ScrollConfiguration(
+            behavior:
+                ScrollConfiguration.of(context).copyWith(scrollbars: false),
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height,
+              child: shell,
             ),
-            const SizedBox(width: 2),
-            Text(
-              'Settings',
-              style: JHGTextStyles.labelStyle.copyWith(
-                color: Colors.white54,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
