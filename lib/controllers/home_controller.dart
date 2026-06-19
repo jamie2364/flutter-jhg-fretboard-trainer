@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
+import 'package:fretboard/services/heatmap_service.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
 import 'package:reg_page/reg_page.dart';
@@ -20,8 +21,28 @@ class HomeController extends GetxController {
   RxString selectedDropDownValue = "".obs;
   RxString defaultTimerSelectedValue = "Stopwatch".obs;
 
-  // Using single mode state as in new code
+  // Game type ('stopwatch' | 'countdown' | 'leaderboard' | 'reverse')
   RxString currentGameMode = 'stopwatch'.obs;
+  // Timer sub-mode tracked independently so identify mode keeps timer working
+  // ('stopwatch' | 'countdown') — leaderboard excluded from identify mode
+  RxString timerMode = 'stopwatch'.obs;
+
+  // Reverse mode state
+  List<String> reverseChoices = [];
+  String? reverseSelectedNote;   // which button the user just tapped
+  bool reverseWasCorrect = false; // was their tap correct
+
+  // "STRING G · FRET 5" hint displayed in the choice panel
+  String get reversePositionHint {
+    if (highlightFret == null) return '';
+    final bm = fretList[highlightFret!];
+    const stringNames = {1: 'e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'E'};
+    return 'STRING ${stringNames[bm.string] ?? bm.string}  ·  FRET ${bm.fret}';
+  }
+
+  static const List<String> _allNotes = [
+    'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'
+  ];
 
   void onDefaultTimerInitialized() {
     selectedDropDownValue.value = defaultTimerSelectedValue.value;
@@ -95,6 +116,9 @@ class HomeController extends GetxController {
           unawaited(boardModel.playSound());
           if (highlightNode == selectedNote &&
               selectedString == highlightString) {
+            if (highlightFret != null) {
+              unawaited(HeatmapService.recordAttempt(highlightFret!, true));
+            }
             previousHighlightFret = highlightFret;
             previousHighlightNode = highlightNode;
             incrementScore();
@@ -105,6 +129,9 @@ class HomeController extends GetxController {
               update();
             });
           } else {
+            if (highlightFret != null) {
+              unawaited(HeatmapService.recordAttempt(highlightFret!, false));
+            }
             decrementScore();
           }
           update();
@@ -151,6 +178,9 @@ class HomeController extends GetxController {
     highlightFret = randomIndex;
     highlightNode = fretList[randomIndex].note;
     highlightString = fretList[randomIndex].string;
+    if (currentGameMode.value == 'reverse') {
+      generateReverseChoices(highlightNode!);
+    }
     update();
   }
 
@@ -173,6 +203,9 @@ class HomeController extends GetxController {
     previousHighlightNode = highlightNode;
     highlightNode = fretList[randomIndex].note;
     highlightString = fretList[randomIndex].string;
+    if (currentGameMode.value == 'reverse') {
+      generateReverseChoices(highlightNode!);
+    }
     update();
   }
 
@@ -195,6 +228,9 @@ class HomeController extends GetxController {
     previousHighlightFret = null;
     previousHighlightNode = null;
     score = 0;
+    reverseChoices = [];
+    reverseSelectedNote = null;
+    reverseWasCorrect = false;
 
     if (resetAll) {
       currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
@@ -207,10 +243,14 @@ class HomeController extends GetxController {
   }
 
   void resetTimer() {
-    if (currentGameMode.value == 'countdown') {
+    // In identify mode use timerMode; otherwise use currentGameMode
+    final effective = currentGameMode.value == 'reverse'
+        ? timerMode.value
+        : currentGameMode.value;
+    if (effective == 'countdown') {
       secondsRemaining.value =
           timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
-    } else if (currentGameMode.value == 'leaderboard') {
+    } else if (effective == 'leaderboard') {
       secondsRemaining.value = 120;
     } else {
       secondsRemaining.value = 0;
@@ -220,9 +260,12 @@ class HomeController extends GetxController {
 
   void startTimer({bool resume = false}) {
     debugLog('debug timer Started - Mode: ${currentGameMode.value}');
-    if (currentGameMode.value == 'countdown') {
+    final effective = currentGameMode.value == 'reverse'
+        ? timerMode.value
+        : currentGameMode.value;
+    if (effective == 'countdown') {
       startCountDownTimer();
-    } else if (currentGameMode.value == 'leaderboard') {
+    } else if (effective == 'leaderboard') {
       offString = [true, true, true, true, true, true];
       string1 = true;
       string2 = true;
@@ -255,15 +298,83 @@ class HomeController extends GetxController {
     update();
   }
 
+  // Cycles timer modes. In identify mode only stopwatch↔countdown (no leaderboard).
   void cycleGameMode() {
-    if (currentGameMode.value == 'stopwatch') {
-      currentGameMode.value = 'countdown';
-    } else if (currentGameMode.value == 'countdown') {
-      currentGameMode.value = 'leaderboard';
+    if (currentGameMode.value == 'reverse') {
+      timerMode.value = timerMode.value == 'stopwatch' ? 'countdown' : 'stopwatch';
     } else {
-      currentGameMode.value = 'stopwatch';
+      if (currentGameMode.value == 'stopwatch') {
+        currentGameMode.value = 'countdown';
+        timerMode.value = 'countdown';
+      } else if (currentGameMode.value == 'countdown') {
+        currentGameMode.value = 'leaderboard';
+        timerMode.value = 'stopwatch'; // leaderboard excluded from identify
+      } else {
+        currentGameMode.value = 'stopwatch';
+        timerMode.value = 'stopwatch';
+      }
     }
     resetTimer();
+    update();
+  }
+
+  void switchToIdentifyMode() {
+    currentGameMode.value = 'reverse';
+    reverseChoices = [];
+    resetTimer();
+    update();
+  }
+
+  void switchToFindMode() {
+    currentGameMode.value = timerMode.value;
+    reverseChoices = [];
+    resetTimer();
+    update();
+  }
+
+  void generateReverseChoices(String correctNote) {
+    final others = List<String>.from(_allNotes)
+      ..remove(correctNote)
+      ..shuffle();
+    reverseChoices = [correctNote, others[0], others[1], others[2]]..shuffle();
+  }
+
+  void selectReverseAnswer(String note) {
+    if (!isStart) return;
+    if (reverseSelectedNote != null) return; // block double-tap during feedback
+
+    // Play the note so the user hears what it is
+    if (highlightFret != null) {
+      unawaited(fretList[highlightFret!].playSound());
+    }
+
+    final isCorrect = note == highlightNode;
+    reverseSelectedNote = note;
+    reverseWasCorrect = isCorrect;
+
+    if (highlightFret != null) {
+      unawaited(HeatmapService.recordAttempt(highlightFret!, isCorrect));
+    }
+
+    if (isCorrect) {
+      previousHighlightFret = highlightFret;
+      previousHighlightNode = highlightNode;
+      incrementScore();
+      // Brief green flash, then next question
+      Future.delayed(const Duration(milliseconds: 600), () {
+        reverseSelectedNote = null;
+        reverseWasCorrect = false;
+        highLightTheGame();
+      });
+    } else {
+      decrementScore();
+      // Show correct answer for longer so user can learn, then advance
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        reverseSelectedNote = null;
+        reverseWasCorrect = false;
+        highLightTheGame();
+      });
+    }
     update();
   }
 

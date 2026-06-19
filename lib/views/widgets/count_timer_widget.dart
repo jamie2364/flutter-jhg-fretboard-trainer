@@ -12,9 +12,12 @@ class CountTimerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // ** Get HomeController instead of TimerController **
     final controller = Get.find<HomeController>();
-    return Obx(
-      () => controller.currentGameMode.value ==
-              'countdown' // ** Check currentGameMode **
+    return Obx(() {
+      // In identify mode the timer sub-mode is tracked via timerMode, not currentGameMode
+      final effectiveMode = controller.currentGameMode.value == 'reverse'
+          ? controller.timerMode.value
+          : controller.currentGameMode.value;
+      return effectiveMode == 'countdown'
           ? _CountdownTimerAdjuster(
               isEnabled: !controller.isStart && !controller.isPaused,
               value: controller.secondsRemaining.value,
@@ -24,11 +27,10 @@ class CountTimerWidget extends StatelessWidget {
               },
             )
           : Text(
-              // ** Use HomeController state **
               controller.formatTime(controller.secondsRemaining.value),
               style: JHGTextStyles.bigNumberStyle,
-            ),
-    );
+            );
+    });
   }
 }
 

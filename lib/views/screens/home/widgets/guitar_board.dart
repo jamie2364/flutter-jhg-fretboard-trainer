@@ -19,11 +19,63 @@ class GuitarBoard extends StatefulWidget {
 
 class _GuitarBoardAltState extends State<GuitarBoard> {
   late bool isPortrait;
+  final ScrollController _scrollController = ScrollController();
+  int? _lastScrolledFret; // avoid redundant scrolls on unrelated update() calls
 
   @override
   void initState() {
     super.initState();
     isPortrait = widget.isPortrait;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Called inside GetBuilder.builder after every update(). Scrolls to the
+  // highlighted fret when in IDENTIFY mode so it's always centered on screen.
+  void _scrollToFret(HomeController controller) {
+    final fret = controller.highlightFret;
+    final isIdentify = controller.currentGameMode.value == 'reverse';
+
+    if (!isIdentify || !controller.isStart || fret == null) {
+      // Scroll back to top when not in identify mode or game stopped
+      if (_lastScrolledFret != null) {
+        _lastScrolledFret = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut);
+          }
+        });
+      }
+      return;
+    }
+
+    if (fret == _lastScrolledFret) return; // same fret — no scroll needed
+    _lastScrolledFret = fret;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      final maxExtent = _scrollController.position.maxScrollExtent;
+      if (maxExtent <= 0) return;
+      final viewport = _scrollController.position.viewportDimension;
+      // fretList index → actual fret number 0-15
+      final fretNumber = fretList[fret].fret ?? 0;
+      // Estimate: 16 fret rows fill totalContent (maxExtent + viewport)
+      final rowHeight = (maxExtent + viewport) / 16.0;
+      // Target: center the row vertically
+      final targetOffset =
+          (fretNumber * rowHeight + rowHeight / 2) - viewport / 2;
+      _scrollController.animateTo(
+        targetOffset.clamp(0.0, maxExtent),
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -44,40 +96,49 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     return GetBuilder<HomeController>(
       init: HomeController(),
       builder: (controller) {
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              Center(
-                child: Container(
+        _scrollToFret(controller);
+        // Column with sticky string names above the scrollable fretboard
+        return Column(
+          children: [
+            // ── String name chips — pinned at top, never scroll away ──────
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                padding: isPortrait
+                    ? EdgeInsets.only(right: width * 0.11)
+                    : EdgeInsets.zero,
+                margin: EdgeInsets.only(
+                  right: isPortrait ? 0 : width * 0.170,
+                ),
+                child: Padding(
                   padding: isPortrait
-                      ? EdgeInsets.only(right: width * 0.11)
-                      : EdgeInsets.zero,
-                  margin: EdgeInsets.only(
-                    right: isPortrait ? 0 : width * 0.170,
-                  ),
-                  child: Padding(
-                    padding: isPortrait
-                        ? EdgeInsets.only(right: 0)
-                        : EdgeInsets.only(left: isTablet ? 70 : 30),
-                    child: StringsNameWidget(
-                      width: width * boardWidthFactor,
-                      isPortrait: isPortrait,
-                      isTablet: isTablet,
-                    ),
+                      ? EdgeInsets.zero
+                      : EdgeInsets.only(left: isTablet ? 70 : 30),
+                  child: StringsNameWidget(
+                    width: width * boardWidthFactor,
+                    isPortrait: isPortrait,
+                    isTablet: isTablet,
                   ),
                 ),
               ),
-              Row(
+            ),
+            // ── Scrollable fretboard ──────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // fretboard
+                  // Explicit height = 16 fret rows × (h*0.076 spacing + h*0.0038 bar)
+                  // = h*1.2768 for row dividers, plus h*0.088 bottom-fret padding
+                  // = h*1.352 total content. Use h*1.36 for a tiny buffer.
                   Container(
                     width: width * boardWidthFactor,
-                    constraints: BoxConstraints(maxHeight: height * 1.2),
-                    alignment: Alignment.center,
+                    height: height * 1.24,
+                    alignment: Alignment.topCenter,
                     child: Stack(
-                      alignment: Alignment.bottomCenter,
+                      alignment: Alignment.topCenter,
                       children: [
                         // BOARD SIZE WITH COLOR
                         Column(
@@ -205,37 +266,63 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                           ),
                         ),
 
-                        /// Fret press With Grid
+                        /// Reverse mode: glow circle on the fret to identify
+                        if (controller.currentGameMode.value == 'reverse' &&
+                            controller.isStart &&
+                            controller.reverseSelectedNote == null)
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: AlignedGridView.count(
+                              itemCount: 96,
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 6,
+                              mainAxisSpacing: 0,
+                              crossAxisSpacing: 7,
+                              itemBuilder: (context, index) =>
+                                  reverseTargetCircle(
+                                isTarget: controller.highlightFret == index,
+                                index: index,
+                                height: height,
+                              ),
+                            ),
+                          ),
+
+                        /// Fret press With Grid — only active in find-note mode
                         ///===========================================================
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: AlignedGridView.count(
-                            itemCount: 96,
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 6,
-                            mainAxisSpacing: 3,
-                            crossAxisSpacing: 4,
-                            itemBuilder: (context, index) {
-                              final noteIndex = fretList[index];
-                              // final sound = fretList[index].fretSound;
-                              return GestureDetector(
-                                onTap: () {
-                                  controller.playSound(
-                                    index,
-                                    noteIndex.note!,
-                                    noteIndex.string!,
-                                    fretList[index].fretSound!,
-                                  );
-                                },
-                                child: stringPress(
-                                  index: index,
-                                  height: height,
-                                  width: width,
-                                ),
-                              );
-                            },
+                        IgnorePointer(
+                          ignoring: !controller.isStart ||
+                              controller.currentGameMode.value == 'reverse',
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: AlignedGridView.count(
+                              itemCount: 96,
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisCount: 6,
+                              mainAxisSpacing: 3,
+                              crossAxisSpacing: 4,
+                              itemBuilder: (context, index) {
+                                final noteIndex = fretList[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    controller.playSound(
+                                      index,
+                                      noteIndex.note!,
+                                      noteIndex.string!,
+                                      fretList[index].fretSound!,
+                                    );
+                                  },
+                                  child: stringPress(
+                                    index: index,
+                                    height: height,
+                                    width: width,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
 
@@ -246,28 +333,61 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   //SPACER
                   SizedBox(width: 20),
                   // NUMBERS
+                  // Portrait: labels "1"-"15", each exactly one fret row tall
+                  // (h*0.0798 = h*0.076 spacing + h*0.0038 bar), text centered.
+                  // Label N is then centered in fret N's playing area so
+                  // position dots align with their correct number.
+                  // Landscape: keep existing offset-based spacing.
                   Container(
-                    // color: Colors.red,
                     width: width * 0.06,
                     child: ListView.builder(
-                      itemCount: 16,
+                      itemCount: widget.isPortrait ? 16 : 16,
                       shrinkWrap: true,
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       itemBuilder: (context, index) {
+                        if (widget.isPortrait) {
+                          // index 0 → "0" (nut/open string) at nut-cap height
+                          // indices 1-15 → "1"-"15" at one full fret-row height
+                          // so label N is centered in fret N's playing area
+                          if (index == 0) {
+                            return SizedBox(
+                              height: height * 0.015,
+                              child: Center(
+                                child: Text(
+                                  '0',
+                                  style: JHGTextStyles.lrlabelStyle.copyWith(
+                                    fontSize: 11,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return SizedBox(
+                            height: height * 0.0798,
+                            child: Center(
+                              child: Text(
+                                index.toString(),
+                                style: JHGTextStyles.lrlabelStyle.copyWith(
+                                  fontSize: 14,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         return Padding(
                           padding: EdgeInsets.only(
-                            bottom: widget.isPortrait == true
-                                ? getPotraitHeight(index, height, isTablet)
-                                : getLandscapeHeight(index, height, isTablet),
+                            bottom: getLandscapeHeight(index, height, isTablet),
                           ),
                           child: RotatedBox(
-                            quarterTurns: widget.isPortrait ? 0 : 1,
+                            quarterTurns: 1,
                             child: Text(
                               index.toString(),
                               style: JHGTextStyles.lrlabelStyle.copyWith(
                                 fontSize: 14,
-                                height: widget.isPortrait == true ? 1.2 : 2,
+                                height: 2,
                               ),
                             ),
                           ),
@@ -277,9 +397,10 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ),
                 ],
               ),
-            ],
-          ),
-        );
+              ),  // SingleChildScrollView
+            ),    // Expanded
+          ],
+        );       // Column
       },
     );
   }
@@ -338,6 +459,35 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget reverseTargetCircle({
+    required bool isTarget,
+    required int index,
+    required double height,
+  }) {
+    final size = height * 0.038;
+    return Padding(
+      padding: EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
+      child: isTarget
+          ? Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: JHGColors.primary.withValues(alpha: 0.30),
+                shape: BoxShape.circle,
+                border: Border.all(color: JHGColors.primary, width: 2.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: JHGColors.primary.withValues(alpha: 0.55),
+                    blurRadius: 6,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+            )
+          : SizedBox(width: size, height: size),
     );
   }
 

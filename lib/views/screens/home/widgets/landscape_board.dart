@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/main.dart';
+import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
@@ -248,6 +249,18 @@ class LandscapeBoard extends StatelessWidget {
                     ),
                   )),
 
+              // Heatmap
+              GestureDetector(
+                onTap: () => Get.to(
+                  () => const HeatmapScreen(),
+                  transition: Transition.downToUp,
+                ),
+                child: RotatedBox(
+                  quarterTurns: 1,
+                  child: _iconBtn(Icons.insights_rounded),
+                ),
+              ),
+
               // Full reset
               GestureDetector(
                 onTap: () => controller.resetGame(true),
@@ -294,6 +307,8 @@ class LandscapeBoard extends StatelessWidget {
         return LucideIcons.clock300;
       case 'leaderboard':
         return LucideIcons.trophy300;
+      case 'reverse':
+        return Icons.quiz_rounded;
       default:
         return LucideIcons.timer300;
     }
