@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:fretboard/controllers/heatmap_controller.dart';
+import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/app_colors.dart';
 import 'package:fretboard/utils/app_strings.dart';
+import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,13 +19,25 @@ class HeatmapScreen extends StatefulWidget {
 
 class _HeatmapScreenState extends State<HeatmapScreen> {
   late HeatmapController controller;
+  bool _showIntro = false;
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<HeatmapController>();
     controller.loadStats();
+    _checkTourIntro();
   }
+
+  Future<void> _checkTourIntro() async {
+    final pending = await TourService.shouldShowHeatmapIntro();
+    if (pending && mounted) {
+      await TourService.markHeatmapIntroSeen();
+      setState(() => _showIntro = true);
+    }
+  }
+
+  void _dismissIntro() => setState(() => _showIntro = false);
 
   void _confirmReset() {
     showDialog(
@@ -74,70 +88,70 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     final width = MediaQuery.of(context).size.width;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      backgroundColor: JHGColors.secondryBlack,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // ─── TOP BAR ──────────────────────────────────────────────────
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Container(
-                      height: 44,
-                      width: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2C2C2C),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white70, size: 18),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        'MASTERY MAP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.4,
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: JHGColors.secondryBlack,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // ─── TOP BAR ──────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _confirmReset,
+                        child: Container(
+                          height: 44, width: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2C),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.restart_alt_rounded,
+                              color: Colors.white54, size: 20),
                         ),
                       ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _confirmReset,
-                    child: Container(
-                      height: 44,
-                      width: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2C2C2C),
-                        borderRadius: BorderRadius.circular(12),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'MASTERY MAP',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: const Icon(Icons.restart_alt_rounded,
-                          color: Colors.white54, size: 20),
-                    ),
+                      // Legend pill
+                      GestureDetector(
+                        onTap: () => _showLegendSheet(context),
+                        child: Container(
+                          height: 44, width: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2C2C2C),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.info_outline_rounded,
+                              color: Colors.white54, size: 20),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            // ─── STATS STRIP ──────────────────────────────────────────────
-            Obx(() => Padding(
+                // ─── STATS STRIP ──────────────────────────────────────────
+                Obx(() => Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                   child: Row(
                     children: [
                       _statChip(
                         value: controller.totalPracticed.toString(),
                         label: 'Practiced',
-                        color: Colors.white38,
+                        color: Colors.white54,
                         bgColor: const Color(0xFF2C2C2C),
                       ),
                       const SizedBox(width: 8),
@@ -158,81 +172,138 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                   ),
                 )),
 
-            // ─── FRETBOARD ────────────────────────────────────────────────
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white24,
-                      strokeWidth: 1.5,
+                // ─── FRETBOARD ────────────────────────────────────────────
+                Expanded(
+                  child: Obx(() {
+                    if (controller.isLoading.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                            color: Colors.white24, strokeWidth: 1.5),
+                      );
+                    }
+                    return _HeatmapFretboard(
+                        controller: controller, height: height, width: width);
+                  }),
+                ),
+
+                // ─── DETAIL PANEL ─────────────────────────────────────────
+                Obx(() {
+                  final idx = controller.selectedIndex.value;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    height: idx >= 0 ? 96 : 0,
+                    child: ClipRect(
+                      child: OverflowBox(
+                        minHeight: 0,
+                        maxHeight: double.infinity,
+                        alignment: Alignment.topCenter,
+                        child: idx >= 0
+                            ? _DetailPanel(index: idx, controller: controller)
+                            : const SizedBox.shrink(),
+                      ),
                     ),
                   );
-                }
-                return _HeatmapFretboard(
-                  controller: controller,
-                  height: height,
-                  width: width,
-                );
-              }),
-            ),
+                }),
 
-            // ─── DETAIL PANEL ─────────────────────────────────────────────
-            Obx(() {
-              final idx = controller.selectedIndex.value;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                height: idx >= 0 ? 96 : 0,
-                child: ClipRect(
-                  child: OverflowBox(
-                    minHeight: 0,
-                    maxHeight: double.infinity,
-                    alignment: Alignment.topCenter,
-                    child: idx >= 0
-                        ? _DetailPanel(index: idx, controller: controller)
-                        : const SizedBox.shrink(),
+                // ─── HINT + LEGEND ────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Tap any fret to see details',
+                        style: GoogleFonts.inter(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      _inlineLegend(),
+                    ],
                   ),
                 ),
-              );
-            }),
 
-            // ─── LEGEND + BOTTOM ──────────────────────────────────────────
-            Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF2C2C2C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              padding: EdgeInsets.fromLTRB(
-                  20, 14, 20, bottomInset > 0 ? bottomInset : 20),
-              child: Column(
+                // ─── NAV BAR ──────────────────────────────────────────────
+                AppNavBar(
+                  activeTab: AppTab.heatmap,
+                  safeBottom: bottomInset,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showIntro) _HeatmapIntroOverlay(onDismiss: _dismissIntro),
+      ],
+    );
+  }
+
+  void _showLegendSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Color Guide', style: GoogleFonts.poppins(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ...{
+              const Color(0xFFE05252): ('Struggling', 'Less than 50% correct'),
+              const Color(0xFFE8961A): ('Learning', '50–74% correct'),
+              const Color(0xFF4CB87A): ('Good', '75–89% correct'),
+              const Color(0xFF2ECC71): ('Mastered', '90%+ correct'),
+              const Color(0x66FFFFFF): ('No data', 'Not practiced yet'),
+            }.entries.map((e) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
                 children: [
-                  Text(
-                    'TAP ANY FRET TO SEE DETAILS',
-                    style: GoogleFonts.inter(
-                      color: Colors.white24,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
+                  Container(
+                    width: 14, height: 14,
+                    decoration: BoxDecoration(color: e.key, shape: BoxShape.circle),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _legendDot(const Color(0xFFE05252), 'Struggling'),
-                      _legendDot(const Color(0xFFE8961A), 'Learning'),
-                      _legendDot(const Color(0xFF4CB87A), 'Good'),
-                      _legendDot(const Color(0xFF2ECC71), 'Mastered'),
-                      _legendDot(const Color(0x40FFFFFF), 'No data'),
+                      Text(e.value.$1, style: GoogleFonts.inter(
+                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(e.value.$2, style: GoogleFonts.inter(
+                        color: Colors.white38, fontSize: 11)),
                     ],
                   ),
                 ],
               ),
-            ),
+            )),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _inlineLegend() {
+    const items = [
+      (Color(0xFFE05252), 'S'),
+      (Color(0xFFE8961A), 'L'),
+      (Color(0xFF4CB87A), 'G'),
+      (Color(0xFF2ECC71), 'M'),
+      (Color(0x66FFFFFF), '–'),
+    ];
+    return Row(
+      children: items.map((item) => Padding(
+        padding: const EdgeInsets.only(left: 6),
+        child: Container(
+          width: 10, height: 10,
+          decoration: BoxDecoration(color: item.$1, shape: BoxShape.circle),
+        ),
+      )).toList(),
     );
   }
 
@@ -276,30 +347,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     );
   }
 
-  Widget _legendDot(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: Colors.white38,
-            fontSize: 9,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
@@ -462,19 +509,22 @@ class _HeatmapFretboard extends StatelessWidget {
               // Fretboard
               Container(
                 width: boardWidth,
-                constraints: BoxConstraints(maxHeight: height * 1.2),
+                height: height * 1.212,
+                clipBehavior: Clip.hardEdge,
+                decoration: const BoxDecoration(),
                 child: Stack(
-                  alignment: Alignment.bottomCenter,
+                  alignment: Alignment.topCenter,
+                  clipBehavior: Clip.hardEdge,
                   children: [
-                    // Cream board
+                    // Cream board — nut + exactly 15 fret rows
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(height: height * 0.015),
-                        Expanded(
-                          child: Container(
-                            width: width * 0.8,
-                            color: AppColors.creamColor,
-                          ),
+                        Container(
+                          width: width * 0.8,
+                          height: height * 1.197,
+                          color: AppColors.creamColor,
                         ),
                       ],
                     ),
@@ -797,6 +847,155 @@ class _StringNameRow extends StatelessWidget {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// ── Heatmap tour intro overlay ────────────────────────────────────────────────
+
+class _HeatmapIntroOverlay extends StatefulWidget {
+  final VoidCallback onDismiss;
+  const _HeatmapIntroOverlay({required this.onDismiss});
+
+  @override
+  State<_HeatmapIntroOverlay> createState() => _HeatmapIntroOverlayState();
+}
+
+class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _fade = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300))
+      ..forward();
+  }
+
+  @override
+  void dispose() {
+    _fade.dispose();
+    super.dispose();
+  }
+
+  void _dismiss() {
+    _fade.reverse().whenComplete(widget.onDismiss);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final padding = MediaQuery.paddingOf(context);
+    final cardW = (size.width - 56.0).clamp(0.0, 400.0);
+    final left = (size.width - cardW) / 2;
+
+    return FadeTransition(
+      opacity: _fade,
+      child: Material(
+        type: MaterialType.transparency,
+        child: SizedBox.expand(
+          child: Stack(
+            children: [
+              // Dark backdrop
+              const IgnorePointer(
+                child: DecoratedBox(
+                  decoration:
+                      BoxDecoration(color: Color(0xCC000000)),
+                  child: SizedBox.expand(),
+                ),
+              ),
+              // Card
+              Positioned(
+                left: left,
+                top: size.height / 2 - 160,
+                width: cardW,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+                  decoration: BoxDecoration(
+                    color: const Color(0xE8111111),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.10)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10))
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: JHGColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.insights_rounded,
+                            color: JHGColors.primary, size: 28),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Your Mastery Map',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Each cell shows one note position. '
+                        'Darker red = more attempts needed. '
+                        'Green = mastered.\n\n'
+                        'Practise the red spots to build a complete mastery of the neck.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.72),
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      GestureDetector(
+                        onTap: _dismiss,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: JHGColors.primary,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: JHGColors.primary
+                                    .withValues(alpha: 0.40),
+                                blurRadius: 16,
+                                offset: const Offset(0, 5),
+                              )
+                            ],
+                          ),
+                          child: const Text(
+                            'Got it!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

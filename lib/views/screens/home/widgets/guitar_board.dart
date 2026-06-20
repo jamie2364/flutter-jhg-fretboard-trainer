@@ -130,25 +130,26 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Explicit height = 16 fret rows × (h*0.076 spacing + h*0.0038 bar)
-                  // = h*1.2768 for row dividers, plus h*0.088 bottom-fret padding
-                  // = h*1.352 total content. Use h*1.36 for a tiny buffer.
+                  // nut (0.015h) + 15 fret rows (1.197h) = 1.212h — ends at fret-15 bar
                   Container(
                     width: width * boardWidthFactor,
-                    height: height * 1.24,
+                    height: height * 1.212,
                     alignment: Alignment.topCenter,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: const BoxDecoration(),
                     child: Stack(
                       alignment: Alignment.topCenter,
+                      clipBehavior: Clip.hardEdge,
                       children: [
-                        // BOARD SIZE WITH COLOR
+                        // BOARD SIZE WITH COLOR — nut + exactly 15 fret rows
                         Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(height: height * 0.015),
-                            Expanded(
-                              child: Container(
-                                width: width * 0.8,
-                                color: AppColors.creamColor,
-                              ),
+                            Container(
+                              width: width * 0.8,
+                              height: height * 1.197,
+                              color: AppColors.creamColor,
                             ),
                           ],
                         ),

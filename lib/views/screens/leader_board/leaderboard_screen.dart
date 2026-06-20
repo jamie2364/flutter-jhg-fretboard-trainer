@@ -7,6 +7,7 @@ import 'package:fretboard/controllers/leaderboard_controller.dart';
 import 'package:fretboard/utils/app_assets.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/leader_board/widgets/leaderboard_widget.dart';
+import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -38,6 +39,7 @@ class LeaderPortraitView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
     return SafeArea(
       bottom: false,
       child: Column(
@@ -48,44 +50,19 @@ class LeaderPortraitView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Trophy icon
                 Container(
-                  height: 44,
-                  width: 44,
+                  height: 44, width: 44,
                   decoration: BoxDecoration(
                     color: JHGColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: JHGColors.primary.withValues(alpha: 0.35)),
+                    border: Border.all(color: JHGColors.primary.withValues(alpha: 0.35)),
                   ),
-                  child: const Icon(LucideIcons.trophy300,
-                      color: JHGColors.primary, size: 20),
+                  child: const Icon(LucideIcons.trophy300, color: JHGColors.primary, size: 20),
                 ),
-
-                // Title
-                Text(
-                  'Leaderboard',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                // Close button
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(LucideIcons.x300,
-                        color: Colors.white70, size: 18),
-                  ),
-                ),
+                Text('Leaderboard',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 44),
               ],
             ),
           ),
@@ -94,54 +71,38 @@ class LeaderPortraitView extends StatelessWidget {
           Expanded(
             child: controller.isLoading.value
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: JHGColors.primary,
-                      strokeWidth: 2,
-                    ),
-                  )
+                    child: CircularProgressIndicator(color: JHGColors.primary, strokeWidth: 2))
                 : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Current leader card
                         _buildLeaderCard(),
                         const SizedBox(height: 16),
-
-                        // Section header
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'RANKINGS',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white38,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              Text(
-                                AppStrings.scoreTemp.toUpperCase(),
-                                style: GoogleFonts.inter(
-                                  color: Colors.white38,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
+                              Text('RANKINGS',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white38, fontSize: 11,
+                                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                              Text(AppStrings.scoreTemp.toUpperCase(),
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white38, fontSize: 11,
+                                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
                             ],
                           ),
                         ),
-
-                        // Score list
                         populateScoreList(controller.scoreList),
                       ],
                     ),
                   ),
           ),
+
+          // ─── NAV BAR ────────────────────────────────────────────────
+          AppNavBar(activeTab: AppTab.leaderboard, safeBottom: safeBottom),
         ],
       ),
     );

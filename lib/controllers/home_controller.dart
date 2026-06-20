@@ -52,6 +52,11 @@ class HomeController extends GetxController {
   }
 
   var isActive = true;
+
+  // Tour hooks — set by TourController, cleared on tour end.
+  VoidCallback? onFretTappedDuringTour;
+  VoidCallback? onAnswerSelectedDuringTour;
+
   int? selectedFret;
   String? selectedNote;
   int? selectedString;
@@ -63,6 +68,15 @@ class HomeController extends GetxController {
 
   JHGInterstitialAd? interstitialAds;
   RxBool isExpanded = RxBool(false);
+
+  /// Controls the collapsible bottom panel on the portrait home screen.
+  /// Tour steps and game-state changes drive this; the panel widget observes it.
+  final isBottomPanelExpanded = true.obs;
+
+  // ── Identify mode settings ───────────────────────────────────────────────
+  bool identifyShowPositionHint = true;
+  bool identifyAutoAdvance = false;
+  bool identifyPlaySound = true;
 
   getUserName() async {
     userName = await LocalDB.getUserName;
@@ -135,6 +149,8 @@ class HomeController extends GetxController {
             decrementScore();
           }
           update();
+          // Notify the interactive tour that the user tapped a fret.
+          onFretTappedDuringTour?.call();
         } else {
           unawaited(boardModel.playSound());
         }
@@ -343,8 +359,8 @@ class HomeController extends GetxController {
     if (!isStart) return;
     if (reverseSelectedNote != null) return; // block double-tap during feedback
 
-    // Play the note so the user hears what it is
-    if (highlightFret != null) {
+    // Play the note so the user hears what it is (respects identifyPlaySound setting)
+    if (highlightFret != null && identifyPlaySound) {
       unawaited(fretList[highlightFret!].playSound());
     }
 
@@ -360,8 +376,10 @@ class HomeController extends GetxController {
       previousHighlightFret = highlightFret;
       previousHighlightNode = highlightNode;
       incrementScore();
-      // Brief green flash, then next question
-      Future.delayed(const Duration(milliseconds: 600), () {
+      final delay = identifyAutoAdvance
+          ? const Duration(milliseconds: 200)
+          : const Duration(milliseconds: 600);
+      Future.delayed(delay, () {
         reverseSelectedNote = null;
         reverseWasCorrect = false;
         highLightTheGame();
@@ -376,6 +394,8 @@ class HomeController extends GetxController {
       });
     }
     update();
+    // Notify the interactive tour that the user selected an identify answer.
+    onAnswerSelectedDuringTour?.call();
   }
 
   String formatTime(int seconds) {
