@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/features/tour/tour_keys.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
@@ -62,38 +64,67 @@ class AppNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final bar = Container(
       height: 56 + safeBottom,
       decoration: const BoxDecoration(
         color: _kNavBg,
         border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: safeBottom),
-        child: Row(
-          children: [
-            _NavItem(
-              icon: Icons.music_note_rounded,
-              isActive: activeTab == AppTab.home,
-              onTap: () => _navigate(AppTab.home, context),
+      child: Align(
+        alignment: Alignment.center,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: safeBottom),
+            child: Row(
+              children: [
+                _NavItem(
+                  icon: Icons.music_note_rounded,
+                  isActive: activeTab == AppTab.home,
+                  onTap: () => _navigate(AppTab.home, context),
+                ),
+                _NavItem(
+                  icon: LucideIcons.trophy300,
+                  isActive: activeTab == AppTab.leaderboard,
+                  onTap: () => _navigate(AppTab.leaderboard, context),
+                ),
+                _NavItem(
+                  // Tour key only needed on the home screen; other screens
+                  // share the same GlobalKey instance which would duplicate it.
+                  key: activeTab == AppTab.home ? tourKeyHeatmapNav : null,
+                  icon: Icons.insights_rounded,
+                  isActive: activeTab == AppTab.heatmap,
+                  onTap: () => _navigate(AppTab.heatmap, context),
+                ),
+                _NavItem(
+                  icon: LucideIcons.settings300,
+                  isActive: activeTab == AppTab.settings,
+                  onTap: () => _navigate(AppTab.settings, context),
+                ),
+              ],
             ),
-            _NavItem(
-              icon: LucideIcons.trophy300,
-              isActive: activeTab == AppTab.leaderboard,
-              onTap: () => _navigate(AppTab.leaderboard, context),
-            ),
-            _NavItem(
-              icon: Icons.insights_rounded,
-              isActive: activeTab == AppTab.heatmap,
-              onTap: () => _navigate(AppTab.heatmap, context),
-            ),
-            _NavItem(
-              icon: LucideIcons.settings300,
-              isActive: activeTab == AppTab.settings,
-              onTap: () => _navigate(AppTab.settings, context),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+
+    if (!kIsWeb) return bar;
+
+    // On web, escape the parent ConstrainedBox so the dark background spans
+    // the full screen width on leaderboard/heatmap/settings screens.
+    // SizedBox fixes the height so the Column doesn't see an infinite child
+    // (OverflowBox sizes to constraints.biggest, which is ∞ in a Column).
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final barHeight = 56.0 + safeBottom;
+    return SizedBox(
+      height: barHeight,
+      child: OverflowBox(
+        minWidth: screenWidth,
+        maxWidth: screenWidth,
+        minHeight: barHeight,
+        maxHeight: barHeight,
+        alignment: Alignment.bottomCenter,
+        child: bar,
       ),
     );
   }
@@ -101,6 +132,7 @@ class AppNavBar extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
+    super.key,
     required this.icon,
     required this.onTap,
     this.isActive = false,

@@ -39,6 +39,51 @@ class WebPortraitGuitarBoard extends StatefulWidget {
 
 class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
   final ScrollController _scrollController = ScrollController();
+  int? _lastAutoScrollFret;
+
+  // Find the fretList entry nearest to [pos] and fire playSound.
+  // Uses nearest-neighbour matching within a 35 px radius so stray taps are
+  // ignored; this replaces 96 individual Positioned hit-area widgets, which
+  // caused a StackOverflow in the DDC JavaScript engine.
+  void _handleBoardTap(Offset pos, HomeController controller) {
+    int bestIndex = -1;
+    double bestDist = double.infinity;
+    for (int i = 0; i < fretList.length; i++) {
+      final e = fretList[i];
+      final cx = _noteLeft(_stringVisualIndex(e.string!)) + 12.5;
+      final cy = _noteTop(e.fret!) + 22.5;
+      final dx = pos.dx - cx;
+      final dy = pos.dy - cy;
+      final d2 = dx * dx + dy * dy;
+      if (d2 < bestDist) {
+        bestDist = d2;
+        bestIndex = i;
+      }
+    }
+    const radius = 35.0;
+    if (bestIndex >= 0 && bestDist <= radius * radius) {
+      final e = fretList[bestIndex];
+      controller.playSound(bestIndex, e.note!, e.string!, e.fretSound!);
+    }
+  }
+
+  // Scroll so the highlighted fret is vertically centred in the viewport.
+  void _scrollToFret(int highlightIndex, double viewportHeight) {
+    if (highlightIndex == _lastAutoScrollFret) return;
+    _lastAutoScrollFret = highlightIndex;
+    final fret = fretList[highlightIndex].fret ?? 0;
+    // noteTop is the top edge of the 45 px dot; add 22.5 to get its centre.
+    final centre = _noteTop(fret) + 22.5;
+    final target = (centre - viewportHeight / 2).clamp(0.0, double.infinity);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        target.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -62,6 +107,14 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     const doubleDotRightX = 3.5 * _webStringGap + 2;
 
     return GetBuilder<HomeController>(builder: (controller) {
+      // Auto-scroll to the highlighted fret in Identify mode.
+      if (controller.isStart &&
+          controller.currentGameMode.value == 'reverse' &&
+          controller.highlightFret != null) {
+        _scrollToFret(controller.highlightFret!, viewportHeight);
+      } else {
+        _lastAutoScrollFret = null;
+      }
       return SizedBox(
         height: viewportHeight,
         width: parentWidth + 31,
@@ -164,45 +217,40 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                             left: doubleDotRightX,
                             top: _fretCenterY(nutHeight, fretSpacing, 12),
                           ),
-                          for (final entry in fretList.asMap().entries)
-                            if (controller.selectedFret == entry.key)
-                              _SelectedNoteDot(
-                                left: _noteLeft(
-                                  _stringVisualIndex(
-                                    entry.value.string!,
-                                  ),
-                                ),
-                                top: _noteTop(entry.value.fret!),
-                                color: controller.selectedColor,
-                              ),
-                          for (final entry in fretList.asMap().entries)
-                            Positioned(
-                              left: _noteLeft(
-                                    _stringVisualIndex(
-                                      entry.value.string!,
-                                    ),
-                                  ) -
-                                  8,
-                              top: _noteTop(entry.value.fret!) - 8,
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    controller.playSound(
-                                      entry.key,
-                                      entry.value.note!,
-                                      entry.value.string!,
-                                      entry.value.fretSound!,
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 41,
-                                    height: 61,
-                                    color: Colors.transparent,
-                                  ),
-                                ),
+                          // Identify mode: highlight the fret the user must name
+                          if (controller.isStart &&
+                              controller.currentGameMode.value == 'reverse' &&
+                              controller.highlightFret != null)
+                            _SelectedNoteDot(
+                              left: _noteLeft(_stringVisualIndex(
+                                  fretList[controller.highlightFret!].string!)),
+                              top: _noteTop(
+                                  fretList[controller.highlightFret!].fret!),
+                              color: JHGColors.primary,
+                            ),
+
+                          if (controller.selectedFret != null &&
+                              controller.selectedFret! < fretList.length)
+                            _SelectedNoteDot(
+                              left: _noteLeft(_stringVisualIndex(
+                                  fretList[controller.selectedFret!].string!)),
+                              top: _noteTop(
+                                  fretList[controller.selectedFret!].fret!),
+                              color: controller.selectedColor,
+                            ),
+                          // Single tap-handler replaces 96 individual
+                          // Positioned hit-area widgets. Nearest-neighbour
+                          // matching within 35 px; same UX, far shallower tree.
+                          Positioned.fill(
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTapDown: (d) => _handleBoardTap(
+                                    d.localPosition, controller),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),

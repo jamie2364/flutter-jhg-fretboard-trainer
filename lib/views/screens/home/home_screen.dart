@@ -82,54 +82,50 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       TourStep(
         title: 'Welcome to Fretboard Trainer!',
         subtitle:
-            'Interactive walkthrough — you\'ll play two live rounds and be ready to go.',
+            'Quick walkthrough — you\'ll play two live rounds and be ready to go.',
         actionLabel: 'Let\'s Go  →',
+        blockBackground: false,
         onActivate: () {
-          // Guarantee a clean state at tour start.
           if (hc().isStart) hc().resetGame(false);
           hc().switchToFindMode();
         },
       ),
 
-      // ── 1. Timer ───────────────────────────────────────────────────────────
-      TourStep(
-        title: 'Set Your Timer',
-        subtitle:
-            'Tap the clock icon to switch between Stopwatch and Countdown.\nFor a countdown, use + and − to set the duration.',
-        targetKey: tourKeyTimer,
-        spotlightPadding: 14,
-        actionLabel: 'Got it  →',
-      ),
-
-      // ── 2. Find Note Mode chip ─────────────────────────────────────────────
+      // ── 1. Find Note Mode chip ────────────────────────────────────────────
       TourStep(
         title: 'Find Note Mode',
         subtitle:
-            'A note name appears at the bottom. Scroll the neck and tap that note on the fretboard to score.',
+            'A note name appears in the panel. Scroll the neck and tap that note on the fretboard to score.',
         targetKey: tourKeyModeChip,
         spotlightPadding: 10,
         actionLabel: 'Got it  →',
       ),
 
-      // ── 3. Tap Play (Find Note) — compact spotlight, must tap ─────────────
+      // ── 2. Tap Play (Find Note) ───────────────────────────────────────────
+      // blockBackground keeps the fretboard locked; user clicks the card button.
       TourStep(
         title: 'Tap Play to Start',
-        subtitle: 'Tap ▶ — the note you need to find will appear below.',
+        subtitle: 'Press ▶ below — the note to find will appear in the panel.',
         targetKey: tourKeyPlayButton,
         spotlightPadding: 8,
-        isInteractive: true,
         blockBackground: true,
-        onSpotlightTap: () {
+        actionLabel: '▶  Start',
+        onActivate: () {
+          if (hc().isStart) hc().resetGame(false);
+        },
+        onActionTap: () {
           hc().startTimer();
           hc().startTheGame();
-          hc().isBottomPanelExpanded.value = false; // collapse → more fretboard space
           tc().next();
         },
       ),
 
-      // ── 4. Find the note — card anchored just above timer, dynamic hint ────
+      // ── 3. Find the note — dynamic hint, card centred above answer tile ──
       TourStep(
         title: 'Find It!',
+        // On web the collapsed tile sits in the lower-left; push card up so
+        // it sits in the fretboard area and doesn't block the answer zone.
+        labelYOffset: kIsWeb ? -160.0 : 60.0,
         subtitleBuilder: () => GetBuilder<HomeController>(
           builder: (h) {
             final note = h.highlightNode ?? '—';
@@ -168,8 +164,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 const SizedBox(height: 3),
                 const Text('Tap it to score!',
                     textAlign: TextAlign.center,
-                    style:
-                        TextStyle(color: Colors.white54, fontSize: 12)),
+                    style: TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             );
           },
@@ -177,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         isInteractive: true,
         blockBackground: false,
         showBackdrop: false,
-        anchorAboveKey: tourKeyTimer, // positions card just above the timer
         onActivate: () {
           void fireOnce() {
             hc().onFretTappedDuringTour = null;
@@ -189,21 +183,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
       ),
 
-      // ── 5. Switch to Identify Mode — spotlight chip, user does it ─────────
+      // ── 4. Switch to Identify Mode ────────────────────────────────────────
       TourStep(
         title: 'Switch to Identify Mode',
         subtitle:
-            'Tap the mode button (highlighted) and select Identify Mode.',
+            'Tap the highlighted mode button and choose Identify Mode.',
         targetKey: tourKeyModeChip,
         spotlightPadding: 10,
-        isInteractive: true,   // no Next button — user must act
-        blockBackground: false, // taps pass through so user can tap chip
-        showBackdrop: true,     // dark overlay draws attention to chip
+        isInteractive: true,
+        blockBackground: false,
+        showBackdrop: true,
         onActivate: () {
           hc().onFretTappedDuringTour = null;
           if (hc().isStart) hc().resetGame(false);
-          hc().isBottomPanelExpanded.value = true; // expand so mode chip is visible
-          // Watch currentGameMode — auto-advance when user switches to identify.
+          hc().isBottomPanelExpanded.value = true;
           final w = ever(hc().currentGameMode, (String mode) {
             if (mode == 'reverse') {
               Future.delayed(const Duration(milliseconds: 400), () {
@@ -215,33 +208,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
       ),
 
-      // ── 6. Tap Play (Identify) ─────────────────────────────────────────────
+      // ── 5. Tap Play (Identify) ────────────────────────────────────────────
       TourStep(
         title: 'Tap Play to Start',
-        subtitle: 'Tap ▶ — a fret will glow on the neck.',
+        subtitle: 'Press ▶ — a fret will glow on the neck.',
         targetKey: tourKeyPlayButton,
         spotlightPadding: 8,
-        isInteractive: true,
         blockBackground: true,
+        actionLabel: '▶  Start',
         onActivate: () {
           if (hc().isStart) hc().resetGame(false);
         },
-        onSpotlightTap: () {
+        onActionTap: () {
           hc().startTimer();
           hc().startTheGame();
           tc().next();
         },
       ),
 
-      // ── 7. Name the note — card anchored above timer, wait for answer ──────
+      // ── 6. Name the note — card centred above the answer tile ────────────
       TourStep(
         title: 'Name That Note!',
         subtitle:
-            'A fret is glowing on the neck.\nTap the correct note name from the 4 buttons below.',
+            'A fret is glowing on the neck.\nTap the correct note from the 4 buttons in the panel.',
         isInteractive: true,
         blockBackground: false,
         showBackdrop: false,
-        anchorAboveKey: tourKeyTimer,
+        labelYOffset: kIsWeb ? -160.0 : 60.0,
         onActivate: () {
           void fireOnce() {
             hc().onAnswerSelectedDuringTour = null;
@@ -253,14 +246,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
       ),
 
-      // ── 8. Heatmap — spotlight the nav icon, then navigate ────────────────
+      // ── 7. Heatmap + tour complete ────────────────────────────────────────
       TourStep(
-        title: 'Your Mastery Map',
+        title: 'Tour Complete! 🎸',
         subtitle:
-            'The Heatmap shows which notes you struggle with most — darker means more practice needed.\nTap "View Heatmap" to explore it now.',
+            'The Heatmap shows which notes you struggle with most — darker means more practice needed.',
         targetKey: tourKeyHeatmapNav,
-        spotlightPadding: 14,
-        actionLabel: 'View Heatmap  →',
+        spotlightPadding: 8,
+        actionLabel: 'Open Heatmap  →',
         onActivate: () {
           hc().onAnswerSelectedDuringTour = null;
           if (hc().isStart) hc().resetGame(false);
@@ -268,9 +261,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         },
         onActionTap: () {
           tc().complete();
-          Get.to(() => const HeatmapScreen(),
-              transition: Transition.noTransition,
-              duration: Duration.zero);
+          Get.to(
+            () => const HeatmapScreen(),
+            transition: Transition.noTransition,
+            duration: Duration.zero,
+          );
         },
       ),
     ];

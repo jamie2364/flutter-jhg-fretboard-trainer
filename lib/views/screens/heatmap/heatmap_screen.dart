@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -85,16 +86,14 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    final width = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+    const webMaxWidth = 568.0;
+    final width = kIsWeb ? webMaxWidth : screenWidth;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: JHGColors.secondryBlack,
-          body: SafeArea(
-            bottom: false,
-            child: Column(
+    final content = SafeArea(
+      bottom: false,
+      child: Column(
               children: [
                 // ─── TOP BAR ──────────────────────────────────────────────
                 Padding(
@@ -232,7 +231,20 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                 ),
               ],
             ),
-          ),
+          );
+
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: JHGColors.secondryBlack,
+          body: kIsWeb
+              ? Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: webMaxWidth),
+                    child: content,
+                  ),
+                )
+              : content,
         ),
         if (_showIntro) _HeatmapIntroOverlay(onDismiss: _dismissIntro),
       ],
@@ -491,9 +503,11 @@ class _HeatmapFretboard extends StatelessWidget {
     const boardWidthFactor = 0.50;
     final boardWidth = width * boardWidthFactor;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(left: 45.8),
-      child: Column(
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.only(left: 45.8),
+        child: Column(
         children: [
           // String name chips
           Center(
@@ -642,6 +656,8 @@ class _HeatmapFretboard extends StatelessWidget {
                       ),
                     ),
                     // Heatmap circles
+                    // Top padding = nut height so fret-0 circles
+                    // appear below the nut instead of behind it.
                     Align(
                       alignment: Alignment.topCenter,
                       child: AlignedGridView.count(
@@ -686,6 +702,7 @@ class _HeatmapFretboard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
@@ -736,11 +753,6 @@ class _HeatmapCell extends StatelessWidget {
   final double height;
   final HeatmapController controller;
 
-  double _topPadding() {
-    if (index >= 0 && index <= 5) return height * 0.006;
-    return height * 0.038;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -754,7 +766,7 @@ class _HeatmapCell extends StatelessWidget {
       return GestureDetector(
         onTap: () => controller.selectFret(index),
         child: Padding(
-          padding: EdgeInsets.only(bottom: _topPadding()),
+          padding: EdgeInsets.symmetric(vertical: height * 0.022),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             width: circleSize,

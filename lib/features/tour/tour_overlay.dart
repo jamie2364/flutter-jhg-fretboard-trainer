@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'tour_controller.dart';
 import 'tour_step.dart';
@@ -148,7 +149,37 @@ class _TourOverlayState extends State<TourOverlay>
                     ),
                   ),
 
-                // 4. Floating label card.
+                // 4. Skip button — top-right, always accessible.
+                Positioned(
+                  top: padding.top + 10,
+                  right: kIsWeb
+                      ? ((size.width - 520.0) / 2.0 + 12.0)
+                          .clamp(12.0, double.infinity)
+                      : 14.0,
+                  child: GestureDetector(
+                    onTap: widget.controller.skip,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Text(
+                        'Skip',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 5. Floating label card.
                 _buildLabel(step, size, padding, spotlight),
               ],
             ),
@@ -163,42 +194,25 @@ class _TourOverlayState extends State<TourOverlay>
     const hPad = 28.0;
     const estimatedCardH = 230.0;
     final cardW = (size.width - hPad * 2).clamp(0.0, 400.0);
+    final hasSpotlight = spotlight != null;
 
     final cardContent = Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: _StepDots(
-                current: widget.controller.currentStep.value,
-                total: widget.controller.totalSteps,
-              ),
-            ),
-            GestureDetector(
-              onTap: widget.controller.complete,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  Icons.close_rounded,
-                  color: Colors.white.withValues(alpha: 0.45),
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
+        _StepDots(
+          current: widget.controller.currentStep.value,
+          total: widget.controller.totalSteps,
         ),
         const SizedBox(height: 12),
         Text(
           step.title,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            shadows: [
+            shadows: const [
               Shadow(
                   color: Colors.black87,
                   blurRadius: 16,
@@ -208,14 +222,13 @@ class _TourOverlayState extends State<TourOverlay>
           ),
         ),
         const SizedBox(height: 6),
-        // Dynamic or static subtitle.
         if (step.subtitleBuilder != null)
           step.subtitleBuilder!()
         else if (step.subtitle != null)
           Text(
             step.subtitle!,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.poppins(
               color: Colors.white.withValues(alpha: 0.80),
               fontSize: 13,
               height: 1.5,
@@ -224,56 +237,29 @@ class _TourOverlayState extends State<TourOverlay>
               ],
             ),
           ),
-        if (!step.isInteractive) ...[
+        // Show action button when the step isn't waiting for the user to
+        // interact with the UI directly, OR when there is no spotlight to
+        // tap (user would otherwise have no way to advance).
+        if (!step.isInteractive || !hasSpotlight) ...[
           const SizedBox(height: 14),
           _ActionButton(
             label: step.actionLabel ??
-                (widget.controller.isLastStep
-                    ? 'Start Playing  🎸'
-                    : 'Next  →'),
+                (widget.controller.isLastStep ? 'Start Playing  🎸' : 'Next  →'),
             onTap: step.onActionTap ?? widget.controller.next,
           ),
         ],
       ],
     );
 
-    // ── Smart card positioning ──────────────────────────────────────────────
+    // Always position the label at the screen centre so it appears in a
+    // consistent, predictable location regardless of where the spotlight is.
+    // labelYOffset (set per step) shifts the card up (negative) or down.
+    // On web, use a smaller upward bias (-40) since the layout is taller.
+    // Spotlight steps: try below → above → centre.
     double baseY;
     bool needsDarkCard = false;
 
-    if (spotlight == null) {
-      // anchorAboveKey: position card just above an anchoring widget
-      // (e.g. the timer) so it never covers the fretboard or answer buttons.
-      if (step.anchorAboveKey?.currentContext != null) {
-        try {
-          final ab = step.anchorAboveKey!.currentContext!
-              .findRenderObject() as RenderBox?;
-          final ob = context.findRenderObject() as RenderBox?;
-          if (ab != null && ob != null) {
-            final dy = ab.localToGlobal(Offset.zero).dy -
-                ob.localToGlobal(Offset.zero).dy;
-            baseY = dy - estimatedCardH - 8;
-          } else {
-            baseY = size.height / 2 - estimatedCardH / 2;
-          }
-        } catch (_) {
-          baseY = size.height / 2 - estimatedCardH / 2;
-        }
-      } else {
-        // No anchor: use declared position preference.
-        switch (step.labelPosition) {
-          case TourLabelPosition.top:
-            baseY = padding.top + 20;
-            break;
-          case TourLabelPosition.bottom:
-            baseY = size.height - estimatedCardH - 24;
-            break;
-          case TourLabelPosition.center:
-            baseY = size.height / 2 - estimatedCardH / 2;
-        }
-      }
-    } else {
-      // Has spotlight: try below, then above, then dark-bg centre.
+    if (hasSpotlight) {
       final double belowY = spotlight.bottom + 16;
       final double aboveY = spotlight.top - estimatedCardH - 16;
       final bool fitsBelow = belowY + estimatedCardH < size.height - 24;
@@ -287,18 +273,15 @@ class _TourOverlayState extends State<TourOverlay>
         baseY = size.height / 2 - estimatedCardH / 2;
         needsDarkCard = true;
       }
+    } else {
+      final double baseOffset = kIsWeb ? -40.0 : -90.0;
+      baseY = size.height / 2 + baseOffset;
     }
 
     final double top = (baseY + step.labelYOffset)
-        .clamp(padding.top + 8.0, size.height - estimatedCardH - 8.0);
+        .clamp(padding.top + 20.0, size.height - estimatedCardH - 8.0);
     final double left =
         ((size.width - cardW) / 2).clamp(hPad, size.width - cardW - hPad);
-
-    final double webCardW = kIsWeb ? cardW.clamp(0.0, 400.0) : cardW;
-    final double webLeft = kIsWeb
-        ? ((size.width - webCardW) / 2)
-            .clamp(hPad, size.width - webCardW - hPad)
-        : left;
 
     final Widget card = Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
@@ -320,14 +303,15 @@ class _TourOverlayState extends State<TourOverlay>
       child: cardContent,
     );
 
-    // "Wait for action" steps: card is visible but lets taps through.
+    // Interactive steps with no backdrop: card is visible but taps pass
+    // through to the underlying UI (fretboard / answer buttons).
     final bool passThrough =
         step.isInteractive && !step.showBackdrop && !step.blockBackground;
 
     return Positioned(
-      left: kIsWeb ? webLeft : left,
+      left: left,
       top: top,
-      width: kIsWeb ? webCardW : cardW,
+      width: cardW,
       child: passThrough ? IgnorePointer(child: card) : card,
     );
   }
