@@ -44,10 +44,7 @@ dependencies:
   web: ^1.1.1
   just_audio: ^0.10.4
   reg_page:
-    # path: ../flutter-jhg-reg-page
-    git:
-      url: https://github.com/jamie2364/flutter-jhg-reg-page
-      ref: master
+    path: ../flutter-jhg-reg-page
   flutter_jhg_elements:
     path: ../flutter_jhg_elements
 
@@ -102,5 +99,7 @@ flutter:
     - web/assets/audio/str_6/
 
 dependency_overrides:
+  reg_page:
+    path: ../flutter-jhg-reg-page
   flutter_jhg_elements:
     path: ../flutter_jhg_elements

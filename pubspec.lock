@@ -858,11 +858,9 @@ packages:
   reg_page:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: "6c79af58c22ae33118b7ec0d1f4ae88366564ae5"
-      url: "https://github.com/jamie2364/flutter-jhg-reg-page"
-    source: git
+      path: "../flutter-jhg-reg-page"
+      relative: true
+    source: path
     version: "0.0.1"
   rxdart:
     dependency: transitive

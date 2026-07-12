@@ -12,13 +12,13 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ── Palette (mirrors portrait_board.dart) ─────────────────────────────────────
-const _kNavBg     = Color(0xFF1C1B1B);
-const _kPanelBg   = Color(0xFF1E1D1D);
+const _kNavBg = Color(0xFF1C1B1B);
+const _kPanelBg = Color(0xFF1E1D1D);
 const _kPanelCard = Color(0xFF1A1A1A);
 
 // ── Web-specific sizing ───────────────────────────────────────────────────────
-const double _webFretboardWidth    = 191.0;
-const double _webFretNumberGutter  = 31.0;
+const double _webFretboardWidth = 191.0;
+const double _webFretNumberGutter = 31.0;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WebBoard — mirrors PortraitBoard exactly, uses WebPortraitGuitarBoard.
@@ -46,15 +46,6 @@ class _WebBoardState extends State<WebBoard> {
     _panelWorker = ever(widget.controller.isBottomPanelExpanded, (bool exp) {
       if (mounted) setState(() => _panelCollapsed = !exp);
     });
-    // In DDC (flutter run -d chrome) each package constant is wrapped in a
-    // lazy getter that runs initializeAndLinkLibrary on first access.  When
-    // accessed inside a deep GetBuilder/Stack/... build the extra JS frames
-    // overflow the call stack.  Force initialisation here — at the top of the
-    // frame, with a shallow stack — so every later access is a cheap cache hit.
-    // ignore: unnecessary_statements, avoid_void_async
-    (LucideIcons.timer300, LucideIcons.clock300, LucideIcons.trophy300,
-        LucideIcons.chevronRight300, LucideIcons.settings300,
-        LucideIcons.minus300, LucideIcons.plus300);
   }
 
   @override
@@ -95,7 +86,6 @@ class _WebBoardState extends State<WebBoard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
               // ── Timer — always at top ──────────────────────────────────────
               KeyedSubtree(key: tourKeyTimer, child: const CountTimerWidget()),
 
@@ -124,8 +114,8 @@ class _WebBoardState extends State<WebBoard> {
                                   width: 112,
                                   child: _panelCollapsed
                                       ? Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 10),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 10),
                                           child: Align(
                                             alignment: Alignment.bottomLeft,
                                             child: SizedBox(
@@ -175,7 +165,9 @@ class _WebBoardState extends State<WebBoard> {
                     // Expanded floating card
                     if (!_panelCollapsed)
                       Positioned(
-                        bottom: 0, left: 0, right: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
                         child: Center(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 520),
@@ -185,8 +177,7 @@ class _WebBoardState extends State<WebBoard> {
                                 controller: c,
                                 isReverse: isReverse,
                                 onCollapse: () => _setCollapsed(true),
-                                onModeTap: () =>
-                                    _showModeSwitcher(context, c),
+                                onModeTap: () => _showModeSwitcher(context, c),
                               ),
                             ),
                           ),
@@ -227,7 +218,8 @@ class _WebBoardState extends State<WebBoard> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
                   color: Colors.white24,
                   borderRadius: BorderRadius.circular(2)),
@@ -235,8 +227,10 @@ class _WebBoardState extends State<WebBoard> {
             const SizedBox(height: 20),
             Text('SELECT MODE',
                 style: GoogleFonts.inter(
-                    color: Colors.white38, fontSize: 11,
-                    fontWeight: FontWeight.w800, letterSpacing: 1.4)),
+                    color: Colors.white38,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4)),
             const SizedBox(height: 16),
             _ModeTile(
               icon: Icons.music_note_rounded,
@@ -364,7 +358,6 @@ class _ExpandedPanel extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               // ── Header row: label + collapse arrow ────────────────────────
               Row(
                 children: [
@@ -385,14 +378,15 @@ class _ExpandedPanel extends StatelessWidget {
                   GestureDetector(
                     onTap: onCollapse,
                     child: Container(
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.07),
                         borderRadius: BorderRadius.circular(9),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.10)),
                       ),
-                      child: const Icon(LucideIcons.chevronLeft300,
+                      child: const Icon(Icons.chevron_left_rounded,
                           color: Colors.white54, size: 14),
                     ),
                   ),
@@ -423,14 +417,17 @@ class _ExpandedPanel extends StatelessWidget {
                           isReverse
                               ? Icons.quiz_rounded
                               : Icons.music_note_rounded,
-                          size: 15, color: JHGColors.primary,
+                          size: 15,
+                          color: JHGColors.primary,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           isReverse ? 'IDENTIFY MODE' : 'FIND NOTE MODE',
                           style: GoogleFonts.inter(
-                              color: Colors.white, fontSize: 13,
-                              fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5),
                         ),
                         const SizedBox(width: 8),
                         const Icon(Icons.keyboard_arrow_down_rounded,
@@ -446,8 +443,10 @@ class _ExpandedPanel extends StatelessWidget {
                       : 'Find the note shown here on the fretboard',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                      color: Colors.white38, fontSize: 13,
-                      fontWeight: FontWeight.w500, height: 1.4),
+                      color: Colors.white38,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4),
                 ),
                 const SizedBox(height: 14),
               ]
@@ -474,7 +473,8 @@ class _ExpandedPanel extends StatelessWidget {
                       ),
                       child: Text(c.highlightNode ?? '',
                           style: GoogleFonts.poppins(
-                              color: JHGColors.primary, fontSize: 28,
+                              color: JHGColors.primary,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 14),
@@ -488,12 +488,15 @@ class _ExpandedPanel extends StatelessWidget {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Text('SCORE',
                             style: GoogleFonts.inter(
-                                color: Colors.white38, fontSize: 11,
-                                fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+                                color: Colors.white38,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1)),
                         const SizedBox(width: 8),
                         Text(c.score.toString(),
                             style: GoogleFonts.poppins(
-                                color: Colors.white, fontSize: 20,
+                                color: Colors.white,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold)),
                       ]),
                     ),
@@ -540,13 +543,14 @@ class _CollapsedTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Container(
-          width: 26, height: 26,
+          width: 26,
+          height: 26,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           ),
-          child: const Icon(LucideIcons.chevronRight300,
+          child: const Icon(Icons.chevron_right_rounded,
               color: Colors.white, size: 14),
         ),
       ),
@@ -558,22 +562,28 @@ class _CollapsedTile extends StatelessWidget {
           ? c.pauseGame
           : c.isPaused
               ? c.resumeGame
-              : () { c.startTimer(); c.startTheGame(); },
+              : () {
+                  c.startTimer();
+                  c.startTheGame();
+                },
       child: Container(
-        width: 52, height: 52,
+        width: 52,
+        height: 52,
         decoration: BoxDecoration(
           color: JHGColors.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: JHGColors.primary.withValues(alpha: 0.45),
-              blurRadius: 12, offset: const Offset(0, 3),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Icon(
           c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
-          color: Colors.white, size: 26,
+          color: Colors.white,
+          size: 26,
         ),
       ),
     );
@@ -592,7 +602,6 @@ class _CollapsedTile extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               // ── IDENTIFY MODE ──────────────────────────────────────────────
               if (isReverse) ...[
                 Row(
@@ -603,8 +612,10 @@ class _CollapsedTile extends StatelessWidget {
                         maxLines: 1,
                         style: const TextStyle(
                           color: Color(0xFFFFB4A5),
-                          fontSize: 11, fontWeight: FontWeight.w700,
-                          letterSpacing: 0.1, height: 1.0,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.1,
+                          height: 1.0,
                         ),
                       ),
                     ),
@@ -618,7 +629,8 @@ class _CollapsedTile extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 7),
                       child: GestureDetector(
-                        onTap: locked ? null : () => c.selectReverseAnswer(note),
+                        onTap:
+                            locked ? null : () => c.selectReverseAnswer(note),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           width: double.infinity,
@@ -631,7 +643,8 @@ class _CollapsedTile extends StatelessWidget {
                           child: Center(
                             child: Text(note,
                                 style: TextStyle(
-                                    color: s.text, fontSize: 17,
+                                    color: s.text,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.2)),
                           ),
@@ -654,14 +667,16 @@ class _CollapsedTile extends StatelessWidget {
                 Center(
                   child: Container(
                     padding: showNote
-                        ? const EdgeInsets.symmetric(horizontal: 14, vertical: 5)
+                        ? const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 5)
                         : EdgeInsets.zero,
                     decoration: showNote
                         ? BoxDecoration(
                             color: JHGColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                                color: JHGColors.primary.withValues(alpha: 0.30)),
+                                color:
+                                    JHGColors.primary.withValues(alpha: 0.30)),
                           )
                         : null,
                     child: Text(
@@ -688,12 +703,15 @@ class _CollapsedTile extends StatelessWidget {
                     children: [
                       Text('SCORE',
                           style: GoogleFonts.inter(
-                              color: Colors.white38, fontSize: 10,
-                              fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                              color: Colors.white38,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8)),
                       const SizedBox(width: 5),
                       Text(c.score.toString(),
                           style: GoogleFonts.poppins(
-                              color: Colors.white, fontSize: 17,
+                              color: Colors.white,
+                              fontSize: 17,
                               fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -747,9 +765,12 @@ class _ControlRow extends StatelessWidget {
 
   IconData _resolveTimerIcon(String mode) {
     switch (mode) {
-      case 'countdown':   return LucideIcons.clock300;
-      case 'leaderboard': return LucideIcons.trophy300;
-      default:            return LucideIcons.timer300;
+      case 'countdown':
+        return Icons.schedule_rounded;
+      case 'leaderboard':
+        return Icons.emoji_events_rounded;
+      default:
+        return Icons.timer_outlined;
     }
   }
 
@@ -763,21 +784,21 @@ class _ControlRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-
         // Timer-mode cycle
         GestureDetector(
           onTap: disabled ? null : c.cycleGameMode,
           child: Container(
-            height: 56, width: 56,
+            height: 56,
+            width: 56,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.07),
               shape: BoxShape.circle,
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
             ),
             child: Icon(
               _resolveTimerIcon(isReverse ? c.timerMode.value : mode),
-              color: disabled ? Colors.white24 : Colors.white60, size: 22,
+              color: disabled ? Colors.white24 : Colors.white60,
+              size: 22,
             ),
           ),
         ),
@@ -788,25 +809,30 @@ class _ControlRow extends StatelessWidget {
               ? c.pauseGame
               : c.isPaused
                   ? c.resumeGame
-                  : () { c.startTimer(); c.startTheGame(); },
+                  : () {
+                      c.startTimer();
+                      c.startTheGame();
+                    },
           child: AnimatedContainer(
             key: tourKeyPlayButton,
             duration: const Duration(milliseconds: 200),
-            height: 72, width: 72,
+            height: 72,
+            width: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: JHGColors.primary,
               boxShadow: [
                 BoxShadow(
-                  color: JHGColors.primary.withValues(
-                      alpha: c.isStart ? 0.50 : 0.22),
+                  color: JHGColors.primary
+                      .withValues(alpha: c.isStart ? 0.50 : 0.22),
                   blurRadius: c.isStart ? 28 : 14,
                 ),
               ],
             ),
             child: Icon(
               c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
-              color: Colors.white, size: 36,
+              color: Colors.white,
+              size: 36,
             ),
           ),
         ),
@@ -815,12 +841,12 @@ class _ControlRow extends StatelessWidget {
         GestureDetector(
           onTap: () => c.resetGame(true),
           child: Container(
-            height: 56, width: 56,
+            height: 56,
+            width: 56,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.07),
               shape: BoxShape.circle,
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
             ),
             child: const Icon(Icons.refresh_rounded,
                 color: Colors.white60, size: 22),
@@ -835,8 +861,11 @@ class _ControlRow extends StatelessWidget {
 
 class _ModeTile extends StatelessWidget {
   const _ModeTile({
-    required this.icon, required this.title,
-    required this.subtitle, required this.isSelected, required this.onTap,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.onTap,
   });
   final IconData icon;
   final String title;
@@ -873,27 +902,32 @@ class _ModeTile extends StatelessWidget {
                   Text(title,
                       style: GoogleFonts.poppins(
                           color: isSelected ? JHGColors.primary : Colors.white,
-                          fontSize: 16, fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2, height: 1.1)),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                          height: 1.1)),
                   const SizedBox(height: 3),
                   Text(subtitle,
                       style: GoogleFonts.inter(
                           color: Colors.white.withValues(alpha: 0.45),
-                          fontSize: 12, height: 1.3)),
+                          fontSize: 12,
+                          height: 1.3)),
                 ],
               ),
             ),
             const SizedBox(width: 10),
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 38, height: 38,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: isSelected
                     ? JHGColors.primary.withValues(alpha: 0.16)
                     : const Color(0xFF2E2E2E),
                 shape: BoxShape.circle,
                 border: isSelected
-                    ? Border.all(color: JHGColors.primary.withValues(alpha: 0.35))
+                    ? Border.all(
+                        color: JHGColors.primary.withValues(alpha: 0.35))
                     : null,
               ),
               child: Icon(icon,
@@ -931,19 +965,27 @@ class _ReverseChoicePanel extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('SCORE', style: GoogleFonts.inter(
-                    color: Colors.white38, fontSize: 9,
-                    fontWeight: FontWeight.w800, letterSpacing: 1)),
+                Text('SCORE',
+                    style: GoogleFonts.inter(
+                        color: Colors.white38,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1)),
                 const SizedBox(width: 6),
-                Text(controller.score.toString(), style: GoogleFonts.poppins(
-                    color: Colors.white, fontSize: 15,
-                    fontWeight: FontWeight.bold)),
+                Text(controller.score.toString(),
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold)),
               ]),
             ),
             if (controller.identifyShowPositionHint)
-              Text(controller.reversePositionHint, style: GoogleFonts.inter(
-                  color: Colors.white38, fontSize: 10,
-                  fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+              Text(controller.reversePositionHint,
+                  style: GoogleFonts.inter(
+                      color: Colors.white38,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8)),
           ],
         ),
         const SizedBox(height: 12),
@@ -954,7 +996,9 @@ class _ReverseChoicePanel extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: GestureDetector(
-                  onTap: locked ? null : () => controller.selectReverseAnswer(note),
+                  onTap: locked
+                      ? null
+                      : () => controller.selectReverseAnswer(note),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     height: 58,
@@ -964,9 +1008,11 @@ class _ReverseChoicePanel extends StatelessWidget {
                       border: Border.all(color: s.border, width: 1.5),
                     ),
                     child: Center(
-                      child: Text(note, style: GoogleFonts.poppins(
-                          color: s.text, fontSize: 16,
-                          fontWeight: FontWeight.w700)),
+                      child: Text(note,
+                          style: GoogleFonts.poppins(
+                              color: s.text,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ),

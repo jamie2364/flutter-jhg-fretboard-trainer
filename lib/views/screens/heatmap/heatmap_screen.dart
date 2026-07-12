@@ -255,42 +255,52 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E1E1E),
+      // Keep it a tidy card instead of a full-width slab on web.
+      constraints: const BoxConstraints(maxWidth: 440),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            20, 10, 20, MediaQuery.of(ctx).padding.bottom + 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
             Text('Color Guide', style: GoogleFonts.poppins(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+              color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
             ...{
-              const Color(0xFFE05252): ('Struggling', 'Less than 50% correct'),
+              const Color(0xFFE05252): ('Struggling', 'Under 50% correct'),
               const Color(0xFFE8961A): ('Learning', '50–74% correct'),
               const Color(0xFF4CB87A): ('Good', '75–89% correct'),
               const Color(0xFF2ECC71): ('Mastered', '90%+ correct'),
               const Color(0x66FFFFFF): ('No data', 'Not practiced yet'),
             }.entries.map((e) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 10),
+              // Label + description on ONE line so each row is half as tall.
               child: Row(
                 children: [
                   Container(
-                    width: 14, height: 14,
+                    width: 11, height: 11,
                     decoration: BoxDecoration(color: e.key, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(e.value.$1, style: GoogleFonts.inter(
-                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                      Text(e.value.$2, style: GoogleFonts.inter(
-                        color: Colors.white38, fontSize: 11)),
-                    ],
-                  ),
+                  Text(e.value.$1, style: GoogleFonts.inter(
+                    color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  Text(e.value.$2, style: GoogleFonts.inter(
+                    color: Colors.white38, fontSize: 11)),
                 ],
               ),
             )),
@@ -500,8 +510,18 @@ class _HeatmapFretboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const boardWidthFactor = 0.50;
+    // On web the canvas is a fixed 568px, so the old 0.50 factor gave a fat
+    // 284px slab. Slim it to ~193px to match the Find Note screen's neck.
+    // Mobile keeps 0.50 (real screen width already yields a good ~195px neck).
+    final boardWidthFactor = kIsWeb ? 0.34 : 0.50;
     final boardWidth = width * boardWidthFactor;
+
+    // Vertical basis. On web, lock the fret pitch to the SAME neck proportion
+    // as the Find Note board (fret 80 : string 33.5 ≈ 2.39), so both boards look
+    // identical regardless of window height. boardWidth*5.17 makes
+    // vh*0.077 (one fret) equal (boardWidth/6)*2.39 (2.39 string-columns tall).
+    // Mobile keeps the real screen height, pixel-identical to before.
+    final vh = kIsWeb ? boardWidth * 5.17 : height;
 
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -509,10 +529,13 @@ class _HeatmapFretboard extends StatelessWidget {
         padding: const EdgeInsets.only(left: 45.8),
         child: Column(
         children: [
-          // String name chips
+          // String name chips.
+          // Right padding must equal the board Row's right-side gutter
+          // (SizedBox 20 + fret-number column width*0.06) so the centred chip
+          // block lines up exactly over the board columns below it.
           Center(
             child: Container(
-              padding: EdgeInsets.only(right: width * 0.11),
+              padding: EdgeInsets.only(right: 20 + width * 0.06),
               child: _StringNameRow(width: boardWidth),
             ),
           ),
@@ -523,7 +546,7 @@ class _HeatmapFretboard extends StatelessWidget {
               // Fretboard
               Container(
                 width: boardWidth,
-                height: height * 1.212,
+                height: vh * 1.212,
                 clipBehavior: Clip.hardEdge,
                 decoration: const BoxDecoration(),
                 child: Stack(
@@ -534,10 +557,10 @@ class _HeatmapFretboard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(height: height * 0.015),
+                        SizedBox(height: vh * 0.015),
                         Container(
                           width: width * 0.8,
-                          height: height * 1.197,
+                          height: vh * 1.197,
                           color: AppColors.creamColor,
                         ),
                       ],
@@ -549,7 +572,7 @@ class _HeatmapFretboard extends StatelessWidget {
                         quarterTurns: 2,
                         child: Container(
                           width: double.infinity,
-                          height: height * 0.015,
+                          height: vh * 0.015,
                           decoration: BoxDecoration(
                             color: JHGColors.black,
                             borderRadius: const BorderRadius.only(
@@ -567,24 +590,24 @@ class _HeatmapFretboard extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: 15,
                       itemBuilder: (_, i) => Padding(
-                        padding: EdgeInsets.only(bottom: height * 0.002),
+                        padding: EdgeInsets.only(bottom: vh * 0.002),
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 11),
-                          height: height * 0.077,
+                          height: vh * 0.077,
                           child: Row(
                             children: [
-                              Expanded(child: _inlayDot(height, i == 11)),
+                              Expanded(child: _inlayDot(vh, i == 11)),
                               const Expanded(child: SizedBox.shrink()),
                               Expanded(
                                   child: _inlayDot(
-                                      height,
+                                      vh,
                                       i == 2 ||
                                           i == 4 ||
                                           i == 6 ||
                                           i == 8 ||
                                           i == 14)),
                               const Expanded(child: SizedBox.shrink()),
-                              Expanded(child: _inlayDot(height, i == 11)),
+                              Expanded(child: _inlayDot(vh, i == 11)),
                             ],
                           ),
                         ),
@@ -597,9 +620,9 @@ class _HeatmapFretboard extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       itemBuilder: (_, pos) => Padding(
-                        padding: EdgeInsets.only(top: height * 0.076),
+                        padding: EdgeInsets.only(top: vh * 0.076),
                         child: Container(
-                          height: height * 0.0038,
+                          height: vh * 0.0038,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
@@ -671,7 +694,11 @@ class _HeatmapFretboard extends StatelessWidget {
                         itemBuilder: (_, i) =>
                             _HeatmapCell(
                           index: i,
-                          height: height,
+                          height: vh,
+                          // Width of a single string column, minus the 5 gaps
+                          // (crossAxisSpacing 7) between the 6 columns. Circles
+                          // scale to this so they fit any board width.
+                          cellWidth: (boardWidth - 7 * 5) / 6,
                           controller: controller,
                         ),
                       ),
@@ -690,7 +717,7 @@ class _HeatmapFretboard extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (_, i) => Padding(
                     padding: EdgeInsets.only(
-                        bottom: _fretNumPadding(i, height)),
+                        bottom: _fretNumPadding(i, vh)),
                     child: Text(
                       i.toString(),
                       style: JHGTextStyles.lrlabelStyle.copyWith(
@@ -746,11 +773,13 @@ class _HeatmapCell extends StatelessWidget {
   const _HeatmapCell({
     required this.index,
     required this.height,
+    required this.cellWidth,
     required this.controller,
   });
 
   final int index;
   final double height;
+  final double cellWidth;
   final HeatmapController controller;
 
   @override
@@ -761,12 +790,20 @@ class _HeatmapCell extends StatelessWidget {
       final hasData = stat != null && stat.hasData;
       final note = fretList[index].note ?? '';
       final isSelected = controller.selectedIndex.value == index;
-      final circleSize = height * 0.033;
+      // On web the neck is slimmer, so size the circle to the string column
+      // (capped at the original height-based size) to avoid overflow/collision.
+      // Mobile keeps the original height-based size, pixel-identical to before.
+      final circleSize = kIsWeb
+          ? (cellWidth * 0.92).clamp(0.0, height * 0.033).toDouble()
+          : height * 0.033;
 
       return GestureDetector(
         onTap: () => controller.selectFret(index),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: height * 0.022),
+          // Keep each cell's total height at the fret-row pitch (height*0.077)
+          // so circles stay centered in their fret regardless of circleSize.
+          padding: EdgeInsets.symmetric(
+              vertical: (height * 0.077 - circleSize) / 2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             width: circleSize,
@@ -792,7 +829,11 @@ class _HeatmapCell extends StatelessWidget {
                   color: hasData
                       ? Colors.white.withValues(alpha: isSelected ? 1.0 : 0.88)
                       : Colors.black.withValues(alpha: 0.4),
-                  fontSize: note.length > 1 ? height * 0.0085 : height * 0.010,
+                  // Web: fill the smaller circle so labels stay legible.
+                  // Mobile: keep the original height-based sizes, unchanged.
+                  fontSize: kIsWeb
+                      ? (note.length > 1 ? circleSize * 0.44 : circleSize * 0.56)
+                      : (note.length > 1 ? height * 0.0085 : height * 0.010),
                   fontWeight: FontWeight.w700,
                   height: 1,
                 ),
@@ -820,8 +861,12 @@ class _StringNameRow extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             const chipSize = 28.0;
-            const leftInset = 12.0;
-            const rightInset = 12.0;
+            // Match the circle grid's outer-column centres: each of the 6
+            // columns is (width - 5*7)/6 wide, so the first/last centre sits
+            // half a column in from the board edge. Keeps chips over strings.
+            final inset = (constraints.maxWidth - 7 * 5) / 12;
+            final leftInset = inset;
+            final rightInset = inset;
             final span = constraints.maxWidth - leftInset - rightInset;
             return SizedBox(
               height: chipSize,
