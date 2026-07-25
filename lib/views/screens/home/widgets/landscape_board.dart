@@ -227,39 +227,49 @@ class LandscapeBoard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Settings
-              Obx(() => GestureDetector(
-                    onTap: controller.currentGameMode.value != 'leaderboard'
-                        ? () {
-                            controller.resetGame(false);
-                            Get.to(() => SettingScreen(),
-                                transition: Transition.rightToLeft);
-                            if (isFreePlan) {
-                              controller.interstitialAds?.showInterstitial();
-                            }
+              // Settings — locked in leaderboard mode and mid-session.
+              Obx(() {
+                final settingsLocked =
+                    controller.currentGameMode.value == 'leaderboard' ||
+                        controller.sessionActive;
+                return GestureDetector(
+                  onTap: settingsLocked
+                      ? null
+                      : () {
+                          controller.resetGame(false);
+                          Get.to(() => SettingScreen(),
+                              transition: Transition.rightToLeft);
+                          if (isFreePlan) {
+                            controller.interstitialAds?.showInterstitial();
                           }
-                        : null,
-                    child: RotatedBox(
-                      quarterTurns: 1,
-                      child: _iconBtn(
-                        LucideIcons.settings300,
-                        disabled:
-                            controller.currentGameMode.value == 'leaderboard',
-                      ),
+                        },
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: _iconBtn(
+                      LucideIcons.settings300,
+                      disabled: settingsLocked,
                     ),
-                  )),
+                  ),
+                );
+              }),
 
-              // Heatmap
-              GestureDetector(
-                onTap: () => Get.to(
-                  () => const HeatmapScreen(),
-                  transition: Transition.downToUp,
-                ),
-                child: RotatedBox(
-                  quarterTurns: 1,
-                  child: _iconBtn(Icons.insights_rounded),
-                ),
-              ),
+              // Heatmap — locked mid-session. (Parent GetBuilder rebuilds this
+              // on start/pause/reset, so no Obx is needed for sessionActive.)
+              Builder(builder: (_) {
+                final locked = controller.sessionActive;
+                return GestureDetector(
+                  onTap: locked
+                      ? null
+                      : () => Get.to(
+                            () => const HeatmapScreen(),
+                            transition: Transition.downToUp,
+                          ),
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: _iconBtn(Icons.insights_rounded, disabled: locked),
+                  ),
+                );
+              }),
 
               // Full reset
               GestureDetector(

@@ -8,10 +8,13 @@ import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-const _kNavBg     = Color(0xFF1C1B1B);
-const _kNavActive  = Color(0xFFFF5F40);
-const _kNavInactive = Color(0xFF7A7A7A);
+// Mirrors the shared AppBottomNav used across the apps (dark bar, coral active,
+// stacked icon + label, no pill).
+const _kNavBg = Color(0xFF0F0F0F);
+const _kNavActive = Color(0xFFFE5D43);
+const _kNavInactive = Color(0xFF9E9A98);
 
 enum AppTab { home, leaderboard, heatmap, settings }
 
@@ -30,6 +33,14 @@ class AppNavBar extends StatelessWidget {
   void _navigate(AppTab tab, BuildContext context) {
     if (tab == activeTab) return;
     final hc = controller ?? Get.find<HomeController>();
+
+    // Guard: while a session is in progress the user may only return Home —
+    // every other tab is blocked so the running game can't be abandoned.
+    if (tab != AppTab.home && hc.sessionActive) return;
+    // Guard: settings is off-limits in leaderboard mode, from any screen.
+    if (tab == AppTab.settings && hc.currentGameMode.value == 'leaderboard') {
+      return;
+    }
 
     switch (tab) {
       case AppTab.home:
@@ -64,11 +75,20 @@ class AppNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hc = controller ?? Get.find<HomeController>();
+    // Mid-session everything but Home is locked; settings is also locked
+    // whenever leaderboard mode is selected.
+    final navLocked = hc.sessionActive;
+    final settingsLocked =
+        navLocked || hc.currentGameMode.value == 'leaderboard';
+
     final bar = Container(
       height: 56 + safeBottom,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _kNavBg,
-        border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
       ),
       child: Align(
         alignment: Alignment.center,
@@ -79,13 +99,16 @@ class AppNavBar extends StatelessWidget {
             child: Row(
               children: [
                 _NavItem(
-                  icon: Icons.music_note_rounded,
+                  icon: LucideIcons.home300,
+                  label: 'Home',
                   isActive: activeTab == AppTab.home,
                   onTap: () => _navigate(AppTab.home, context),
                 ),
                 _NavItem(
                   icon: LucideIcons.trophy300,
+                  label: 'Leaders',
                   isActive: activeTab == AppTab.leaderboard,
+                  disabled: navLocked && activeTab != AppTab.leaderboard,
                   onTap: () => _navigate(AppTab.leaderboard, context),
                 ),
                 _NavItem(
@@ -93,12 +116,16 @@ class AppNavBar extends StatelessWidget {
                   // share the same GlobalKey instance which would duplicate it.
                   key: activeTab == AppTab.home ? tourKeyHeatmapNav : null,
                   icon: Icons.insights_rounded,
+                  label: 'Stats',
                   isActive: activeTab == AppTab.heatmap,
+                  disabled: navLocked && activeTab != AppTab.heatmap,
                   onTap: () => _navigate(AppTab.heatmap, context),
                 ),
                 _NavItem(
                   icon: LucideIcons.settings300,
+                  label: 'Settings',
                   isActive: activeTab == AppTab.settings,
+                  disabled: settingsLocked && activeTab != AppTab.settings,
                   onTap: () => _navigate(AppTab.settings, context),
                 ),
               ],
@@ -134,33 +161,44 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     super.key,
     required this.icon,
+    required this.label,
     required this.onTap,
     this.isActive = false,
+    this.disabled = false,
   });
 
   final IconData icon;
+  final String label;
   final VoidCallback onTap;
   final bool isActive;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? _kNavActive : _kNavInactive;
+    final color = disabled
+        ? Colors.white12
+        : isActive
+            ? _kNavActive
+            : _kNavInactive;
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? _kNavActive.withValues(alpha: 0.14)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+        onTap: disabled ? null : onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: color,
+                fontSize: 10,
+                decoration: TextDecoration.none,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
-            child: Icon(icon, size: 22, color: color),
-          ),
+          ],
         ),
       ),
     );

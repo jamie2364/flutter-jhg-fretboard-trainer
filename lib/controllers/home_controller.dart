@@ -23,6 +23,9 @@ class HomeController extends GetxController {
 
   // Game type ('stopwatch' | 'countdown' | 'leaderboard' | 'reverse')
   RxString currentGameMode = 'stopwatch'.obs;
+  // True once the user has explicitly picked Find/Identify (startup screen or
+  // the top-bar switcher). Stops initializeData() from overwriting their choice.
+  bool modeChosen = false;
   // Timer sub-mode tracked independently so identify mode keeps timer working
   // ('stopwatch' | 'countdown') — leaderboard excluded from identify mode
   RxString timerMode = 'stopwatch'.obs;
@@ -102,9 +105,12 @@ class HomeController extends GetxController {
     secondsRemaining.value = 0;
 
     await initLocalDbData();
-    currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
-        ? 'countdown'
-        : 'stopwatch';
+    // Don't override a mode the user explicitly picked (startup screen / switcher).
+    if (!modeChosen) {
+      currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
+          ? 'countdown'
+          : 'stopwatch';
+    }
     if (kIsWeb) {
       preloadFretSounds();
     }
@@ -182,6 +188,12 @@ class HomeController extends GetxController {
 
   bool isStart = false;
   bool isPaused = false;
+
+  // A session is "in progress" once the user has started (and not yet reset)
+  // the game — running OR paused. While active, navigation away from the game
+  // screen is blocked so the timer/score can't be abandoned mid-session.
+  bool get sessionActive => isStart || isPaused;
+
   int? highlightFret;
   int? highlightString;
   String? highlightNode;
@@ -335,16 +347,18 @@ class HomeController extends GetxController {
   }
 
   void switchToIdentifyMode() {
+    modeChosen = true;
     currentGameMode.value = 'reverse';
     reverseChoices = [];
-    resetTimer();
+    resetGame(false);
     update();
   }
 
   void switchToFindMode() {
+    modeChosen = true;
     currentGameMode.value = timerMode.value;
     reverseChoices = [];
-    resetTimer();
+    resetGame(false);
     update();
   }
 
@@ -502,6 +516,7 @@ class HomeController extends GetxController {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (secondsRemaining.value > 0) {
         secondsRemaining.value--;
+        update();
       } else {
         timer.cancel();
         LeaderBoardController lc = Get.find<LeaderBoardController>();
@@ -524,6 +539,7 @@ class HomeController extends GetxController {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (secondsRemaining.value > 0) {
         secondsRemaining.value--;
+        update();
       } else {
         timer.cancel();
         update();

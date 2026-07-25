@@ -5,7 +5,7 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/utils/app_subscription.dart';
-import 'package:fretboard/views/screens/home/home_screen.dart';
+import 'package:fretboard/views/screens/mode_select_screen.dart';
 import 'package:get/get.dart';
 import 'package:reg_page/reg_page.dart';
 
@@ -59,14 +59,14 @@ class _MyAppState extends State<MyApp> {
           initialBinding: AppBindings(),
           navigatorKey: navKey,
           home: kIsWeb
-              ? const HomeScreen()
+              ? const ModeSelectScreen()
               : SplashScreen(
                   yearlySubscriptionId: yearlySubscription(),
                   monthlySubscriptionId: monthlySubscription(),
                   appName: AppStrings.appName,
                   featuresList: getFeaturesList(),
                   navKey: navKey,
-                  nextPage: () => const HomeScreen(),
+                  nextPage: () => const ModeSelectScreen(),
                 ),
         );
       },

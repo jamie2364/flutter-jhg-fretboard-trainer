@@ -9,17 +9,17 @@ import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
+import 'package:fretboard/views/screens/mode_select_screen.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widgets/count_timer_widget.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const _kNavBg       = Color(0xFF1C1B1B);
-const _kPanelBg     = Color(0xFF1E1D1D);
+const _kNavBg       = Color(0xFF0F0F0F);
 const _kPanelCard   = Color(0xFF1A1A1A);   // dictionaries card bg
-const _kNavActive   = Color(0xFFFF5F40);
-const _kNavInactive = Color(0xFF7A7A7A);
+const _kNavActive   = Color(0xFFFE5D43);
+const _kNavInactive = Color(0xFF9E9A98);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PortraitBoard
@@ -69,7 +69,13 @@ class _PortraitBoardState extends State<PortraitBoard> {
         final isReverse = c.currentGameMode.value == 'reverse';
         final gameRunning = c.isStart || c.isPaused;
 
-        // Auto-expand when game ends so mode chip reappears.
+        // Auto-collapse when the game starts (more fretboard); auto-expand
+        // again when it ends.
+        if (!_prevGameRunning && gameRunning && !_panelCollapsed) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_panelCollapsed) _setCollapsed(true);
+          });
+        }
         if (_prevGameRunning && !gameRunning && _panelCollapsed) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && _panelCollapsed) _setCollapsed(false);
@@ -83,8 +89,8 @@ class _PortraitBoardState extends State<PortraitBoard> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
 
-              // ── Timer — always at top ────────────────────────────────────
-              KeyedSubtree(key: tourKeyTimer, child: CountTimerWidget()),
+              // ── Top: mode switcher (left) — replaces the big top timer ────
+              _ModeSwitcherBar(controller: c, isReverse: isReverse),
 
               // ── Fretboard fills full Expanded height at all times ────────
               // Both the expanded panel and the collapsed tile are Positioned
@@ -95,7 +101,17 @@ class _PortraitBoardState extends State<PortraitBoard> {
                   children: [
                     Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 45.8),
+                        padding: EdgeInsets.only(
+                          left: 45.8,
+                          // Reserve room for the collapsed bar so the board
+                          // doesn't stretch underneath it (matches dictionaries).
+                          // The bar is taller in identify mode (answer buttons).
+                          bottom: _panelCollapsed
+                              ? (isReverse && (c.isStart || c.isPaused)
+                                  ? 148
+                                  : 84)
+                              : 0,
+                        ),
                         child: const GuitarBoard(isPortrait: true),
                       ),
                     ),
@@ -110,17 +126,17 @@ class _PortraitBoardState extends State<PortraitBoard> {
                             controller: c,
                             isReverse: isReverse,
                             onCollapse: () => _setCollapsed(true),
-                            onModeTap: () => _showModeSwitcher(context, c),
                           ),
                         ),
                       ),
 
-                    // Collapsed tile — tiny bottom-left corner card
+                    // Collapsed tile — full-width bar below the fretboard
+                    // (matches drills / dictionaries).
                     if (_panelCollapsed)
                       Positioned(
-                        bottom: 10,
+                        bottom: 12,
                         left: 12,
-                        width: 106,
+                        right: 12,
                         child: _CollapsedTile(
                           controller: c,
                           isReverse: isReverse,
@@ -143,53 +159,65 @@ class _PortraitBoardState extends State<PortraitBoard> {
       },
     );
   }
+}
 
-  // ── Mode selector bottom sheet ─────────────────────────────────────────────
+// ─── Top-left mode switcher (matches dictionaries / drills) ───────────────────
+// Tapping toggles between Find Note and Identify.
+class _ModeSwitcherBar extends StatelessWidget {
+  const _ModeSwitcherBar({required this.controller, required this.isReverse});
 
-  void _showModeSwitcher(BuildContext context, HomeController controller) {
-    final isReverse = controller.currentGameMode.value == 'reverse';
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: _kNavBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-            20, 16, 20, MediaQuery.of(ctx).padding.bottom + 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2)),
+  final HomeController controller;
+  final bool isReverse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Row(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            // Opens the mode-select screen (matches dictionaries).
+            onTap: () =>
+                Get.to(() => const ModeSelectScreen(fromSwitcher: true)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isReverse ? 'Identify' : 'Find Note',
+                      style: const TextStyle(
+                        color: Color(0xFFFE5D43),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      LucideIcons.chevronDown300,
+                      color: Color(0xFFFE5D43),
+                      size: 16,
+                    ),
+                  ],
+                ),
+                Text(
+                  'TAP TO SWITCH MODE',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text('SELECT MODE',
-                style: GoogleFonts.inter(
-                    color: Colors.white38, fontSize: 11,
-                    fontWeight: FontWeight.w800, letterSpacing: 1.4)),
-            const SizedBox(height: 16),
-            _ModeTile(
-              icon: Icons.music_note_rounded,
-              title: 'Find Note',
-              subtitle: 'A note is shown — tap it on the fretboard',
-              isSelected: !isReverse,
-              onTap: () { controller.switchToFindMode(); Navigator.pop(ctx); },
-            ),
-            const SizedBox(height: 12),
-            _ModeTile(
-              icon: Icons.quiz_rounded,
-              title: 'Identify',
-              subtitle: 'A fret lights up — choose the correct note',
-              isSelected: isReverse,
-              onTap: () { controller.switchToIdentifyMode(); Navigator.pop(ctx); },
-            ),
-          ],
-        ),
+          ),
+          const Spacer(),
+        ],
       ),
     );
   }
@@ -204,13 +232,11 @@ class _ExpandedPanel extends StatelessWidget {
     required this.controller,
     required this.isReverse,
     required this.onCollapse,
-    required this.onModeTap,
   });
 
   final HomeController controller;
   final bool isReverse;
   final VoidCallback onCollapse;
-  final VoidCallback onModeTap;
 
   @override
   Widget build(BuildContext context) {
@@ -261,54 +287,28 @@ class _ExpandedPanel extends StatelessWidget {
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.10)),
                       ),
-                      child: const Icon(LucideIcons.chevronLeft300,
+                      child: const Icon(LucideIcons.chevronDown300,
                           color: Colors.white54, size: 14),
                     ),
                   ),
                 ],
               ),
 
+              const SizedBox(height: 10),
+
+              // ── Timer — lives in the tile now (not the top) ──────────────
+              Center(
+                child: KeyedSubtree(
+                  key: tourKeyTimer,
+                  child: const CountTimerWidget(),
+                ),
+              ),
               const SizedBox(height: 14),
 
               // ── Content: depends on game state ───────────────────────────
 
-              // Idle: mode chip + hint
+              // Idle: hint only (mode is chosen on the startup screen)
               if (!c.isStart && !c.isPaused) ...[
-                GestureDetector(
-                  onTap: onModeTap,
-                  child: Container(
-                    key: tourKeyModeChip,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: _kPanelBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isReverse
-                              ? Icons.quiz_rounded
-                              : Icons.music_note_rounded,
-                          size: 15, color: JHGColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isReverse ? 'IDENTIFY MODE' : 'FIND NOTE MODE',
-                          style: GoogleFonts.inter(
-                            color: Colors.white, fontSize: 13,
-                            fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.keyboard_arrow_down_rounded,
-                            size: 18, color: Colors.white38),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
                 Text(
                   isReverse
                       ? 'A fret lights up — pick the correct note name'
@@ -381,7 +381,7 @@ class _ExpandedPanel extends StatelessWidget {
   }
 }
 
-// ─── Collapsed left-side tile ─────────────────────────────────────────────────
+// ─── Collapsed bar — full-width, below the fretboard (matches drills/dict) ─────
 
 class _CollapsedTile extends StatelessWidget {
   const _CollapsedTile({
@@ -398,180 +398,224 @@ class _CollapsedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
     final isPlaying = c.isStart || c.isPaused;
-    final showNote = isPlaying && !isReverse;
-    final showAnswers = isPlaying && isReverse && c.reverseChoices.isNotEmpty;
+    final modeLabel = isReverse ? 'IDENTIFY MODE' : 'FIND NOTE MODE';
+    final showAnswers =
+        isReverse && isPlaying && c.reverseChoices.isNotEmpty;
     final locked = c.reverseSelectedNote != null;
 
-    // Expand arrow — shared
-    final expandBtn = GestureDetector(
-      onTap: onExpand,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Container(
-          width: 26, height: 26,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+    // Compact time pill — the clock now lives here when the tile is collapsed.
+    final timeChip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.timer300,
+              size: 13, color: Colors.white.withValues(alpha: 0.6)),
+          const SizedBox(width: 5),
+          Text(
+            c.formatTime(c.secondsRemaining.value),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          child: const Icon(LucideIcons.chevronRight300,
-              color: Colors.white, size: 14),
-        ),
+        ],
       ),
     );
 
-    // Play / Stop circle — same orange for both modes
+    Widget answerButton(String note) {
+      final s = _answerStyle(note, c);
+      return GestureDetector(
+        onTap: locked ? null : () => c.selectReverseAnswer(note),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 40,
+          decoration: BoxDecoration(
+            color: s.bg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: s.border, width: 1.4),
+          ),
+          child: Center(
+            child: Text(
+              note,
+              style: TextStyle(
+                color: s.text,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final playBtn = GestureDetector(
       onTap: c.isStart
           ? c.pauseGame
           : c.isPaused
               ? c.resumeGame
-              : () { c.startTimer(); c.startTheGame(); },
+              : () {
+                  c.startTimer();
+                  c.startTheGame();
+                },
       child: Container(
-        width: 52, height: 52,
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: JHGColors.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: JHGColors.primary.withValues(alpha: 0.45),
-              blurRadius: 12, offset: const Offset(0, 3),
+              color: JHGColors.primary.withValues(alpha: 0.40),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Icon(
           c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
-          color: Colors.white, size: 26,
+          color: Colors.white,
+          size: 22,
         ),
       ),
     );
 
+    final expandBtn = GestureDetector(
+      onTap: onExpand,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: const Icon(LucideIcons.chevronUp300,
+            color: Colors.white54, size: 18),
+      ),
+    );
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
-            color: _kPanelCard.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+            color: _kPanelCard.withValues(alpha: 0.90),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
           ),
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
+          padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
-              // ── IDENTIFY MODE ───────────────────────────────────────────
-              if (isReverse) ...[
-                // Header: label + expand
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          modeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFCBC8C6),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        if (!isPlaying)
+                          const Text(
+                            'Tap play to start',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Color(0xFFFE5D43),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              height: 1.1,
+                            ),
+                          )
+                        else if (isReverse)
+                          const Text(
+                            'Which note is this?',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Color(0xFFE5E2E1),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              height: 1.1,
+                            ),
+                          )
+                        else
+                          // Find mode: "Find" white, the target note coral —
+                          // same size, note is bolder so it still stands out.
+                          Row(
+                            children: [
+                              const Text(
+                                'Find',
+                                style: TextStyle(
+                                  color: Color(0xFFE5E2E1),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                c.highlightNode ?? '—',
+                                style: const TextStyle(
+                                  color: Color(0xFFFE5D43),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.3,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  if (isPlaying) ...[
+                    timeChip,
+                    const SizedBox(width: 8),
+                  ],
+                  playBtn,
+                  const SizedBox(width: 8),
+                  expandBtn,
+                ],
+              ),
+              // Identify mode: answer choices stay usable while collapsed.
+              if (showAnswers) ...[
+                const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        isPlaying ? 'Which?' : 'Identify',
-                        maxLines: 1,
-                        style: const TextStyle(
-                          color: Color(0xFFFFB4A5),
-                          fontSize: 11, fontWeight: FontWeight.w700,
-                          letterSpacing: 0.1, height: 1.0,
-                        ),
-                      ),
-                    ),
-                    expandBtn,
+                    for (int i = 0; i < c.reverseChoices.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(child: answerButton(c.reverseChoices[i])),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Single-column answer buttons (only when playing)
-                if (showAnswers) ...[
-                  ...c.reverseChoices.map((note) {
-                    final s = _answerStyle(note, c);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 7),
-                      child: GestureDetector(
-                        onTap: locked ? null : () => c.selectReverseAnswer(note),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: double.infinity,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: s.bg,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: s.border, width: 1.4),
-                          ),
-                          child: Center(
-                            child: Text(note,
-                                style: TextStyle(
-                                  color: s.text, fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.2)),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 10),
-                ],
-                // Play / Stop circle (centered)
-                Center(child: playBtn),
-              ]
-
-              // ── FIND NOTE MODE ──────────────────────────────────────────
-              else ...[
-                // Expand button pinned to top-right
-                Align(
-                  alignment: Alignment.topRight,
-                  child: expandBtn,
-                ),
-                const SizedBox(height: 14),
-                // Note name — big, centered, with tinted background when playing
-                Center(
-                  child: Container(
-                    padding: showNote
-                        ? const EdgeInsets.symmetric(horizontal: 14, vertical: 5)
-                        : EdgeInsets.zero,
-                    decoration: showNote
-                        ? BoxDecoration(
-                            color: JHGColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: JHGColors.primary.withValues(alpha: 0.30)),
-                          )
-                        : null,
-                    child: Text(
-                      showNote ? (c.highlightNode ?? '—') : 'Find Note',
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: showNote ? JHGColors.primary : const Color(0xFFFFB4A5),
-                        fontSize: showNote ? 26 : 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: showNote ? -0.5 : 0.1,
-                        height: 1.0,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Play / Stop circle (centered)
-                Center(child: playBtn),
-                // Score — centered below circle
-                if (showNote) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('SCORE',
-                          style: GoogleFonts.inter(
-                            color: Colors.white38, fontSize: 10,
-                            fontWeight: FontWeight.w700, letterSpacing: 0.8)),
-                      const SizedBox(width: 5),
-                      Text(c.score.toString(),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white, fontSize: 17,
-                            fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
               ],
             ],
           ),
@@ -707,82 +751,6 @@ class _ControlRow extends StatelessWidget {
 
 // ─── Mode tile (bottom sheet) ─────────────────────────────────────────────────
 
-class _ModeTile extends StatelessWidget {
-  const _ModeTile({
-    required this.icon, required this.title,
-    required this.subtitle, required this.isSelected, required this.onTap,
-  });
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? JHGColors.primary.withValues(alpha: 0.12)
-              : const Color(0xFF252525),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected
-                ? JHGColors.primary.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.07),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: GoogleFonts.poppins(
-                        color: isSelected ? JHGColors.primary : Colors.white,
-                        fontSize: 22, fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2, height: 1.1)),
-                  const SizedBox(height: 5),
-                  Text(subtitle,
-                      style: GoogleFonts.inter(
-                        color: Colors.white.withValues(alpha: 0.45),
-                        fontSize: 13, height: 1.35)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? JHGColors.primary.withValues(alpha: 0.16)
-                    : const Color(0xFF2E2E2E),
-                shape: BoxShape.circle,
-                border: isSelected
-                    ? Border.all(color: JHGColors.primary.withValues(alpha: 0.35))
-                    : null,
-              ),
-              child: Icon(icon,
-                  color: isSelected ? JHGColors.primary : Colors.white54,
-                  size: 22),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Bottom nav bar ───────────────────────────────────────────────────────────
-
 class _FretboardNavBar extends StatelessWidget {
   const _FretboardNavBar({
     super.key, required this.safeBottom, required this.controller,
@@ -792,52 +760,78 @@ class _FretboardNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canOpenSettings = controller.currentGameMode.value != 'leaderboard';
+    // Mid-session, every tab except Home is locked so the running game can't be
+    // abandoned. Settings is additionally locked in leaderboard mode.
+    final sessionActive = controller.sessionActive;
+    final canOpenSettings =
+        controller.currentGameMode.value != 'leaderboard' && !sessionActive;
     return Container(
       height: 56 + safeBottom,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _kNavBg,
-        border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: safeBottom),
-        child: Row(
-          children: [
-            _NavItem(icon: Icons.music_note_rounded, isActive: true),
-            _NavItem(
-              icon: LucideIcons.trophy300,
-              onTap: () {
-                Get.to(() => LeadershipScreen(),
-                    transition: Transition.noTransition,
-                    duration: Duration.zero);
-                if (isFreePlan) controller.interstitialAds?.showInterstitial();
-              },
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 568),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: safeBottom),
+            child: Row(
+              children: [
+                _NavItem(
+                  icon: LucideIcons.home300,
+                  label: 'Home',
+                  isActive: true,
+                ),
+                _NavItem(
+                  icon: LucideIcons.trophy300,
+                  label: 'Leaders',
+                  disabled: sessionActive,
+                  onTap: sessionActive
+                      ? null
+                      : () {
+                          Get.to(() => LeadershipScreen(),
+                              transition: Transition.noTransition,
+                              duration: Duration.zero);
+                          if (isFreePlan) {
+                            controller.interstitialAds?.showInterstitial();
+                          }
+                        },
+                ),
+                _NavItem(
+                  key: tourKeyHeatmapNav,
+                  icon: Icons.insights_rounded,
+                  label: 'Stats',
+                  disabled: sessionActive,
+                  onTap: sessionActive
+                      ? null
+                      : () => Get.to(
+                            () => const HeatmapScreen(),
+                            transition: Transition.noTransition,
+                            duration: Duration.zero,
+                          ),
+                ),
+                _NavItem(
+                  icon: LucideIcons.settings300,
+                  label: 'Settings',
+                  onTap: canOpenSettings
+                      ? () {
+                          controller.resetGame(false);
+                          Get.to(() => SettingScreen(),
+                              transition: Transition.noTransition,
+                              duration: Duration.zero);
+                          if (isFreePlan) {
+                            controller.interstitialAds?.showInterstitial();
+                          }
+                        }
+                      : null,
+                  disabled: !canOpenSettings,
+                ),
+              ],
             ),
-            _NavItem(
-              key: tourKeyHeatmapNav,
-              icon: Icons.insights_rounded,
-              onTap: () => Get.to(
-                () => const HeatmapScreen(),
-                transition: Transition.noTransition,
-                duration: Duration.zero,
-              ),
-            ),
-            _NavItem(
-              icon: LucideIcons.settings300,
-              onTap: canOpenSettings
-                  ? () {
-                      controller.resetGame(false);
-                      Get.to(() => SettingScreen(),
-                          transition: Transition.noTransition,
-                          duration: Duration.zero);
-                      if (isFreePlan) {
-                        controller.interstitialAds?.showInterstitial();
-                      }
-                    }
-                  : null,
-              disabled: !canOpenSettings,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -846,10 +840,11 @@ class _FretboardNavBar extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   const _NavItem({
-    super.key, required this.icon,
+    super.key, required this.icon, required this.label,
     this.onTap, this.isActive = false, this.disabled = false,
   });
   final IconData icon;
+  final String label;
   final VoidCallback? onTap;
   final bool isActive;
   final bool disabled;
@@ -862,18 +857,21 @@ class _NavItem extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? _kNavActive.withValues(alpha: 0.14)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: color,
+                fontSize: 10,
+                decoration: TextDecoration.none,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
             ),
-            child: Icon(icon, size: 22, color: color),
-          ),
+          ],
         ),
       ),
     );

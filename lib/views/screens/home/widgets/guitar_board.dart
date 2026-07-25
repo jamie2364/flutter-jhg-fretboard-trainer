@@ -89,7 +89,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final boardWidthFactor = isPortrait
         ? isTablet
               ? 0.3
-              : 0.46
+              : 0.44
         : isTablet
         ? 0.3
         : 0.47;
@@ -357,9 +357,11 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                               child: Center(
                                 child: Text(
                                   '0',
+                                  overflow: TextOverflow.visible,
                                   style: JHGTextStyles.lrlabelStyle.copyWith(
-                                    fontSize: 11,
+                                    fontSize: 14,
                                     height: 1.0,
+                                    color: Colors.white.withValues(alpha: 0.75),
                                   ),
                                 ),
                               ),
@@ -373,6 +375,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                                 style: JHGTextStyles.lrlabelStyle.copyWith(
                                   fontSize: 14,
                                   height: 1.2,
+                                  color: Colors.white.withValues(alpha: 0.75),
                                 ),
                               ),
                             ),
@@ -468,27 +471,43 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     required int index,
     required double height,
   }) {
-    final size = height * 0.038;
-    return Padding(
-      padding: EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
-      child: isTarget
-          ? Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: JHGColors.primary.withValues(alpha: 0.30),
-                shape: BoxShape.circle,
-                border: Border.all(color: JHGColors.primary, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: JHGColors.primary.withValues(alpha: 0.55),
-                    blurRadius: 6,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-            )
-          : SizedBox(width: size, height: size),
+    // Uniform fret-height cells so the target grid lines up with the real
+    // frets instead of drifting (the old per-index offset accumulated error and
+    // pushed far frets off-screen). Fret 0 sits at the short nut row.
+    final fret = index ~/ 6;
+    final cellHeight = fret == 0 ? height * 0.015 : height * 0.0798;
+    final ballSize = height * 0.044;
+    return SizedBox(
+      height: cellHeight,
+      child: Center(
+        child: isTarget
+            ? Container(
+                width: ballSize,
+                height: ballSize,
+                decoration: glossyBall(JHGColors.primary).copyWith(
+                  // Bright white ring + coral glow so the fret to identify is
+                  // unmistakable against the ivory board.
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: JHGColors.primary.withValues(alpha: 0.65),
+                      blurRadius: 14,
+                      spreadRadius: 2,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(Icons.question_mark_rounded,
+                      color: Colors.white, size: 15),
+                ),
+              )
+            : null,
+      ),
     );
   }
 
@@ -513,12 +532,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     child: Container(
       width: height * 0.030,
       height: height * 0.030,
-      decoration: BoxDecoration(
-        color: isColor == true ? color : Colors.transparent,
-        //color: Colors.red,
-        shape: BoxShape.circle,
-      ),
-      // child: Text("${fretList[index].note}",style: TextStyle(color: Colors.red),),
+      decoration: isColor == true
+          ? glossyBall(color is Color ? color : JHGColors.primary)
+          : const BoxDecoration(
+              color: Colors.transparent,
+              shape: BoxShape.circle,
+            ),
     ),
   );
 
@@ -766,4 +785,37 @@ class _StringNameChip extends StatelessWidget {
       ),
     );
   }
+}
+
+// Gives a note ball the look of a glossy sphere: a bright top-left specular
+// highlight fades through the base colour into a deep shaded edge (radial
+// gradient), with a soft rim and layered drop shadows so the ball lifts off the
+// fretboard instead of reading as a flat disc.
+BoxDecoration glossyBall(Color base) {
+  final specular = Color.lerp(base, Colors.white, 0.68)!;
+  final highlight = Color.lerp(base, Colors.white, 0.22)!;
+  final shade = Color.lerp(base, Colors.black, 0.34)!;
+  final deepShade = Color.lerp(base, Colors.black, 0.52)!;
+  return BoxDecoration(
+    shape: BoxShape.circle,
+    gradient: RadialGradient(
+      center: const Alignment(-0.42, -0.5),
+      radius: 1.1,
+      colors: [specular, highlight, base, shade, deepShade],
+      stops: const [0.0, 0.18, 0.5, 0.82, 1.0],
+    ),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 0.6),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.45),
+        blurRadius: 6,
+        offset: const Offset(0, 3),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.22),
+        blurRadius: 2,
+        offset: const Offset(0, 1),
+      ),
+    ],
+  );
 }
