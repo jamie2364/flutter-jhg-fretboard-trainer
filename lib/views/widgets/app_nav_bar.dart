@@ -13,7 +13,6 @@ import 'package:google_fonts/google_fonts.dart';
 // Mirrors the shared AppBottomNav used across the apps (dark bar, coral active,
 // stacked icon + label, no pill).
 const _kNavBg = Color(0xFF0F0F0F);
-const _kNavActive = Color(0xFFFE5D43);
 const _kNavInactive = Color(0xFF9E9A98);
 
 enum AppTab { home, leaderboard, heatmap, settings }
@@ -87,7 +86,8 @@ class AppNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: _kNavBg,
         border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          top: BorderSide(
+              color: Colors.white.withValues(alpha: 0.12), width: 1.5),
         ),
       ),
       child: Align(
@@ -95,7 +95,7 @@ class AppNavBar extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Padding(
-            padding: EdgeInsets.only(bottom: safeBottom),
+            padding: EdgeInsets.only(bottom: safeBottom * 0.4),
             child: Row(
               children: [
                 _NavItem(
@@ -178,7 +178,7 @@ class _NavItem extends StatelessWidget {
     final color = disabled
         ? Colors.white12
         : isActive
-            ? _kNavActive
+            ? Colors.white
             : _kNavInactive;
     return Expanded(
       child: GestureDetector(
@@ -194,8 +194,9 @@ class _NavItem extends StatelessWidget {
               style: GoogleFonts.poppins(
                 color: color,
                 fontSize: 10,
+                height: 1.0,
                 decoration: TextDecoration.none,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

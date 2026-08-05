@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/utils/intervals.dart';
+import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/views/screens/home/home_screen.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,26 +25,26 @@ class ModeSelectScreen extends StatefulWidget {
 }
 
 class _ModeSelectScreenState extends State<ModeSelectScreen> {
-  // Find Note is the default selection.
-  bool _identify = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Preselect the current mode when reopened from the switcher.
-    if (Get.isRegistered<HomeController>()) {
-      _identify =
-          Get.find<HomeController>().currentGameMode.value == 'reverse';
-    }
-  }
-
-  void _start() {
+  // Picking a mode selects it and moves straight on — no separate CTA.
+  void _select(bool identify) {
     final hc = Get.find<HomeController>();
-    if (_identify) {
+    if (identify) {
       hc.switchToIdentifyMode();
     } else {
       hc.switchToFindMode();
     }
+    _go();
+  }
+
+  void _selectInterval() {
+    Get.to(() => IntervalSetupScreen(fromSwitcher: widget.fromSwitcher));
+  }
+
+  void _selectChord() {
+    Get.to(() => ChordSetupScreen(fromSwitcher: widget.fromSwitcher));
+  }
+
+  void _go() {
     if (widget.fromSwitcher) {
       Get.back();
     } else {
@@ -52,88 +54,194 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       backgroundColor: _kBg,
       body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Fretboard Trainer',
-                      style: GoogleFonts.poppins(
-                        color: _kOnSurface,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        height: 1.1,
-                        letterSpacing: -1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'How would you like to start?',
-                      style: GoogleFonts.inter(
-                        color: _kMuted,
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    _ModeCard(
-                      label: 'Find Note',
-                      subtitle:
-                          'Find the shown note on the fretboard against the clock.',
-                      selected: !_identify,
-                      onTap: () => setState(() => _identify = false),
-                      onInfo: () => _showGuide(context, identify: false),
-                    ),
-                    const SizedBox(height: 12),
-                    _ModeCard(
-                      label: 'Identify',
-                      subtitle: 'Name the note at the highlighted fret.',
-                      selected: _identify,
-                      onTap: () => setState(() => _identify = true),
-                      onInfo: () => _showGuide(context, identify: true),
-                    ),
-                  ],
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Fretboard Trainer',
+                  style: GoogleFonts.poppins(
+                    color: _kOnSurface,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                    letterSpacing: -1.0,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'How would you like to start?',
+                  style: GoogleFonts.inter(
+                    color: _kMuted,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                _ModeCard(
+                  label: 'Find Note',
+                  subtitle:
+                      'Find the shown note on the fretboard against the clock.',
+                  onTap: () => _select(false),
+                ),
+                const SizedBox(height: 12),
+                _ModeCard(
+                  label: 'Identify',
+                  subtitle: 'Name the note at the highlighted fret.',
+                  onTap: () => _select(true),
+                ),
+                const SizedBox(height: 12),
+                _ModeCard(
+                  label: 'Intervals',
+                  subtitle:
+                      'Two notes light up — name the interval between them.',
+                  onTap: _selectInterval,
+                ),
+                const SizedBox(height: 12),
+                _ModeCard(
+                  label: 'Chords',
+                  subtitle:
+                      'Name a chord from its shape, or build the shape yourself.',
+                  onTap: _selectChord,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Two-step interval setup wizard: pick the game type, then the difficulty,
+/// then drop into the training board. Single route (matches the app's wizard
+/// pattern) so there's no deep navigation stack to unwind.
+class IntervalSetupScreen extends StatefulWidget {
+  const IntervalSetupScreen({super.key, this.fromSwitcher = false});
+  final bool fromSwitcher;
+
+  @override
+  State<IntervalSetupScreen> createState() => _IntervalSetupScreenState();
+}
+
+class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
+  int _step = 0; // 0 = type, 1 = difficulty
+  IntervalGameType _type = IntervalGameType.name;
+
+  void _pickType(IntervalGameType type) {
+    setState(() {
+      _type = type;
+      _step = 1;
+    });
+  }
+
+  void _pickDifficulty(IntervalDifficulty difficulty) {
+    Get.find<HomeController>()
+        .switchToIntervalMode(type: _type, difficulty: difficulty);
+    if (widget.fromSwitcher) {
+      // Pop the setup screen and the mode-select screen back to the game.
+      Get.close(2);
+    } else {
+      Get.off(() => const HomeScreen());
+    }
+  }
+
+  void _back() {
+    if (_step == 1) {
+      setState(() => _step = 0);
+    } else {
+      Get.back();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isType = _step == 0;
+    return Scaffold(
+      backgroundColor: _kBg,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top-left back icon (no Next — selecting a card auto-advances).
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: IconButton(
+                onPressed: _back,
+                icon: const Icon(Icons.arrow_back_rounded, color: _kOnSurface),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(24, 12, 24, bottomPad + 20),
-              child: GestureDetector(
-                onTap: _start,
-                child: Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: _kPrimary,
-                    borderRadius: BorderRadius.circular(26),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _kPrimary.withValues(alpha: 0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        isType ? 'Intervals' : 'Difficulty',
+                        style: GoogleFonts.poppins(
+                          color: _kOnSurface,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                          letterSpacing: -1.0,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isType
+                            ? 'Which interval game?'
+                            : 'How challenging should it be?',
+                        style: GoogleFonts.inter(
+                          color: _kMuted,
+                          fontSize: 15,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      if (isType) ...[
+                        _ModeCard(
+                          label: 'Name the Interval',
+                          subtitle:
+                              'Two notes light up — name the interval between them.',
+                          onTap: () => _pickType(IntervalGameType.name),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Build the Interval',
+                          subtitle:
+                              'A root + an interval name — tap the fret that far away.',
+                          onTap: () => _pickType(IntervalGameType.build),
+                        ),
+                      ] else ...[
+                        _ModeCard(
+                          label: 'Easy',
+                          subtitle: 'Both notes on the same string, going up.',
+                          onTap: () => _pickDifficulty(IntervalDifficulty.easy),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Medium',
+                          subtitle: 'Same or a neighbouring string, going up.',
+                          onTap: () =>
+                              _pickDifficulty(IntervalDifficulty.medium),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Hard',
+                          subtitle: 'Anywhere on the neck, either direction.',
+                          onTap: () => _pickDifficulty(IntervalDifficulty.hard),
+                        ),
+                      ],
                     ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _identify ? 'Identify' : 'Find Note',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -145,107 +253,129 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   }
 }
 
-void _showGuide(BuildContext context, {required bool identify}) {
-  final heading = identify ? 'Identify' : 'Find Note';
-  final steps = identify
-      ? const [
-          'A position lights up on the fretboard.',
-          'Pick the correct note name.',
-          'Sharpen your fretboard recall.',
-        ]
-      : const [
-          'A note name is shown.',
-          'Tap that note on the fretboard.',
-          'Beat the clock and climb the leaderboard.',
-        ];
-  showDialog<void>(
-    context: context,
-    barrierColor: Colors.black54,
-    builder: (_) => Dialog(
-      backgroundColor: const Color(0xFF1C1C1B),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 56),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+/// Two-step chord setup wizard: pick the game type, then the difficulty, then
+/// drop into the training board. Mirrors IntervalSetupScreen exactly.
+class ChordSetupScreen extends StatefulWidget {
+  const ChordSetupScreen({super.key, this.fromSwitcher = false});
+  final bool fromSwitcher;
+
+  @override
+  State<ChordSetupScreen> createState() => _ChordSetupScreenState();
+}
+
+class _ChordSetupScreenState extends State<ChordSetupScreen> {
+  int _step = 0; // 0 = type, 1 = difficulty
+  ChordGameType _type = ChordGameType.name;
+
+  void _pickType(ChordGameType type) {
+    setState(() {
+      _type = type;
+      _step = 1;
+    });
+  }
+
+  void _pickDifficulty(ChordDifficulty difficulty) {
+    Get.find<HomeController>()
+        .switchToChordMode(type: _type, difficulty: difficulty);
+    if (widget.fromSwitcher) {
+      // Pop the setup screen and the mode-select screen back to the game.
+      Get.close(2);
+    } else {
+      Get.off(() => const HomeScreen());
+    }
+  }
+
+  void _back() {
+    if (_step == 1) {
+      setState(() => _step = 0);
+    } else {
+      Get.back();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isType = _step == 0;
+    return Scaffold(
+      backgroundColor: _kBg,
+      body: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'HOW ${heading.toUpperCase()} WORKS',
-              style: GoogleFonts.inter(
-                color: _kPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.4,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: IconButton(
+                onPressed: _back,
+                icon: const Icon(Icons.arrow_back_rounded, color: _kOnSurface),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              heading,
-              style: GoogleFonts.poppins(
-                color: _kOnSurface,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            for (int i = 0; i < steps.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 22,
-                      height: 22,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _kPrimary.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border:
-                            Border.all(color: _kPrimary.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(
-                        '${i + 1}',
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        isType ? 'Chords' : 'Difficulty',
                         style: GoogleFonts.poppins(
-                          color: _kPrimary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        steps[i],
-                        style: GoogleFonts.inter(
                           color: _kOnSurface,
-                          fontSize: 14,
-                          height: 1.35,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                          letterSpacing: -1.0,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 4),
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                ),
-                child: Text(
-                  'Got it',
-                  style: GoogleFonts.poppins(
-                    color: _kOnSurface,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                      const SizedBox(height: 8),
+                      Text(
+                        isType
+                            ? 'Which chord game?'
+                            : 'How challenging should it be?',
+                        style: GoogleFonts.inter(
+                          color: _kMuted,
+                          fontSize: 15,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      if (isType) ...[
+                        _ModeCard(
+                          label: 'Name the Chord',
+                          subtitle:
+                              'A chord lights up on the neck — pick its name.',
+                          onTap: () => _pickType(ChordGameType.name),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Build the Chord',
+                          subtitle:
+                              'A chord name is shown — tap the frets to place it.',
+                          onTap: () => _pickType(ChordGameType.build),
+                        ),
+                      ] else ...[
+                        _ModeCard(
+                          label: 'Easy',
+                          subtitle:
+                              'Open major & minor chords, low on the neck.',
+                          onTap: () => _pickDifficulty(ChordDifficulty.easy),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Medium',
+                          subtitle:
+                              'Adds 7ths, sixths, sus, add9, dim & aug shapes.',
+                          onTap: () => _pickDifficulty(ChordDifficulty.medium),
+                        ),
+                        const SizedBox(height: 12),
+                        _ModeCard(
+                          label: 'Hard',
+                          subtitle:
+                              'The full vocabulary, anywhere up the neck.',
+                          onTap: () => _pickDifficulty(ChordDifficulty.hard),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -253,35 +383,50 @@ void _showGuide(BuildContext context, {required bool identify}) {
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-class _ModeCard extends StatelessWidget {
+class _ModeCard extends StatefulWidget {
   const _ModeCard({
     required this.label,
     required this.subtitle,
-    required this.selected,
     required this.onTap,
-    required this.onInfo,
   });
 
   final String label;
   final String subtitle;
-  final bool selected;
   final VoidCallback onTap;
-  final VoidCallback onInfo;
+
+  @override
+  State<_ModeCard> createState() => _ModeCardState();
+}
+
+class _ModeCardState extends State<_ModeCard> {
+  bool _flash = false;
+
+  Future<void> _handleTap() async {
+    if (_flash) return;
+    setState(() => _flash = true);
+    await Future.delayed(const Duration(milliseconds: 160));
+    if (!mounted) return;
+    widget.onTap();
+    await Future.delayed(const Duration(milliseconds: 250));
+    if (mounted) setState(() => _flash = false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final flash = _flash;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      onTap: _handleTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
+        duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         decoration: BoxDecoration(
-          gradient: selected
+          color: flash ? null : const Color(0xFF1A1A1A),
+          gradient: flash
               ? LinearGradient(
                   colors: [
                     _kPrimary.withValues(alpha: 0.18),
@@ -289,13 +434,12 @@ class _ModeCard extends StatelessWidget {
                   ],
                 )
               : null,
-          color: selected ? null : const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? _kPrimary.withValues(alpha: 0.55)
+            color: flash
+                ? _kPrimary.withValues(alpha: 0.45)
                 : Colors.white.withValues(alpha: 0.08),
-            width: selected ? 1.5 : 1.0,
+            width: flash ? 1.5 : 1.0,
           ),
         ),
         child: Row(
@@ -305,9 +449,9 @@ class _ModeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label,
+                    widget.label,
                     style: GoogleFonts.poppins(
-                      color: selected ? _kPrimary : _kOnSurface,
+                      color: flash ? _kPrimary : _kOnSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.3,
@@ -316,7 +460,7 @@ class _ModeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    subtitle,
+                    widget.subtitle,
                     style: GoogleFonts.inter(
                       color: _kMuted.withValues(alpha: 0.85),
                       fontSize: 13,
@@ -327,23 +471,19 @@ class _ModeCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onInfo,
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? _kPrimary.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.06),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.info_outline_rounded,
-                  color: selected ? _kPrimary : Colors.white54,
-                  size: 18,
-                ),
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: flash
+                    ? _kPrimary.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: flash ? _kPrimary : Colors.white54,
+                size: 20,
               ),
             ),
           ],

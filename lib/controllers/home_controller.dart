@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/services/heatmap_service.dart';
+import 'package:fretboard/utils/intervals.dart';
+import 'package:fretboard/utils/chords.dart';
+import 'package:fretboard/services/chord_service.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
 import 'package:reg_page/reg_page.dart';
@@ -34,6 +37,58 @@ class HomeController extends GetxController {
   List<String> reverseChoices = [];
   String? reverseSelectedNote;   // which button the user just tapped
   bool reverseWasCorrect = false; // was their tap correct
+
+  // ── Interval mode state ("Name the Interval") ────────────────────────────
+  // A two-note prompt is shown on the neck (root + target) and the user picks
+  // the interval name. Difficulty widens how far apart the notes may sit.
+  IntervalDifficulty intervalDifficulty = IntervalDifficulty.easy;
+  IntervalGameType intervalGameType = IntervalGameType.name;
+  IntervalPrompt? intervalPrompt;
+  int? intervalRootIndex;        // fretList index of the root note
+  int? intervalTargetIndex;      // fretList index of the target note (name mode)
+  List<MusicInterval> intervalChoicesList = [];
+  MusicInterval? intervalSelected;    // which choice the user tapped (name mode)
+  bool intervalWasCorrect = false;
+  bool intervalBuildDone = false;     // build mode: locks after a tap for feedback
+  int? intervalBuildRevealIndex;      // build mode: correct target shown after a wrong tap
+
+  // ── Chord mode state ("Name / Build the Chord") ──────────────────────────
+  // A chord shape lights up on the neck (Name) — the user picks the symbol; or
+  // a chord symbol is shown (Build) — the user taps the frets to place it.
+  // Difficulty widens the chord vocabulary and how far up the neck shapes sit.
+  ChordDifficulty chordDifficulty = ChordDifficulty.easy;
+  ChordGameType chordGameType = ChordGameType.name;
+
+  final ChordService _chordService = ChordService();
+  ChordCatalog? _chordCatalog;
+  bool chordCatalogLoading = false;
+
+  ChordShape? chordPrompt;
+  List<String> chordChoicesList = [];   // name mode: symbols to choose from
+  String? chordSelected;                // name mode: which symbol was tapped
+  bool chordWasCorrect = false;
+  Set<int> chordTapped = {};             // build mode: fretted indices placed
+  bool chordBuildDone = false;           // build mode: locked during feedback
+  Set<int>? chordBuildReveal;            // build mode: correct set after Reveal
+
+  // Choice-mode = the timer behaves like identify (follows [timerMode], no
+  // leaderboard). Interval and chord game types share this timing treatment.
+  bool get isChoiceMode =>
+      currentGameMode.value == 'reverse' ||
+      currentGameMode.value == 'interval' ||
+      currentGameMode.value == 'chord';
+
+  bool get isIntervalMode => currentGameMode.value == 'interval';
+  bool get isIntervalName =>
+      isIntervalMode && intervalGameType == IntervalGameType.name;
+  bool get isIntervalBuild =>
+      isIntervalMode && intervalGameType == IntervalGameType.build;
+
+  bool get isChordMode => currentGameMode.value == 'chord';
+  bool get isChordName =>
+      isChordMode && chordGameType == ChordGameType.name;
+  bool get isChordBuild =>
+      isChordMode && chordGameType == ChordGameType.build;
 
   // "STRING G · FRET 5" hint displayed in the choice panel
   String get reversePositionHint {
@@ -103,6 +158,8 @@ class HomeController extends GetxController {
     score = 0;
     timer = null;
     secondsRemaining.value = 0;
+    _clearIntervalState();
+    _clearChordState();
 
     await initLocalDbData();
     // Don't override a mode the user explicitly picked (startup screen / switcher).
@@ -225,6 +282,30 @@ class HomeController extends GetxController {
   void startTheGame() {
     isStart = true;
     isPaused = false;
+    if (isIntervalMode) {
+      if (isIntervalBuild) {
+        newBuildIntervalPrompt();
+      } else {
+        newIntervalPrompt();
+      }
+      update();
+      return;
+    }
+    if (isChordMode) {
+      // The catalog can still be loading on the first play — start the round
+      // as soon as it's ready.
+      if (_chordCatalog == null) {
+        ensureChordCatalog().then((_) {
+          if (isStart) {
+            isChordBuild ? newBuildChordPrompt() : newChordNamePrompt();
+          }
+        });
+      } else {
+        isChordBuild ? newBuildChordPrompt() : newChordNamePrompt();
+      }
+      update();
+      return;
+    }
     int randomIndex = getRandomIndex();
     highlightFret = randomIndex;
     previousHighlightFret = highlightFret;
@@ -259,8 +340,13 @@ class HomeController extends GetxController {
     reverseChoices = [];
     reverseSelectedNote = null;
     reverseWasCorrect = false;
+    _clearIntervalState();
+    _clearChordState();
 
-    if (resetAll) {
+    // Keep the chosen trainer mode on reset — only the plain find-note timer
+    // modes fall back to the saved default. Identify / interval stay put so the
+    // reset button clears the round rather than kicking back to Find Note.
+    if (resetAll && !isChoiceMode) {
       currentGameMode.value = defaultTimerSelectedValue.value == 'Countdown'
           ? 'countdown'
           : 'stopwatch';
@@ -270,11 +356,30 @@ class HomeController extends GetxController {
     update();
   }
 
+  void _clearIntervalState() {
+    intervalPrompt = null;
+    intervalRootIndex = null;
+    intervalTargetIndex = null;
+    intervalChoicesList = [];
+    intervalSelected = null;
+    intervalWasCorrect = false;
+    intervalBuildDone = false;
+    intervalBuildRevealIndex = null;
+  }
+
+  void _clearChordState() {
+    chordPrompt = null;
+    chordChoicesList = [];
+    chordSelected = null;
+    chordWasCorrect = false;
+    chordTapped = {};
+    chordBuildDone = false;
+    chordBuildReveal = null;
+  }
+
   void resetTimer() {
-    // In identify mode use timerMode; otherwise use currentGameMode
-    final effective = currentGameMode.value == 'reverse'
-        ? timerMode.value
-        : currentGameMode.value;
+    // In choice modes (identify / interval) use timerMode; otherwise currentGameMode
+    final effective = isChoiceMode ? timerMode.value : currentGameMode.value;
     if (effective == 'countdown') {
       secondsRemaining.value =
           timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
@@ -288,9 +393,7 @@ class HomeController extends GetxController {
 
   void startTimer({bool resume = false}) {
     debugLog('debug timer Started - Mode: ${currentGameMode.value}');
-    final effective = currentGameMode.value == 'reverse'
-        ? timerMode.value
-        : currentGameMode.value;
+    final effective = isChoiceMode ? timerMode.value : currentGameMode.value;
     if (effective == 'countdown') {
       startCountDownTimer();
     } else if (effective == 'leaderboard') {
@@ -328,7 +431,7 @@ class HomeController extends GetxController {
 
   // Cycles timer modes. In identify mode only stopwatch↔countdown (no leaderboard).
   void cycleGameMode() {
-    if (currentGameMode.value == 'reverse') {
+    if (isChoiceMode) {
       timerMode.value = timerMode.value == 'stopwatch' ? 'countdown' : 'stopwatch';
     } else {
       if (currentGameMode.value == 'stopwatch') {
@@ -359,6 +462,358 @@ class HomeController extends GetxController {
     currentGameMode.value = timerMode.value;
     reverseChoices = [];
     resetGame(false);
+    update();
+  }
+
+  // ── Interval mode ("Name the Interval") ──────────────────────────────────
+
+  void switchToIntervalMode({
+    IntervalGameType? type,
+    IntervalDifficulty? difficulty,
+  }) {
+    modeChosen = true;
+    currentGameMode.value = 'interval';
+    if (type != null) intervalGameType = type;
+    if (difficulty != null) intervalDifficulty = difficulty;
+    _clearIntervalState();
+    resetGame(false);
+    update();
+  }
+
+  void setIntervalDifficulty(IntervalDifficulty difficulty) {
+    intervalDifficulty = difficulty;
+    // If a round is idle, regenerate nothing; the next Play uses the new level.
+    update();
+  }
+
+  void setIntervalGameType(IntervalGameType type) {
+    intervalGameType = type;
+    update();
+  }
+
+  // ── Build the Interval: show a root + interval name, user taps the fret ──
+
+  /// Prepares the next build question: a root note and a target interval that
+  /// is reachable at the current difficulty (the actual target fret stays
+  /// hidden — the user has to find it).
+  void newBuildIntervalPrompt() {
+    final prompt = pickIntervalPrompt(
+      fretList,
+      difficulty: intervalDifficulty,
+      isStringActive: getStringStatus,
+    );
+    if (prompt == null) return;
+
+    intervalPrompt = prompt;
+    intervalRootIndex = fretList.indexOf(prompt.root);
+    intervalTargetIndex = null; // hidden — the user taps to find it
+    intervalSelected = null;
+    intervalWasCorrect = false;
+    intervalBuildDone = false;
+    intervalBuildRevealIndex = null;
+    selectedFret = null;
+    selectedColor = Colors.transparent;
+
+    if (identifyPlaySound) unawaited(prompt.root.playSound());
+    update();
+  }
+
+  /// Handles a fret tap in build mode. Any position exactly the target interval
+  /// away from the root counts (ascending for easy/medium, either way on hard).
+  void selectBuildIntervalFret(int index) {
+    if (!isStart) return;
+    if (intervalBuildDone) return; // locked while showing feedback
+    final root = intervalPrompt?.root;
+    final want = intervalPrompt?.interval;
+    if (root == null || want == null) return;
+    if (index < 0 || index >= fretList.length) return;
+
+    final tapped = fretList[index];
+    // Only count taps on active strings, mirroring find mode.
+    if (!getStringStatus(tapped.string ?? 0)) {
+      unawaited(tapped.playSound());
+      return;
+    }
+
+    final gap = semitoneGap(root, tapped);
+    final isCorrect = intervalDifficulty == IntervalDifficulty.hard
+        ? gap.abs() == want.semitones
+        : gap == want.semitones;
+
+    intervalBuildDone = true;
+    selectedFret = index;
+    unawaited(tapped.playSound());
+    unawaited(HeatmapService.recordAttempt(index, isCorrect));
+
+    if (isCorrect) {
+      selectedColor = JHGColors.green;
+      incrementScore();
+      final delay = identifyAutoAdvance
+          ? const Duration(milliseconds: 350)
+          : const Duration(milliseconds: 700);
+      Future.delayed(delay, () {
+        if (isStart) newBuildIntervalPrompt();
+      });
+    } else {
+      selectedColor = JHGColors.primary;
+      // Reveal where a correct answer was so the user learns from the miss.
+      intervalBuildRevealIndex = intervalRootIndex == null
+          ? null
+          : fretList.indexOf(intervalPrompt!.target);
+      decrementScore();
+      Future.delayed(const Duration(milliseconds: 1300), () {
+        if (isStart) newBuildIntervalPrompt();
+      });
+    }
+    update();
+    onFretTappedDuringTour?.call();
+  }
+
+  /// Generates the next interval question, honouring difficulty and muted
+  /// strings. No-op (keeps the previous prompt) if no valid pair exists.
+  void newIntervalPrompt() {
+    final prompt = pickIntervalPrompt(
+      fretList,
+      difficulty: intervalDifficulty,
+      isStringActive: getStringStatus,
+    );
+    if (prompt == null) return;
+
+    intervalPrompt = prompt;
+    intervalRootIndex = fretList.indexOf(prompt.root);
+    intervalTargetIndex = fretList.indexOf(prompt.target);
+    intervalChoicesList = intervalChoices(prompt.interval);
+    intervalSelected = null;
+    intervalWasCorrect = false;
+
+    if (identifyPlaySound) unawaited(_playIntervalNotes());
+    update();
+  }
+
+  Future<void> _playIntervalNotes() async {
+    final p = intervalPrompt;
+    if (p == null) return;
+    await p.root.playSound();
+    await Future.delayed(const Duration(milliseconds: 480));
+    // Guard against the round having moved on while we waited.
+    if (intervalPrompt == p) await p.target.playSound();
+  }
+
+  void selectIntervalAnswer(MusicInterval choice) {
+    if (!isStart) return;
+    if (intervalSelected != null) return; // block double-tap during feedback
+    final correct = intervalPrompt?.interval;
+    if (correct == null) return;
+
+    if (identifyPlaySound) unawaited(_playIntervalNotes());
+
+    final isCorrect = choice.semitones == correct.semitones;
+    intervalSelected = choice;
+    intervalWasCorrect = isCorrect;
+
+    // Record against the target fret so the heatmap still reflects trouble spots.
+    if (intervalTargetIndex != null) {
+      unawaited(HeatmapService.recordAttempt(intervalTargetIndex!, isCorrect));
+    }
+
+    if (isCorrect) {
+      incrementScore();
+      final delay = identifyAutoAdvance
+          ? const Duration(milliseconds: 250)
+          : const Duration(milliseconds: 650);
+      Future.delayed(delay, () {
+        if (isStart) newIntervalPrompt();
+      });
+    } else {
+      decrementScore();
+      Future.delayed(const Duration(milliseconds: 1100), () {
+        if (isStart) newIntervalPrompt();
+      });
+    }
+    update();
+    onAnswerSelectedDuringTour?.call();
+  }
+
+  // ── Chord mode ("Name / Build the Chord") ────────────────────────────────
+
+  void switchToChordMode({
+    ChordGameType? type,
+    ChordDifficulty? difficulty,
+  }) {
+    modeChosen = true;
+    currentGameMode.value = 'chord';
+    if (type != null) chordGameType = type;
+    if (difficulty != null) chordDifficulty = difficulty;
+    _clearChordState();
+    ensureChordCatalog();
+    resetGame(false);
+    update();
+  }
+
+  void setChordDifficulty(ChordDifficulty difficulty) {
+    chordDifficulty = difficulty;
+    update();
+  }
+
+  void setChordGameType(ChordGameType type) {
+    chordGameType = type;
+    update();
+  }
+
+  /// Loads + builds the chord catalog once (parsed off the UI thread). Safe to
+  /// call repeatedly — it no-ops after the first successful build.
+  Future<void> ensureChordCatalog() async {
+    if (_chordCatalog != null || chordCatalogLoading) return;
+    chordCatalogLoading = true;
+    update();
+    try {
+      final data = await _chordService.getData();
+      _chordCatalog = ChordCatalog(data);
+    } finally {
+      chordCatalogLoading = false;
+      update();
+    }
+  }
+
+  /// Strums a chord shape: each sounding note in turn, low string → high, so it
+  /// reads as a downstroke rather than a block.
+  Future<void> _playChord(ChordShape shape) async {
+    for (final i in shape.boardIndices) {
+      if (i < 0 || i >= fretList.length) continue;
+      unawaited(fretList[i].playSound());
+      await Future.delayed(const Duration(milliseconds: 70));
+    }
+  }
+
+  /// Prepares the next Name question: a shape to light up plus its answer set.
+  void newChordNamePrompt() {
+    final cat = _chordCatalog;
+    if (cat == null) return;
+    final shape = cat.pick(chordDifficulty);
+    if (shape == null) return;
+
+    chordPrompt = shape;
+    chordChoicesList = cat.choices(shape, chordDifficulty);
+    chordSelected = null;
+    chordWasCorrect = false;
+    chordTapped = {};
+    chordBuildDone = false;
+    chordBuildReveal = null;
+    selectedFret = null;
+    selectedColor = Colors.transparent;
+
+    if (identifyPlaySound) unawaited(_playChord(shape));
+    update();
+  }
+
+  /// Prepares the next Build question: a chord symbol is shown; the actual
+  /// shape stays hidden until the user places it (or reveals it).
+  void newBuildChordPrompt() {
+    final cat = _chordCatalog;
+    if (cat == null) return;
+    final shape = cat.pick(chordDifficulty);
+    if (shape == null) return;
+
+    chordPrompt = shape;
+    chordChoicesList = [];
+    chordSelected = null;
+    chordWasCorrect = false;
+    chordTapped = {};
+    chordBuildDone = false;
+    chordBuildReveal = null;
+    selectedFret = null;
+    selectedColor = Colors.transparent;
+
+    // Play it once as an audio reference for the shape to build.
+    if (identifyPlaySound) unawaited(_playChord(shape));
+    update();
+  }
+
+  void selectChordAnswer(String symbol) {
+    if (!isStart) return;
+    if (chordSelected != null) return; // block double-tap during feedback
+    final correct = chordPrompt?.symbol;
+    if (correct == null) return;
+
+    if (identifyPlaySound) unawaited(_playChord(chordPrompt!));
+
+    final isCorrect = symbol == correct;
+    chordSelected = symbol;
+    chordWasCorrect = isCorrect;
+
+    if (isCorrect) {
+      incrementScore();
+      final delay = identifyAutoAdvance
+          ? const Duration(milliseconds: 350)
+          : const Duration(milliseconds: 750);
+      Future.delayed(delay, () {
+        if (isStart) newChordNamePrompt();
+      });
+    } else {
+      decrementScore();
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (isStart) newChordNamePrompt();
+      });
+    }
+    update();
+    onAnswerSelectedDuringTour?.call();
+  }
+
+  /// Build mode: toggle a fretted position. Open strings (fret 0) aren't part
+  /// of the placed shape — tapping one just sounds the note. The round is won
+  /// when the placed set matches any accepted voicing of the target chord.
+  void tapChordFret(int index) {
+    if (!isStart) return;
+    if (chordBuildDone) return; // locked while showing feedback
+    if (index < 0 || index >= fretList.length) return;
+
+    final model = fretList[index];
+    final fret = model.fret ?? (index ~/ 6);
+    unawaited(model.playSound());
+    if (fret <= 0) return; // open string — not a placed note
+
+    if (chordTapped.contains(index)) {
+      chordTapped.remove(index);
+    } else {
+      chordTapped.add(index);
+    }
+
+    final matched = chordPrompt?.acceptableFrettedSets.any((s) =>
+            s.length == chordTapped.length && s.containsAll(chordTapped)) ??
+        false;
+    if (matched) {
+      chordBuildDone = true;
+      selectedColor = JHGColors.green;
+      incrementScore();
+      final delay = identifyAutoAdvance
+          ? const Duration(milliseconds: 450)
+          : const Duration(milliseconds: 850);
+      Future.delayed(delay, () {
+        if (isStart) newBuildChordPrompt();
+      });
+    }
+    update();
+    onFretTappedDuringTour?.call();
+  }
+
+  void clearChordBuild() {
+    if (chordBuildDone) return;
+    chordTapped = {};
+    update();
+  }
+
+  /// Build mode: give up on the current chord — reveal a correct shape (green)
+  /// and move on. Counts as a miss.
+  void revealChordBuild() {
+    if (!isStart || chordBuildDone) return;
+    final sets = chordPrompt?.acceptableFrettedSets;
+    if (sets == null || sets.isEmpty) return;
+    chordBuildReveal = sets.first;
+    chordBuildDone = true;
+    decrementScore();
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (isStart) newBuildChordPrompt();
+    });
     update();
   }
 
