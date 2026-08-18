@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       TourStep(
         title: 'Welcome to Fretboard Trainer!',
         subtitle:
-            'Quick walkthrough — you\'ll play two live rounds and be ready to go.',
+            'A quick walkthrough. You\'ll play two live rounds and be ready to go.',
         actionLabel: 'Let\'s Go  →',
         blockBackground: false,
         onActivate: () {
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // blockBackground keeps the fretboard locked; user clicks the card button.
       TourStep(
         title: 'Tap Play to Start',
-        subtitle: 'Press ▶ below — the note to find will appear in the panel.',
+        subtitle: 'Press ▶ below. The note to find will appear in the panel.',
         targetKey: tourKeyPlayButton,
         spotlightPadding: 8,
         blockBackground: true,
@@ -142,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const TextSpan(text: 'Look for '),
                       TextSpan(
                         text: note,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: JHGColors.primary,
                           fontWeight: FontWeight.w800,
                           fontSize: 17,
@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // ── 5. Tap Play (Identify) ────────────────────────────────────────────
       TourStep(
         title: 'Tap Play to Start',
-        subtitle: 'Press ▶ — a fret will glow on the neck.',
+        subtitle: 'Press ▶. A fret will glow on the neck.',
         targetKey: tourKeyPlayButton,
         spotlightPadding: 8,
         blockBackground: true,
@@ -250,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       TourStep(
         title: 'Tour Complete! 🎸',
         subtitle:
-            'The Heatmap shows which notes you struggle with most — darker means more practice needed.',
+            'The Heatmap shows which notes you struggle with most. Darker means more practice needed.',
         targetKey: tourKeyHeatmapNav,
         spotlightPadding: 8,
         actionLabel: 'Open Heatmap  →',
@@ -287,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: JHGColors.secondryBlack,
+          backgroundColor: const Color(0xFF0F0F0F),
           body: GetBuilder<HomeController>(
               init: HomeController(),
               builder: (controller) {
@@ -300,13 +300,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ? Container(
                             height: height,
                             width: width,
-                            color: JHGColors.secondryBlack,
+                            color: const Color(0xFF0F0F0F),
                             child: WebBoard(controller: controller),
                           )
                         : Container(
                             width: width,
                             height: height,
-                            color: JHGColors.secondryBlack,
+                            color: const Color(0xFF0F0F0F),
                             child: isPortraitViewport
                                 ? PortraitBoard(controller: controller)
                                 : LandscapeBoard(controller: controller),

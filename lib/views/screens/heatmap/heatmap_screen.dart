@@ -27,6 +27,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     super.initState();
     controller = Get.find<HeatmapController>();
     controller.loadStats();
+    controller.loadBreakdowns();
     _checkTourIntro();
   }
 
@@ -40,6 +41,22 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
 
   void _dismissIntro() => setState(() => _showIntro = false);
 
+  Widget _topIcon({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        width: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: Icon(icon, color: Colors.white54, size: 20),
+      ),
+    );
+  }
+
   void _confirmReset() {
     showDialog(
       context: context,
@@ -47,7 +64,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
         backgroundColor: const Color(0xFF2C2C2C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Reset mastery data?',
+          'Reset Notes stats?',
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 16,
@@ -55,7 +72,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
           ),
         ),
         content: Text(
-          'This will permanently clear all your accuracy stats. Your score history is unaffected.',
+          'This permanently clears your per-note accuracy (and the Find/Identify '
+          'split). Your score history and other games are unaffected.',
           style: GoogleFonts.inter(
             color: Colors.white54,
             fontSize: 13,
@@ -70,7 +88,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              controller.clearStats();
+              controller.resetModule(0);
             },
             child: Text('Reset',
                 style: GoogleFonts.inter(
@@ -100,17 +118,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: _confirmReset,
-                        child: Container(
-                          height: 44, width: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C2C2C),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.restart_alt_rounded,
-                              color: Colors.white54, size: 20),
-                        ),
+                      _topIcon(
+                        icon: Icons.arrow_back_rounded,
+                        onTap: () => Get.back(),
                       ),
                       const Expanded(
                         child: Center(
@@ -125,104 +135,21 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                           ),
                         ),
                       ),
-                      // Legend pill
-                      GestureDetector(
+                      _topIcon(
+                        icon: Icons.info_outline_rounded,
                         onTap: () => _showLegendSheet(context),
-                        child: Container(
-                          height: 44, width: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C2C2C),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.info_outline_rounded,
-                              color: Colors.white54, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ─── STATS STRIP ──────────────────────────────────────────
-                Obx(() => Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                  child: Row(
-                    children: [
-                      _statChip(
-                        value: controller.totalPracticed.toString(),
-                        label: 'Practiced',
-                        color: Colors.white54,
-                        bgColor: const Color(0xFF2C2C2C),
                       ),
                       const SizedBox(width: 8),
-                      _statChip(
-                        value: controller.mastered.toString(),
-                        label: 'Mastered',
-                        color: const Color(0xFF2ECC71),
-                        bgColor: const Color(0x1A2ECC71),
-                      ),
-                      const SizedBox(width: 8),
-                      _statChip(
-                        value: controller.struggling.toString(),
-                        label: 'Struggling',
-                        color: const Color(0xFFE05252),
-                        bgColor: const Color(0x1AE05252),
+                      _topIcon(
+                        icon: Icons.restart_alt_rounded,
+                        onTap: _confirmReset,
                       ),
                     ],
                   ),
-                )),
-
-                // ─── FRETBOARD ────────────────────────────────────────────
-                Expanded(
-                  child: Obx(() {
-                    if (controller.isLoading.value) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                            color: Colors.white24, strokeWidth: 1.5),
-                      );
-                    }
-                    return _HeatmapFretboard(
-                        controller: controller, height: height, width: width);
-                  }),
                 ),
 
-                // ─── DETAIL PANEL ─────────────────────────────────────────
-                Obx(() {
-                  final idx = controller.selectedIndex.value;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                    height: idx >= 0 ? 96 : 0,
-                    child: ClipRect(
-                      child: OverflowBox(
-                        minHeight: 0,
-                        maxHeight: double.infinity,
-                        alignment: Alignment.topCenter,
-                        child: idx >= 0
-                            ? _DetailPanel(index: idx, controller: controller)
-                            : const SizedBox.shrink(),
-                      ),
-                    ),
-                  );
-                }),
-
-                // ─── HINT + LEGEND ────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Tap any fret to see details',
-                        style: GoogleFonts.inter(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      _inlineLegend(),
-                    ],
-                  ),
-                ),
+                // ─── BODY: Notes heatmap ──────────────────────────────────
+                Expanded(child: _notesBody(height, width)),
 
                 // ─── NAV BAR ──────────────────────────────────────────────
                 AppNavBar(
@@ -236,7 +163,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: JHGColors.secondryBlack,
+          backgroundColor: const Color(0xFF0F0F0F),
           body: kIsWeb
               ? Center(
                   child: ConstrainedBox(
@@ -251,10 +178,100 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     );
   }
 
+  /// The original Notes body: summary chips, the fretboard heatmap, the
+  /// tap-to-inspect detail panel, and the hint/legend row.
+  Widget _notesBody(double height, double width) {
+    return Column(
+      children: [
+        // ─── STATS STRIP ──────────────────────────────────────────────────
+        Obx(() => Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: Row(
+                children: [
+                  _statChip(
+                    value: controller.totalPracticed.toString(),
+                    label: 'Practiced',
+                    color: Colors.white54,
+                    bgColor: const Color(0xFF2C2C2C),
+                  ),
+                  const SizedBox(width: 8),
+                  _statChip(
+                    value: controller.mastered.toString(),
+                    label: 'Mastered',
+                    color: const Color(0xFF2ECC71),
+                    bgColor: const Color(0x1A2ECC71),
+                  ),
+                  const SizedBox(width: 8),
+                  _statChip(
+                    value: controller.struggling.toString(),
+                    label: 'Struggling',
+                    color: const Color(0xFFE05252),
+                    bgColor: const Color(0x1AE05252),
+                  ),
+                ],
+              ),
+            )),
+
+        // ─── FRETBOARD ────────────────────────────────────────────────────
+        Expanded(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(
+                    color: Colors.white24, strokeWidth: 1.5),
+              );
+            }
+            return _HeatmapFretboard(
+                controller: controller, height: height, width: width);
+          }),
+        ),
+
+        // ─── DETAIL PANEL ─────────────────────────────────────────────────
+        Obx(() {
+          final idx = controller.selectedIndex.value;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            height: idx >= 0 ? 96 : 0,
+            child: ClipRect(
+              child: OverflowBox(
+                minHeight: 0,
+                maxHeight: double.infinity,
+                alignment: Alignment.topCenter,
+                child: idx >= 0
+                    ? _DetailPanel(index: idx, controller: controller)
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          );
+        }),
+
+        // ─── HINT + LEGEND ────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Tap any fret to see details',
+                style: GoogleFonts.inter(
+                  color: Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              _inlineLegend(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showLegendSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: const Color(0xFF0F0F0F),
       // Keep it a tidy card instead of a full-width slab on web.
       constraints: const BoxConstraints(maxWidth: 440),
       shape: const RoundedRectangleBorder(
@@ -385,7 +402,7 @@ class _DetailPanel extends StatelessWidget {
     final fret = fretList[index];
     final stat = controller.stats[index];
     final hasData = stat != null && stat.hasData;
-    final acc = hasData ? stat!.accuracy : 0.0;
+    final acc = hasData ? stat.accuracy : 0.0;
     final color = controller.getHeatColor(index);
 
     return Container(
@@ -475,7 +492,7 @@ class _DetailPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${stat!.correct}/${stat.attempts}',
+                  '${stat.correct}/${stat.attempts}',
                   style: GoogleFonts.poppins(
                     color: Colors.white54,
                     fontSize: 13,
@@ -513,7 +530,7 @@ class _HeatmapFretboard extends StatelessWidget {
     // On web the canvas is a fixed 568px, so the old 0.50 factor gave a fat
     // 284px slab. Slim it to ~193px to match the Find Note screen's neck.
     // Mobile keeps 0.50 (real screen width already yields a good ~195px neck).
-    final boardWidthFactor = kIsWeb ? 0.34 : 0.50;
+    const boardWidthFactor = kIsWeb ? 0.34 : 0.50;
     final boardWidth = width * boardWidthFactor;
 
     // Vertical basis. On web, lock the fret pitch to the SAME neck proportion
@@ -573,9 +590,9 @@ class _HeatmapFretboard extends StatelessWidget {
                         child: Container(
                           width: double.infinity,
                           height: vh * 0.015,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: JHGColors.black,
-                            borderRadius: const BorderRadius.only(
+                            borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(10),
                               bottomRight: Radius.circular(10),
                             ),
@@ -945,7 +962,6 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
     final cardW = (size.width - 56.0).clamp(0.0, 400.0);
     final left = (size.width - cardW) / 2;
 

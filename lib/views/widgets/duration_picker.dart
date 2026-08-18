@@ -88,11 +88,11 @@ class LabeledDurationPicker extends StatelessWidget {
                 .clamp(360.0, 520.0)
                 .toDouble()
             : null;
-        final dialogHeight = kIsWeb ? 256.0 : 326.0;
-        final pickerHeight = kIsWeb ? 126.0 : 178.0;
-        final pickerItemExtent = kIsWeb ? 34.0 : 44.0;
-        final pickerTextSize = kIsWeb ? 16.0 : 20.0;
-        final buttonHeight = kIsWeb ? 40.0 : 48.0;
+        const dialogHeight = kIsWeb ? 256.0 : 326.0;
+        const pickerHeight = kIsWeb ? 126.0 : 178.0;
+        const pickerItemExtent = kIsWeb ? 34.0 : 44.0;
+        const pickerTextSize = kIsWeb ? 16.0 : 20.0;
+        const buttonHeight = kIsWeb ? 40.0 : 48.0;
 
         return Dialog(
           backgroundColor: JHGColors.charcolGray,
@@ -101,14 +101,14 @@ class LabeledDurationPicker extends StatelessWidget {
           ),
           child: Container(
             width: dialogWidth,
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: kIsWeb ? 18 : kBodyHrPadding,
             ),
             height: dialogHeight,
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(
+                  padding: const EdgeInsets.only(
                     top: kIsWeb ? 14 : 20,
                     bottom: kIsWeb ? 10 : 14,
                   ),
@@ -136,7 +136,7 @@ class LabeledDurationPicker extends StatelessWidget {
                           itemExtent: pickerItemExtent,
                           magnification: kIsWeb ? 1.05 : 1.15,
                           selectionOverlay: Container(
-                            margin: EdgeInsets.symmetric(
+                            margin: const EdgeInsets.symmetric(
                               horizontal: kIsWeb ? 6 : 8,
                             ),
                             decoration: BoxDecoration(
@@ -174,7 +174,7 @@ class LabeledDurationPicker extends StatelessWidget {
                           itemExtent: pickerItemExtent,
                           magnification: kIsWeb ? 1.05 : 1.15,
                           selectionOverlay: Container(
-                            margin: EdgeInsets.symmetric(
+                            margin: const EdgeInsets.symmetric(
                               horizontal: kIsWeb ? 6 : 8,
                             ),
                             decoration: BoxDecoration(
@@ -207,7 +207,7 @@ class LabeledDurationPicker extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: kIsWeb ? 12 : 16),
+                const SizedBox(height: kIsWeb ? 12 : 16),
                 JHGPrimaryBtn(
                   height: buttonHeight,
                   onPressed: () {
@@ -220,7 +220,7 @@ class LabeledDurationPicker extends StatelessWidget {
                   },
                   label: "Done",
                 ),
-                SizedBox(height: kIsWeb ? 10 : 12),
+                const SizedBox(height: kIsWeb ? 10 : 12),
               ],
             ),
           ),

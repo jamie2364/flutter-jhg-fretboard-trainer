@@ -143,7 +143,7 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                                   child: Container(
                                     width: boardWidth,
                                     height: nutHeight,
-                                    decoration: BoxDecoration(
+                                    decoration: const BoxDecoration(
                                       color: Colors.black12,
                                     ),
                                   ),
@@ -191,8 +191,8 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                                             JHGColors.primary,
                                           ]
                                         : [
-                                            Color.fromRGBO(196, 196, 196, 1),
-                                            Color.fromRGBO(196, 196, 196, 1),
+                                            const Color.fromRGBO(196, 196, 196, 1),
+                                            const Color.fromRGBO(196, 196, 196, 1),
                                             Colors.black54,
                                             Colors.black87,
                                           ],
@@ -257,17 +257,17 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                   ],
                 ),
                 //SPACER
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
                 // NUMBERS
-                Container(
+                SizedBox(
                   height: boardHeight,
                   // color: Colors.red,
                   width: 26,
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
-                      _FretNumberLabel(number: 0, height: 20),
-                      _FretNumberLabel(number: 1, height: 30),
+                      const _FretNumberLabel(number: 0, height: 20),
+                      const _FretNumberLabel(number: 1, height: 30),
                       for (int fret = 2; fret <= 22; fret++)
                         _FretNumberLabel(
                           number: fret,
@@ -354,7 +354,7 @@ class _FretMarkerDot extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: JHGColors.secondryBlack,
           shape: BoxShape.circle,
         ),

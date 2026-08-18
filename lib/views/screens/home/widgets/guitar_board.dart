@@ -29,23 +29,37 @@ const Set<int> _kDoubleDotFrets = {11};
 
 const List<String> _kOpenStringLabels = ['E', 'A', 'D', 'G', 'B', 'E'];
 
-// Ball top so the 28px ball is centred ON fret [fret]'s wire (wire F at F*80),
-// not floating in the middle of the fret space. Open string sits at the nut.
+// Note colour when the ball is NOT a root — a neutral grey, matching the
+// dictionaries / drills fretboard (root = coral, every other note = grey).
+const Color _kNoteGrey = Color(0xFF888888);
+// Distinct pure red for the wrong-tap flash (stands apart from the coral notes).
+const Color _kFlashRed = Color(0xFFE53935);
+
+// Ball top so the 28px ball sits in the MIDDLE of fret [fret]'s playing area
+// (between wire F-1 and wire F), NOT on the wire itself — pixel-identical to the
+// dictionaries / drills `bouncingBall`: fret F ⇒ top = 26 + (F-1)*80, so the
+// ball's centre lands at (F-1)*80 + 40, the centre of the fret space. Fret 1 is
+// nudged down (nut takes the top 14px) and the open string sits at the nut.
 double _ballTopFor(int fret) {
   if (fret == 0) return 2.0;
-  return fret * _kFretSpacing - _kBallRadius;
+  if (fret == 1) return 34.0;
+  return 26.0 + (fret - 1) * _kFretSpacing;
 }
 
-// Tappable cell for a fret, centred on its wire so a tap lands where the note
-// is drawn. Fret F spans (F*80 - 40)..(F*80 + 40); the open zone is 0..40.
+// Ball centre (y) for a fret — used to build tap cells that track the balls.
+double _ballCenterFor(int fret) => _ballTopFor(fret) + _kBallRadius;
+
+// Tappable cell for a fret. Its bounds are the midpoints to the neighbouring
+// frets' ball centres, so every cell is centred on its ball and adjacent cells
+// tile the neck without overlapping.
 double _cellTopFor(int fret) {
   if (fret == 0) return 0.0;
-  return fret * _kFretSpacing - _kFretSpacing / 2;
+  return (_ballCenterFor(fret - 1) + _ballCenterFor(fret)) / 2;
 }
 
 double _cellHeightFor(int fret) {
-  if (fret == 0) return _kFretSpacing / 2;
-  return _kFretSpacing;
+  final bottom = (_ballCenterFor(fret) + _ballCenterFor(fret + 1)) / 2;
+  return bottom - _cellTopFor(fret);
 }
 
 // Horizontal position. Columns run low-E (col 0, left) → high-e (col 5, right),
@@ -65,7 +79,9 @@ class GuitarBoard extends StatefulWidget {
 class _GuitarBoardAltState extends State<GuitarBoard> {
   late bool isPortrait;
   final ScrollController _scrollController = ScrollController();
-  int? _lastScrolledFret; // avoid redundant scrolls on unrelated update() calls
+  // Signature (minFret*100 + maxFret) of the note band last scrolled to, so an
+  // unrelated update() that leaves the shown notes unchanged doesn't re-scroll.
+  int? _lastScrollSig;
 
   @override
   void initState() {
@@ -79,30 +95,73 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     super.dispose();
   }
 
-  // Called inside GetBuilder.builder after every update(). Scrolls to the
-  // highlighted fret when in IDENTIFY mode so it's always centered on screen.
-  void _scrollToFret(HomeController controller) {
-    // Interval mode centres between the two notes; identify centres the target.
-    // Chord NAME centres on the shape's highest note so the whole grip is in
-    // view; chord BUILD stays at the top (nothing to reveal yet).
-    final bool isInterval = controller.currentGameMode.value == 'interval';
-    final bool isChordName = controller.isChordName;
-    final int? chordFocus = (isChordName && controller.chordPrompt != null)
-        ? _chordFocusIndex(controller.chordPrompt!)
-        : null;
-    final int? fret = isInterval
-        ? (controller.intervalTargetIndex ?? controller.intervalRootIndex)
-        : isChordName
-            ? chordFocus
-            : controller.highlightFret;
-    final isIdentify = controller.currentGameMode.value == 'reverse' ||
-        isInterval ||
-        isChordName;
+  // Fret numbers (0-15) of every note currently drawn on the board, so the
+  // auto-scroll can keep as many as possible in view. Empty ⇒ nothing to show
+  // (find mode / idle), so the board rests at the top (the open strings).
+  List<int> _activeFrets(HomeController c) {
+    if (!c.isStart) return const [];
+    int? fretOf(int? index) =>
+        (index == null || index < 0 || index >= fretList.length)
+            ? null
+            : (fretList[index].fret ?? index ~/ 6);
 
-    if (!isIdentify || !controller.isStart || fret == null) {
-      // Scroll back to top when not in identify mode or game stopped
-      if (_lastScrolledFret != null) {
-        _lastScrolledFret = null;
+    final frets = <int>[];
+    void add(int? index) {
+      final f = fretOf(index);
+      if (f != null) frets.add(f);
+    }
+
+    final mode = c.currentGameMode.value;
+    if (mode == 'reverse') {
+      add(c.highlightFret);
+    } else if (mode == 'interval') {
+      add(c.intervalRootIndex);
+      if (!c.isIntervalBuild) add(c.intervalTargetIndex);
+      add(c.intervalBuildRevealIndex);
+    } else if (c.isChordName && c.chordPrompt != null) {
+      for (final f in c.chordPrompt!.frets) {
+        if (f != null) frets.add(f);
+      }
+    } else if (c.isChordBuild) {
+      for (final idx in c.chordTapped) {
+        add(idx);
+      }
+      final reveal = c.chordBuildReveal;
+      if (reveal != null) {
+        for (final idx in reveal) {
+          add(idx);
+        }
+      }
+    } else if (c.isChordLab) {
+      final p = c.chordLabPrompt;
+      if (p != null) {
+        if (p.round == ChordLabRound.name) {
+          for (final f in p.target.frets) {
+            if (f != null) frets.add(f);
+          }
+        } else {
+          for (final idx in c.chordLabActive) {
+            add(idx);
+          }
+          if (p.regionLo != null) frets.add(p.regionLo!);
+          if (p.regionHi != null) frets.add(p.regionHi!);
+        }
+      }
+    }
+    return frets;
+  }
+
+  // Called inside GetBuilder.builder after every update(). Scrolls so the band
+  // of currently-shown notes is centred in the viewport — keeping the whole
+  // chord / interval in view where it fits, and as much as possible when it
+  // doesn't. Find mode and idle rest at the top.
+  void _scrollToFret(HomeController controller) {
+    final frets = _activeFrets(controller);
+
+    if (frets.isEmpty) {
+      // Nothing highlighted → return to the top (open strings).
+      if (_lastScrollSig != null) {
+        _lastScrollSig = null;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
             _scrollController.animateTo(0,
@@ -114,31 +173,59 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       return;
     }
 
-    if (fret == _lastScrolledFret) return; // same fret — no scroll needed
-    _lastScrolledFret = fret;
+    int minF = frets.first, maxF = frets.first;
+    for (final f in frets) {
+      if (f < minF) minF = f;
+      if (f > maxF) maxF = f;
+    }
+    final sig = minF * 100 + maxF;
+    if (sig == _lastScrollSig) return; // same note band — no scroll needed
+    _lastScrollSig = sig;
+
+    // The note that MUST stay on screen when the whole band can't fit: the
+    // interval root (so it's always visible even across an octave gap), or the
+    // identify target. Chords are compact enough to just centre the band.
+    int? anchorFret;
+    final mode = controller.currentGameMode.value;
+    if (mode == 'interval' && controller.intervalRootIndex != null) {
+      anchorFret = fretList[controller.intervalRootIndex!].fret ?? 0;
+    } else if (mode == 'reverse' && controller.highlightFret != null) {
+      anchorFret = fretList[controller.highlightFret!].fret ?? 0;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
       final maxExtent = _scrollController.position.maxScrollExtent;
       if (maxExtent <= 0) return;
       final viewport = _scrollController.position.viewportDimension;
-      // fretList index → actual fret number 0-15
-      final fretNumber = fretList[fret].fret ?? 0;
+
       if (widget.isPortrait) {
-        // Fixed-pixel board: centre the highlighted fret's cell in the viewport.
-        // In interval mode, centre on the midpoint of the two notes so both stay
-        // in view (they can sit several frets apart at higher difficulty).
-        double cellCenter =
-            _cellTopFor(fretNumber) + _cellHeightFor(fretNumber) / 2;
-        if (isInterval && controller.intervalRootIndex != null) {
-          final rootFret =
-              fretList[controller.intervalRootIndex!].fret ?? 0;
-          final rootCenter =
-              _cellTopFor(rootFret) + _cellHeightFor(rootFret) / 2;
-          cellCenter = (cellCenter + rootCenter) / 2;
+        final bandTop = _cellTopFor(minF);
+        final bandBottom = _cellTopFor(maxF) + _cellHeightFor(maxF);
+        double offset;
+
+        if (bandBottom - bandTop <= viewport || anchorFret == null) {
+          // Whole band fits (or nothing special to anchor): centre it.
+          offset = (bandTop + bandBottom) / 2 - viewport / 2;
+        } else {
+          // Band taller than the screen: keep the anchor note on screen and
+          // show as much of the neck toward the far note as fits. Push the
+          // anchor to the near edge so the gap fills the rest of the viewport.
+          final anchorCenter =
+              _cellTopFor(anchorFret) + _cellHeightFor(anchorFret) / 2;
+          final farBelow = maxF > anchorFret; // a note higher up the neck
+          final farAbove = minF < anchorFret; // a note lower down the neck
+          if (farBelow && !farAbove) {
+            offset = anchorCenter - viewport * 0.18; // anchor near the top
+          } else if (farAbove && !farBelow) {
+            offset = anchorCenter - viewport * 0.82; // anchor near the bottom
+          } else {
+            offset = anchorCenter - viewport / 2; // notes both sides — centre it
+          }
         }
+
         _scrollController.animateTo(
-          (cellCenter - viewport / 2).clamp(0.0, maxExtent),
+          offset.clamp(0.0, maxExtent),
           duration: const Duration(milliseconds: 380),
           curve: Curves.easeOut,
         );
@@ -146,10 +233,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       }
       // Legacy (landscape) estimate: 16 fret rows fill the total content.
       final rowHeight = (maxExtent + viewport) / 16.0;
-      final targetOffset =
-          (fretNumber * rowHeight + rowHeight / 2) - viewport / 2;
+      final bandCenter = ((minF + maxF) / 2 + 0.5) * rowHeight;
       _scrollController.animateTo(
-        targetOffset.clamp(0.0, maxExtent),
+        (bandCenter - viewport / 2).clamp(0.0, maxExtent),
         duration: const Duration(milliseconds: 380),
         curve: Curves.easeOut,
       );
@@ -184,6 +270,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final bool isChord = controller.isChordMode;
     final bool isChordBuild = controller.isChordBuild;
     final bool isChordName = controller.isChordName;
+    final bool isChordLab = controller.isChordLab;
+    // Chord Lab is board-interactive on every round except Name (answered on
+    // the choice grid).
+    final bool isChordLabBoard = isChordLab &&
+        controller.chordLabPrompt != null &&
+        controller.chordLabPrompt!.round != ChordLabRound.name;
 
     // Board taps are live in find mode and in the BUILD variants of interval /
     // chord (where the user taps to answer). Identify and the NAME variants
@@ -191,6 +283,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final bool tapMode = controller.isStart &&
         (isIntervalBuild ||
             isChordBuild ||
+            isChordLabBoard ||
             (!isReverse && !isInterval && !isChord));
 
     // Whether the coral "identify this fret" glow is showing right now.
@@ -293,20 +386,6 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                             for (int col = 0; col < 6; col++)
                               _string(col, highlightString),
 
-                            // Find-mode tap targets (transparent)
-                            IgnorePointer(
-                              ignoring: !tapMode,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  for (int index = 0;
-                                      index < fretList.length;
-                                      index++)
-                                    _tapCell(controller, index),
-                                ],
-                              ),
-                            ),
-
                             // Correct / wrong feedback ball (find mode)
                             if (selected != null &&
                                 selected >= 0 &&
@@ -332,7 +411,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                             if (showIntervalTarget)
                               _noteBall(
                                 index: controller.intervalTargetIndex!,
-                                color: JHGColors.primary,
+                                color: _kNoteGrey,
                               ),
                             // Build mode: green reveal of a correct target.
                             if (showBuildReveal)
@@ -365,6 +444,28 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                                   index: idx,
                                   color: JHGColors.green,
                                 ),
+
+                            // Chord Lab: given/placed notes (+ region band for
+                            // the Build round; full shape for the Name round).
+                            if (isChordLab && controller.isStart)
+                              ..._chordLabWidgets(controller),
+
+                            // Transparent tap targets — MUST be the topmost
+                            // layer so taps land on notes too (e.g. removing a
+                            // note in Chord Lab), not get absorbed by the balls
+                            // painted above the cells.
+                            IgnorePointer(
+                              ignoring: !tapMode,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  for (int index = 0;
+                                      index < fretList.length;
+                                      index++)
+                                    _tapCell(controller, index),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -485,8 +586,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ),
         );
 
-    // Inlay for fret (i+1) sits on that fret's wire, to match the notes.
-    final double markerTop = (i + 1) * _kFretSpacing - 4.5;
+    // Inlay for fret (i+1) sits in the MIDDLE of that fret's playing area (the
+    // 9px dot's centre lands at i*80 + 40.5), matching the dictionaries board.
+    final double markerTop = i * _kFretSpacing + 36.0;
     if (_kDoubleDotFrets.contains(i)) {
       return [
         Positioned(
@@ -568,6 +670,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         onTap: () {
           if (controller.isIntervalBuild) {
             controller.selectBuildIntervalFret(index);
+          } else if (controller.isChordLab) {
+            controller.chordLabTap(index);
           } else if (controller.isChordBuild) {
             controller.tapChordFret(index);
           } else {
@@ -628,22 +732,6 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     );
   }
 
-  // Board index of the shape's highest-fret sounding note — the scroll anchor
-  // so the whole grip (which extends up-neck from the nut) stays in view.
-  int? _chordFocusIndex(ChordShape shape) {
-    int? bestIndex;
-    int bestFret = -1;
-    for (int col = 0; col < 6; col++) {
-      final f = shape.frets[col];
-      if (f == null) continue;
-      if (f > bestFret) {
-        bestFret = f;
-        bestIndex = f * 6 + col;
-      }
-    }
-    return bestIndex;
-  }
-
   // ── Chord NAME: the full shape drawn on the neck ────────────────────────────
   // One ball per sounding string (root ringed + "R"), and an "×" over the nut
   // for every muted string — the standard chord-diagram reading.
@@ -660,9 +748,71 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       final isRoot = fretList[index].note == shape.root;
       widgets.add(isRoot
           ? _rootBall(index)
-          : _noteBall(index: index, color: JHGColors.primary));
+          : _noteBall(index: index, color: _kNoteGrey));
     }
     return widgets;
+  }
+
+  // ── Chord Lab: given notes (grey, locked), placed notes (coral → green on a
+  // win), and a translucent region band for the Build round ──────────────────
+  List<Widget> _chordLabWidgets(HomeController c) {
+    final p = c.chordLabPrompt;
+    if (p == null) return const [];
+    // Name round draws the full shape, exactly like Chord Name mode.
+    if (p.round == ChordLabRound.name) return _chordShapeWidgets(p.target);
+
+    final out = <Widget>[];
+    if (p.round == ChordLabRound.build &&
+        p.regionLo != null &&
+        p.regionHi != null) {
+      out.add(_regionBand(p.regionLo!, p.regionHi!));
+    }
+    final done = c.chordLabDone;
+    final flash = c.chordLabFlashIndex;
+    for (final idx in c.chordLabActive) {
+      if (idx < 0 || idx >= fretList.length) continue;
+      final locked = p.locked.contains(idx);
+      out.add(_noteBall(
+        index: idx,
+        color: idx == flash
+            ? _kFlashRed
+            : done
+                ? JHGColors.green
+                : (locked ? _kNoteGrey : JHGColors.primary),
+      ));
+    }
+    // Complete / Build: a wrongly-tapped empty fret flashes red briefly.
+    if (flash != null &&
+        !c.chordLabActive.contains(flash) &&
+        flash >= 0 &&
+        flash < fretList.length) {
+      out.add(_noteBall(index: flash, color: _kFlashRed));
+    }
+    return out;
+  }
+
+  Widget _regionBand(int lo, int hi) {
+    final top = _cellTopFor(lo);
+    final bottom = _cellTopFor(hi) + _cellHeightFor(hi);
+    return Positioned(
+      top: top,
+      left: 0,
+      width: _kBoardWidth,
+      height: bottom - top,
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            color: JHGColors.primary.withValues(alpha: 0.10),
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                color: JHGColors.primary.withValues(alpha: 0.45),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   // ── Root ball: coral with a white ring and an "R" so the chord root reads ───
@@ -975,7 +1125,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 //SPACER
                 const SizedBox(width: 20),
                 // NUMBERS
-                Container(
+                SizedBox(
                   width: width * 0.06,
                   child: ListView.builder(
                     itemCount: 16,

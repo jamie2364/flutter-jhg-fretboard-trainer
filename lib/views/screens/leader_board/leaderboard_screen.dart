@@ -13,13 +13,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 class LeadershipScreen extends StatelessWidget {
   final String? intervalType;
-  LeadershipScreen({this.intervalType, super.key});
+  const LeadershipScreen({this.intervalType, super.key});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LeaderBoardController>();
     return Scaffold(
-      backgroundColor: JHGColors.secondryBlack,
+      backgroundColor: const Color(0xFF0F0F0F),
       body: GetBuilder<LeaderBoardController>(builder: (con) {
         if (!kIsWeb) return LeaderPortraitView(controller: controller);
         return Center(
@@ -188,7 +188,7 @@ class LeaderLandscapeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     return JHGBody(
-      padding: EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: 24),
       body: RotatedBox(
         quarterTurns: 1,
         child: Column(
@@ -212,9 +212,9 @@ class LeaderLandscapeView extends StatelessWidget {
                 child: Column(
                   children: [
                     controller.isLoading.value
-                        ? Container(
+                        ? SizedBox(
                             height: width,
-                            child: Center(
+                            child: const Center(
                               child: CircularProgressIndicator(
                                 color: JHGColors.primary,
                               ),
@@ -240,7 +240,7 @@ class LeaderLandscapeView extends StatelessWidget {
                                     ),
                                     color: JHGColors.charcolGray,
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     crossAxisAlignment:
@@ -254,7 +254,7 @@ class LeaderLandscapeView extends StatelessWidget {
                                     top: 20.dp,
                                     left: 10.0.dp,
                                     right: 10.0.dp),
-                                child: Container(
+                                child: SizedBox(
                                   width: 80.w,
                                   child: Column(
                                     children: [

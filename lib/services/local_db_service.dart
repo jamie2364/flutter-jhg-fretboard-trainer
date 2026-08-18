@@ -7,9 +7,7 @@ class SharedPrefHelper {
   SharedPrefHelper._init();
 
   Future<SharedPreferences> get preferences async {
-    if (_prefs == null) {
-      _prefs = await _initPrefs();
-    }
+    _prefs ??= await _initPrefs();
     return _prefs!;
   }
 

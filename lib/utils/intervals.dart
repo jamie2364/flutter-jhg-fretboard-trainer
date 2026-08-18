@@ -62,6 +62,14 @@ const List<MusicInterval> kIntervals = [
   MusicInterval(12, 'Octave', 'P8'),
 ];
 
+/// The interval whose compact label is [short] (e.g. "P5"), or null.
+MusicInterval? intervalForShort(String short) {
+  for (final i in kIntervals) {
+    if (i.short == short) return i;
+  }
+  return null;
+}
+
 /// The interval for a (signed or unsigned) semitone [gap], or null if out of
 /// the unison..octave range.
 MusicInterval? intervalForGap(int gap) {
@@ -104,6 +112,7 @@ IntervalPrompt? pickIntervalPrompt(
   List<BoardModel> board, {
   required IntervalDifficulty difficulty,
   required bool Function(int string) isStringActive,
+  Set<int>? allowedSemitones,
   Random? rng,
 }) {
   final r = rng ?? Random();
@@ -118,6 +127,10 @@ IntervalPrompt? pickIntervalPrompt(
 
     final gap = semitoneGap(root, target);
     if (gap.abs() > 12) continue;
+    // Restrict to the intervals the user chose to practise (null = all).
+    if (allowedSemitones != null && !allowedSemitones.contains(gap.abs())) {
+      continue;
+    }
 
     switch (difficulty) {
       case IntervalDifficulty.easy:

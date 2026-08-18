@@ -274,7 +274,7 @@ class _TourOverlayState extends State<TourOverlay>
         needsDarkCard = true;
       }
     } else {
-      final double baseOffset = kIsWeb ? -40.0 : -90.0;
+      const double baseOffset = kIsWeb ? -40.0 : -90.0;
       baseY = size.height / 2 + baseOffset;
     }
 

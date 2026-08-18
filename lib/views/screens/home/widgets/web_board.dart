@@ -135,7 +135,7 @@ class _WebBoardState extends State<WebBoard> {
                                 Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    SizedBox(
+                                    const SizedBox(
                                       width: _webFretboardWidth +
                                           _webFretNumberGutter,
                                       child: Align(
@@ -235,7 +235,7 @@ class _WebBoardState extends State<WebBoard> {
             _ModeTile(
               icon: Icons.music_note_rounded,
               title: 'Find Note',
-              subtitle: 'A note is shown — tap it on the fretboard',
+              subtitle: 'A note is shown. Tap it on the fretboard.',
               isSelected: !isReverse,
               onTap: () {
                 controller.switchToFindMode();
@@ -246,7 +246,7 @@ class _WebBoardState extends State<WebBoard> {
             _ModeTile(
               icon: Icons.quiz_rounded,
               title: 'Identify',
-              subtitle: 'A fret lights up — choose the correct note',
+              subtitle: 'A fret lights up. Choose the correct note.',
               isSelected: isReverse,
               onTap: () {
                 controller.switchToIdentifyMode();
@@ -362,13 +362,9 @@ class _ExpandedPanel extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    !c.isStart && !c.isPaused
-                        ? (isReverse ? 'IDENTIFY MODE' : 'FIND NOTE MODE')
-                        : isReverse
-                            ? 'WHICH NOTE IS THIS?'
-                            : 'FIND THE NOTE',
+                    isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
                     style: const TextStyle(
-                      color: Color(0xFFE3BEB7),
+                      color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.4,
@@ -422,7 +418,7 @@ class _ExpandedPanel extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isReverse ? 'IDENTIFY MODE' : 'FIND NOTE MODE',
+                          isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
                           style: GoogleFonts.inter(
                               color: Colors.white,
                               fontSize: 13,
@@ -439,8 +435,8 @@ class _ExpandedPanel extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   isReverse
-                      ? 'A fret lights up — pick the correct note name'
-                      : 'Find the note shown here on the fretboard',
+                      ? 'A fret lights up. Pick the correct note name.'
+                      : 'Find the note shown here on the fretboard.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                       color: Colors.white38,
@@ -729,32 +725,37 @@ class _CollapsedTile extends StatelessWidget {
 
 _BtnStyle _answerStyle(String note, HomeController c) {
   final selected = c.reverseSelectedNote;
-  if (selected == null) {
+  final neutral = _BtnStyle(
+    bg: Colors.white.withValues(alpha: 0.08),
+    border: Colors.white.withValues(alpha: 0.12),
+    text: Colors.white,
+  );
+  if (selected == null) return neutral;
+  // Correct pick → reveal green and fade the rest as the round ends.
+  if (c.reverseWasCorrect) {
+    if (note == c.highlightNode) {
+      return _BtnStyle(
+        bg: JHGColors.green.withValues(alpha: 0.20),
+        border: JHGColors.green,
+        text: JHGColors.green,
+      );
+    }
     return _BtnStyle(
-      bg: Colors.white.withValues(alpha: 0.08),
-      border: Colors.white.withValues(alpha: 0.12),
-      text: Colors.white,
+      bg: Colors.white.withValues(alpha: 0.03),
+      border: Colors.white.withValues(alpha: 0.05),
+      text: Colors.white30,
     );
   }
-  if (note == c.highlightNode) {
-    return _BtnStyle(
-      bg: JHGColors.green.withValues(alpha: 0.20),
-      border: JHGColors.green,
-      text: JHGColors.green,
-    );
-  }
-  if (note == selected && !c.reverseWasCorrect) {
+  // Wrong pick → flash only the tapped button; leave the others tappable so
+  // the user can keep guessing (we never reveal the correct answer).
+  if (note == selected) {
     return _BtnStyle(
       bg: JHGColors.primary.withValues(alpha: 0.18),
       border: JHGColors.primary,
       text: JHGColors.primary,
     );
   }
-  return _BtnStyle(
-    bg: Colors.white.withValues(alpha: 0.03),
-    border: Colors.white.withValues(alpha: 0.05),
-    text: Colors.white30,
-  );
+  return neutral;
 }
 
 // ─── Shared control row ───────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
      Nav.key = navKey;
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // Transparent status bar
       statusBarBrightness: Brightness.dark, // Dark text for status bar
     ));
@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context)
-                  .copyWith(textScaler: TextScaler.linear(1.0)),
+                  .copyWith(textScaler: const TextScaler.linear(1.0)),
               child: child!,
             );
           },
@@ -59,14 +59,14 @@ class _MyAppState extends State<MyApp> {
           initialBinding: AppBindings(),
           navigatorKey: navKey,
           home: kIsWeb
-              ? const ModeSelectScreen()
+              ? const StartScreen()
               : SplashScreen(
                   yearlySubscriptionId: yearlySubscription(),
                   monthlySubscriptionId: monthlySubscription(),
                   appName: AppStrings.appName,
                   featuresList: getFeaturesList(),
                   navKey: navKey,
-                  nextPage: () => const ModeSelectScreen(),
+                  nextPage: () => const StartScreen(),
                 ),
         );
       },

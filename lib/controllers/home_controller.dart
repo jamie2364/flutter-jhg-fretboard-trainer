@@ -4,9 +4,12 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:fretboard/services/feedback_sounds.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/services/heatmap_service.dart';
+import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/services/chord_service.dart';
@@ -29,6 +32,12 @@ class HomeController extends GetxController {
   // True once the user has explicitly picked Find/Identify (startup screen or
   // the top-bar switcher). Stops initializeData() from overwriting their choice.
   bool modeChosen = false;
+  // True once the user has explicitly chosen which strings to practise (the
+  // customize-session Strings step, or the Settings per-string toggles). The
+  // string prefs have no setter, so getString1..6() always return `true` — this
+  // flag stops initLocalDbData() from resetting a live selection back to all-on
+  // every time the training board opens.
+  bool stringsChosen = false;
   // Timer sub-mode tracked independently so identify mode keeps timer working
   // ('stopwatch' | 'countdown') — leaderboard excluded from identify mode
   RxString timerMode = 'stopwatch'.obs;
@@ -71,6 +80,26 @@ class HomeController extends GetxController {
   bool chordBuildDone = false;           // build mode: locked during feedback
   Set<int>? chordBuildReveal;            // build mode: correct set after Reveal
 
+  // ── Chord Lab ──────────────────────────────────────────────────────────────
+  // The customize-session chord game type: one session rotates through the four
+  // ChordLabRound variations.
+  Set<String> chordLabKeys = {...kChromaticRoots};
+  Set<String> chordLabTonalities = {...kChordLabTonalities};
+  Set<ChordLabRound> chordLabRounds = {...ChordLabRound.values};
+  ChordLabPrompt? chordLabPrompt;
+  Set<int> chordLabActive = {};   // currently lit fretted notes
+  int? chordLabFlashIndex;        // fret briefly flashed red after a wrong tap
+  bool chordLabDone = false;      // locked while the win feedback shows
+  ChordLabRound? _lastLabRound;
+
+  // ── Practice-stats guards ────────────────────────────────────────────────
+  // Accuracy is recorded once per prompt (the first graded outcome), so the
+  // Stats screen reflects genuine first-try knowledge rather than every retry.
+  bool _intervalStatDone = false;
+  bool _chordStatDone = false;
+  bool _labStatDone = false;
+  bool _labHadWrong = false; // a board-round tap went wrong before the win
+
   // Choice-mode = the timer behaves like identify (follows [timerMode], no
   // leaderboard). Interval and chord game types share this timing treatment.
   bool get isChoiceMode =>
@@ -89,6 +118,10 @@ class HomeController extends GetxController {
       isChordMode && chordGameType == ChordGameType.name;
   bool get isChordBuild =>
       isChordMode && chordGameType == ChordGameType.build;
+  bool get isChordLab =>
+      isChordMode && chordGameType == ChordGameType.lab;
+  bool get isChordLabName =>
+      isChordLab && chordLabPrompt?.round == ChordLabRound.name;
 
   // "STRING G · FRET 5" hint displayed in the choice panel
   String get reversePositionHint {
@@ -134,7 +167,46 @@ class HomeController extends GetxController {
   // ── Identify mode settings ───────────────────────────────────────────────
   bool identifyShowPositionHint = true;
   bool identifyAutoAdvance = false;
-  bool identifyPlaySound = true;
+  // Off by default: the trainer no longer auto-plays notes/chords during a
+  // round. Users can still hear the current prompt on demand via the Listen
+  // button (playCurrentPrompt), or re-enable auto-play from Settings.
+  bool identifyPlaySound = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Warm the chord library in the background isolate the moment the app
+    // boots, so it's already parsed by the time the user reaches Chord mode —
+    // no "Loading chords…"/"Getting the next chord…" stall on first play.
+    unawaited(ensureChordCatalog());
+    // Preload the answer-feedback cues so the first correct/wrong is instant.
+    unawaited(FeedbackSounds.instance.init());
+  }
+
+  /// Plays the current prompt on demand (the Listen button). Respects nothing
+  /// but the current mode — this is the explicit "let me hear it" action, so it
+  /// always sounds regardless of the identifyPlaySound auto-play setting.
+  void playCurrentPrompt() {
+    if (isChordLab) {
+      final shape = chordLabPrompt?.target;
+      if (shape != null) unawaited(_playChord(shape));
+      return;
+    }
+    if (isChordMode) {
+      final shape = chordPrompt;
+      if (shape != null) unawaited(_playChord(shape));
+      return;
+    }
+    if (isIntervalMode) {
+      if (intervalPrompt != null) unawaited(_playIntervalNotes());
+      return;
+    }
+    // Find / Identify note modes: sound the highlighted target fret.
+    final fret = highlightFret;
+    if (fret != null && fret >= 0 && fret < fretList.length) {
+      unawaited(fretList[fret].playSound());
+    }
+  }
 
   getUserName() async {
     userName = await LocalDB.getUserName;
@@ -196,6 +268,13 @@ class HomeController extends GetxController {
             if (highlightFret != null) {
               unawaited(HeatmapService.recordAttempt(highlightFret!, true));
             }
+            // Only the real Find game records the Find-mode split — the board
+            // tap also reaches here from identify/name modes via the shared
+            // handler, and those must not count as Find attempts.
+            if (!isChoiceMode) {
+              unawaited(PracticeStatsService.record(
+                  StatsModule.note, 'mode:find', true));
+            }
             previousHighlightFret = highlightFret;
             previousHighlightNode = highlightNode;
             incrementScore();
@@ -208,6 +287,10 @@ class HomeController extends GetxController {
           } else {
             if (highlightFret != null) {
               unawaited(HeatmapService.recordAttempt(highlightFret!, false));
+            }
+            if (!isChoiceMode) {
+              unawaited(PracticeStatsService.record(
+                  StatsModule.note, 'mode:find', false));
             }
             decrementScore();
           }
@@ -233,6 +316,10 @@ class HomeController extends GetxController {
     score = score + 1;
     isPlayed = true;
     selectedColor = JHGColors.green;
+    // Answer feedback: cheerful cue + a light tick. Every answer path routes
+    // through here, so all modes get consistent feedback.
+    unawaited(FeedbackSounds.instance.playCorrect());
+    unawaited(HapticFeedback.lightImpact());
     update();
   }
 
@@ -240,6 +327,9 @@ class HomeController extends GetxController {
     score = score - 1;
     isPlayed = true;
     selectedColor = JHGColors.primary;
+    // Answer feedback: buzzer + a firmer tap so a miss is felt as well as heard.
+    unawaited(FeedbackSounds.instance.playWrong());
+    unawaited(HapticFeedback.mediumImpact());
     update();
   }
 
@@ -296,12 +386,10 @@ class HomeController extends GetxController {
       // as soon as it's ready.
       if (_chordCatalog == null) {
         ensureChordCatalog().then((_) {
-          if (isStart) {
-            isChordBuild ? newBuildChordPrompt() : newChordNamePrompt();
-          }
+          if (isStart) _startNextChordRound();
         });
       } else {
-        isChordBuild ? newBuildChordPrompt() : newChordNamePrompt();
+        _startNextChordRound();
       }
       update();
       return;
@@ -375,6 +463,11 @@ class HomeController extends GetxController {
     chordTapped = {};
     chordBuildDone = false;
     chordBuildReveal = null;
+    chordLabPrompt = null;
+    chordLabActive = {};
+    chordLabFlashIndex = null;
+    chordLabDone = false;
+    _lastLabRound = null;
   }
 
   void resetTimer() {
@@ -467,14 +560,45 @@ class HomeController extends GetxController {
 
   // ── Interval mode ("Name the Interval") ──────────────────────────────────
 
+  // Which intervals the user chose to practise (semitone values 0..12). All by
+  // default so an unconfigured / Random session covers the whole catalog.
+  Set<int> selectedIntervals =
+      {for (final iv in kIntervals) iv.semitones};
+
+  /// Sets the practised-interval filter. Ignores an empty set (there must be at
+  /// least one interval to generate a question).
+  void setSelectedIntervals(Set<int> semitones) {
+    if (semitones.isEmpty) return;
+    selectedIntervals = {...semitones};
+    update();
+  }
+
+  /// Resets the interval filter to the full catalog (used by Random Practice).
+  void resetIntervalFilter() {
+    selectedIntervals = {for (final iv in kIntervals) iv.semitones};
+  }
+
+  /// Turns every string back on — used by Random Practice ("everything") so a
+  /// narrowed selection from an earlier customized session doesn't carry over.
+  void resetStrings() {
+    string1 = string2 = string3 = string4 = string5 = string6 = true;
+    offString = [true, true, true, true, true, true];
+    stringsChosen = true; // keep this explicit all-on choice for the session
+    update();
+  }
+
   void switchToIntervalMode({
     IntervalGameType? type,
     IntervalDifficulty? difficulty,
+    Set<int>? intervals,
   }) {
     modeChosen = true;
     currentGameMode.value = 'interval';
     if (type != null) intervalGameType = type;
     if (difficulty != null) intervalDifficulty = difficulty;
+    if (intervals != null && intervals.isNotEmpty) {
+      selectedIntervals = {...intervals};
+    }
     _clearIntervalState();
     resetGame(false);
     update();
@@ -501,6 +625,7 @@ class HomeController extends GetxController {
       fretList,
       difficulty: intervalDifficulty,
       isStringActive: getStringStatus,
+      allowedSemitones: selectedIntervals,
     );
     if (prompt == null) return;
 
@@ -510,6 +635,7 @@ class HomeController extends GetxController {
     intervalSelected = null;
     intervalWasCorrect = false;
     intervalBuildDone = false;
+    _intervalStatDone = false;
     intervalBuildRevealIndex = null;
     selectedFret = null;
     selectedColor = Colors.transparent;
@@ -544,6 +670,7 @@ class HomeController extends GetxController {
     selectedFret = index;
     unawaited(tapped.playSound());
     unawaited(HeatmapService.recordAttempt(index, isCorrect));
+    _recordIntervalStat(isCorrect);
 
     if (isCorrect) {
       selectedColor = JHGColors.green;
@@ -576,6 +703,7 @@ class HomeController extends GetxController {
       fretList,
       difficulty: intervalDifficulty,
       isStringActive: getStringStatus,
+      allowedSemitones: selectedIntervals,
     );
     if (prompt == null) return;
 
@@ -585,9 +713,24 @@ class HomeController extends GetxController {
     intervalChoicesList = intervalChoices(prompt.interval);
     intervalSelected = null;
     intervalWasCorrect = false;
+    _intervalStatDone = false;
 
     if (identifyPlaySound) unawaited(_playIntervalNotes());
     update();
+  }
+
+  /// Records the first graded outcome for the current interval prompt, split by
+  /// the interval quality (which interval) and by game type (name vs build).
+  void _recordIntervalStat(bool correct) {
+    if (_intervalStatDone) return;
+    final interval = intervalPrompt?.interval;
+    if (interval == null) return;
+    _intervalStatDone = true;
+    unawaited(PracticeStatsService.recordAll(
+      StatsModule.interval,
+      ['q:${interval.short}', 'mode:${isIntervalBuild ? 'build' : 'name'}'],
+      correct,
+    ));
   }
 
   Future<void> _playIntervalNotes() async {
@@ -615,6 +758,7 @@ class HomeController extends GetxController {
     if (intervalTargetIndex != null) {
       unawaited(HeatmapService.recordAttempt(intervalTargetIndex!, isCorrect));
     }
+    _recordIntervalStat(isCorrect);
 
     if (isCorrect) {
       incrementScore();
@@ -625,9 +769,16 @@ class HomeController extends GetxController {
         if (isStart) newIntervalPrompt();
       });
     } else {
+      // Wrong pick: dock a point and flash the tapped choice, but keep the
+      // same question. Clear the selection after the flash so the user can
+      // try again — we never reveal the answer or auto-advance on a miss.
       decrementScore();
-      Future.delayed(const Duration(milliseconds: 1100), () {
-        if (isStart) newIntervalPrompt();
+      final tapped = choice;
+      Future.delayed(const Duration(milliseconds: 550), () {
+        if (isStart && !intervalWasCorrect && intervalSelected == tapped) {
+          intervalSelected = null;
+          update();
+        }
       });
     }
     update();
@@ -648,6 +799,59 @@ class HomeController extends GetxController {
     ensureChordCatalog();
     resetGame(false);
     update();
+  }
+
+  /// Enters Chord Lab with the chosen keys, tonalities and difficulty.
+  void switchToChordLab({
+    required Set<String> keys,
+    required Set<String> tonalities,
+    required Set<ChordLabRound> rounds,
+    required ChordDifficulty difficulty,
+  }) {
+    modeChosen = true;
+    currentGameMode.value = 'chord';
+    chordGameType = ChordGameType.lab;
+    chordDifficulty = difficulty;
+    if (keys.isNotEmpty) chordLabKeys = {...keys};
+    if (tonalities.isNotEmpty) chordLabTonalities = {...tonalities};
+    if (rounds.isNotEmpty) chordLabRounds = {...rounds};
+    _clearChordState();
+    ensureChordCatalog();
+    resetGame(false);
+    update();
+  }
+
+  /// Routes to the right chord-round generator for the current game type.
+  void _startNextChordRound() {
+    if (isChordLab) {
+      newChordLabPrompt();
+    } else if (isChordBuild) {
+      newBuildChordPrompt();
+    } else {
+      newChordNamePrompt();
+    }
+  }
+
+  /// Skips the current question and draws a fresh one — no score change. Works
+  /// in every mode.
+  void skipQuestion() {
+    if (!isStart) return;
+    if (isChordMode) {
+      _startNextChordRound();
+      return;
+    }
+    if (isIntervalMode) {
+      isIntervalBuild ? newBuildIntervalPrompt() : newIntervalPrompt();
+      return;
+    }
+    if (currentGameMode.value == 'reverse') {
+      reverseSelectedNote = null;
+      reverseWasCorrect = false;
+      highLightTheGame();
+      return;
+    }
+    // Find mode: a fresh target note.
+    highLightTheGame();
   }
 
   void setChordDifficulty(ChordDifficulty difficulty) {
@@ -701,9 +905,24 @@ class HomeController extends GetxController {
     chordBuildReveal = null;
     selectedFret = null;
     selectedColor = Colors.transparent;
+    _chordStatDone = false;
 
     if (identifyPlaySound) unawaited(_playChord(shape));
     update();
+  }
+
+  /// Records the first graded outcome for the current chord prompt, split by
+  /// chord quality (which chord) and game type (name vs build).
+  void _recordChordStat(bool correct) {
+    if (_chordStatDone) return;
+    final shape = chordPrompt;
+    if (shape == null) return;
+    _chordStatDone = true;
+    unawaited(PracticeStatsService.recordAll(
+      StatsModule.chord,
+      ['q:${shape.tonality}', 'mode:${isChordBuild ? 'build' : 'name'}'],
+      correct,
+    ));
   }
 
   /// Prepares the next Build question: a chord symbol is shown; the actual
@@ -723,6 +942,7 @@ class HomeController extends GetxController {
     chordBuildReveal = null;
     selectedFret = null;
     selectedColor = Colors.transparent;
+    _chordStatDone = false;
 
     // Play it once as an audio reference for the shape to build.
     if (identifyPlaySound) unawaited(_playChord(shape));
@@ -740,6 +960,7 @@ class HomeController extends GetxController {
     final isCorrect = symbol == correct;
     chordSelected = symbol;
     chordWasCorrect = isCorrect;
+    _recordChordStat(isCorrect);
 
     if (isCorrect) {
       incrementScore();
@@ -750,9 +971,16 @@ class HomeController extends GetxController {
         if (isStart) newChordNamePrompt();
       });
     } else {
+      // Wrong pick: dock a point and flash the tapped symbol, but keep the
+      // same question. Clear the selection after the flash so the user can
+      // try again — we never reveal the answer or auto-advance on a miss.
       decrementScore();
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (isStart) newChordNamePrompt();
+      final tapped = symbol;
+      Future.delayed(const Duration(milliseconds: 550), () {
+        if (isStart && !chordWasCorrect && chordSelected == tapped) {
+          chordSelected = null;
+          update();
+        }
       });
     }
     update();
@@ -784,6 +1012,7 @@ class HomeController extends GetxController {
     if (matched) {
       chordBuildDone = true;
       selectedColor = JHGColors.green;
+      _recordChordStat(true);
       incrementScore();
       final delay = identifyAutoAdvance
           ? const Duration(milliseconds: 450)
@@ -810,10 +1039,197 @@ class HomeController extends GetxController {
     if (sets == null || sets.isEmpty) return;
     chordBuildReveal = sets.first;
     chordBuildDone = true;
+    _recordChordStat(false);
     decrementScore();
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (isStart) newBuildChordPrompt();
     });
+    update();
+  }
+
+  // ── Chord Lab ────────────────────────────────────────────────────────────
+
+  /// Prepares the next Chord Lab round (a random variation on a chord drawn from
+  /// the selected keys × tonalities).
+  void newChordLabPrompt() {
+    final cat = _chordCatalog;
+    if (cat == null) return;
+    final prompt = cat.nextLabPrompt(
+      difficulty: chordDifficulty,
+      keys: chordLabKeys,
+      tonalities: chordLabTonalities,
+      rounds: chordLabRounds,
+      avoid: _lastLabRound,
+    );
+    if (prompt == null) return; // nothing playable for this selection
+
+    chordLabPrompt = prompt;
+    _lastLabRound = prompt.round;
+    chordLabActive = {...prompt.initial};
+    chordLabFlashIndex = null;
+    chordLabDone = false;
+    // Name rounds reuse the choice grid.
+    chordChoicesList =
+        prompt.round == ChordLabRound.name ? cat.labChoices(prompt.target) : [];
+    chordSelected = null;
+    chordWasCorrect = false;
+    selectedFret = null;
+    selectedColor = Colors.transparent;
+    _labStatDone = false;
+    _labHadWrong = false;
+
+    if (identifyPlaySound) unawaited(_playChord(prompt.target));
+    update();
+  }
+
+  /// Records the first graded outcome for the current Chord Lab prompt, split by
+  /// round type (Name / Complete / Remove / Build) and by chord quality.
+  void _recordLabStat(bool correct) {
+    if (_labStatDone) return;
+    final p = chordLabPrompt;
+    if (p == null) return;
+    _labStatDone = true;
+    unawaited(PracticeStatsService.recordAll(
+      StatsModule.chordLab,
+      ['round:${p.round.name}', 'q:${p.target.tonality}'],
+      correct,
+    ));
+  }
+
+  void _advanceChordLab({Duration delay = const Duration(milliseconds: 700)}) {
+    Future.delayed(delay, () {
+      if (isStart && isChordLab) newChordLabPrompt();
+    });
+  }
+
+  /// Name round (round A): pick the chord's name. Retry-until-right, like the
+  /// other name modes.
+  void selectChordLabName(String symbol) {
+    if (!isStart || chordLabDone) return;
+    if (chordSelected != null) return;
+    final p = chordLabPrompt;
+    if (p == null || p.round != ChordLabRound.name) return;
+
+    final isCorrect = symbol == p.target.symbol;
+    chordSelected = symbol;
+    chordWasCorrect = isCorrect;
+
+    _recordLabStat(isCorrect);
+    if (isCorrect) {
+      chordLabDone = true;
+      incrementScore();
+      _advanceChordLab();
+    } else {
+      decrementScore();
+      final tapped = symbol;
+      Future.delayed(const Duration(milliseconds: 550), () {
+        if (isStart && !chordWasCorrect && chordSelected == tapped) {
+          chordSelected = null;
+          update();
+        }
+      });
+    }
+    update();
+  }
+
+  /// Board rounds (Complete / Remove / Build): a single tap handler with greedy
+  /// validation — a tap that can't lead to a valid voicing is rejected and
+  /// costs a point; completing a valid voicing wins the round.
+  void chordLabTap(int index) {
+    if (!isStart || chordLabDone) return;
+    final p = chordLabPrompt;
+    if (p == null || index < 0 || index >= fretList.length) return;
+    final fret = index ~/ 6;
+    if (fret <= 0) {
+      // Open string — sound it, but it's never part of a placed set.
+      unawaited(fretList[index].playSound());
+      return;
+    }
+
+    switch (p.round) {
+      case ChordLabRound.name:
+        return; // name rounds are answered via the choice grid
+
+      case ChordLabRound.remove:
+        if (!chordLabActive.contains(index)) return; // only remove lit notes
+        final trial = {...chordLabActive}..remove(index);
+        unawaited(fretList[index].playSound());
+        if (_labMatches(p, trial)) {
+          chordLabActive = trial;
+          _winChordLab();
+        } else {
+          // Removing a real chord tone is wrong — dock a point, flash the note
+          // red so the tap clearly registers, and keep it in place.
+          _labHadWrong = true;
+          decrementScore();
+          _flashLab(index);
+        }
+
+      case ChordLabRound.complete:
+      case ChordLabRound.build:
+        if (p.locked.contains(index)) return; // given notes are fixed
+        unawaited(fretList[index].playSound());
+        if (chordLabActive.contains(index)) {
+          // Toggle off your own placed note (free undo, no penalty).
+          chordLabActive = {...chordLabActive}..remove(index);
+          update();
+          return;
+        }
+        final trial = {...chordLabActive, index};
+        if (_labCanExtendTo(p, trial)) {
+          chordLabActive = trial;
+          if (_labMatches(p, trial)) {
+            _winChordLab();
+          } else {
+            update();
+          }
+        } else {
+          // A note that can't belong to any valid voicing — reject it with a
+          // red flash so the tap is clearly acknowledged.
+          _labHadWrong = true;
+          decrementScore();
+          _flashLab(index);
+        }
+    }
+  }
+
+  /// True if [set] exactly equals one of the round's accepted voicings.
+  bool _labMatches(ChordLabPrompt p, Set<int> set) => p.acceptable
+      .any((a) => a.length == set.length && a.containsAll(set));
+
+  /// True if [set] is a subset of some accepted voicing (i.e. still completable).
+  bool _labCanExtendTo(ChordLabPrompt p, Set<int> set) =>
+      p.acceptable.any((a) => a.containsAll(set));
+
+  void _winChordLab() {
+    chordLabFlashIndex = null;
+    chordLabDone = true;
+    selectedColor = JHGColors.green;
+    // A board round counts as "known" only if solved with no wrong taps.
+    _recordLabStat(!_labHadWrong);
+    incrementScore();
+    _advanceChordLab(delay: const Duration(milliseconds: 850));
+    update();
+  }
+
+  /// Briefly flashes [index] red after a wrong Chord Lab tap so the tap clearly
+  /// registers (paired with the buzzer + haptic from decrementScore).
+  void _flashLab(int index) {
+    chordLabFlashIndex = index;
+    update();
+    Future.delayed(const Duration(milliseconds: 450), () {
+      if (chordLabFlashIndex == index) {
+        chordLabFlashIndex = null;
+        update();
+      }
+    });
+  }
+
+  /// Chord Lab: clear the notes the user has placed (leaves the given ones).
+  void clearChordLab() {
+    final p = chordLabPrompt;
+    if (p == null || chordLabDone) return;
+    chordLabActive = {...p.initial};
     update();
   }
 
@@ -840,6 +1256,8 @@ class HomeController extends GetxController {
     if (highlightFret != null) {
       unawaited(HeatmapService.recordAttempt(highlightFret!, isCorrect));
     }
+    unawaited(PracticeStatsService.record(
+        StatsModule.note, 'mode:identify', isCorrect));
 
     if (isCorrect) {
       previousHighlightFret = highlightFret;
@@ -854,12 +1272,16 @@ class HomeController extends GetxController {
         highLightTheGame();
       });
     } else {
+      // Wrong pick: dock a point and flash the tapped button, but keep the
+      // same target note. Clear the selection after the flash so the user can
+      // try again — we never reveal the answer or auto-advance on a miss.
       decrementScore();
-      // Show correct answer for longer so user can learn, then advance
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        reverseSelectedNote = null;
-        reverseWasCorrect = false;
-        highLightTheGame();
+      final tapped = note;
+      Future.delayed(const Duration(milliseconds: 550), () {
+        if (isStart && !reverseWasCorrect && reverseSelectedNote == tapped) {
+          reverseSelectedNote = null;
+          update();
+        }
       });
     }
     update();
@@ -894,6 +1316,51 @@ class HomeController extends GetxController {
 
   List offString = [true, true, true, true, true, true];
 
+  /// Sets a string's active state by string number (1 = high e … 6 = low E),
+  /// keeping [offString] in sync. Never lets every string turn off — the last
+  /// remaining active string can't be disabled. Used by the customize-session
+  /// Strings step (mirrors the per-string toggles in Settings).
+  void setStringActive(int stringNumber, bool active) {
+    final idx = 6 - stringNumber; // string6→0 (low E) … string1→5 (high e)
+    if (idx < 0 || idx >= offString.length) return;
+    switch (stringNumber) {
+      case 1: string1 = active;
+      case 2: string2 = active;
+      case 3: string3 = active;
+      case 4: string4 = active;
+      case 5: string5 = active;
+      case 6: string6 = active;
+    }
+    offString[idx] = active;
+    // Guard: keep at least one string live.
+    if (!offString.contains(true)) {
+      offString[idx] = true;
+      switch (stringNumber) {
+        case 1: string1 = true;
+        case 2: string2 = true;
+        case 3: string3 = true;
+        case 4: string4 = true;
+        case 5: string5 = true;
+        case 6: string6 = true;
+      }
+    }
+    stringsChosen = true;
+    update();
+  }
+
+  /// True when string [stringNumber] (1 = high e … 6 = low E) is active.
+  bool isStringOn(int stringNumber) {
+    switch (stringNumber) {
+      case 1: return string1;
+      case 2: return string2;
+      case 3: return string3;
+      case 4: return string4;
+      case 5: return string5;
+      case 6: return string6;
+    }
+    return false;
+  }
+
   bool string1 = true;
   void setString1(int index) {
     string1 = !string1;
@@ -902,6 +1369,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string1 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -913,6 +1381,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string2 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -924,6 +1393,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string3 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -935,6 +1405,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string4 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -946,6 +1417,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string5 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -957,6 +1429,7 @@ class HomeController extends GetxController {
       offString[index] = true;
       string6 = true;
     }
+    stringsChosen = true;
     update();
   }
 
@@ -1072,11 +1545,19 @@ class HomeController extends GetxController {
         await SharedPrefHelper.instance.getDefaultTimerMinutes();
     timerIntervalValue.value =
         await SharedPrefHelper.instance.getTimerInterval();
-    string1 = await SharedPrefHelper.instance.getString1();
-    string2 = await SharedPrefHelper.instance.getString2();
-    string3 = await SharedPrefHelper.instance.getString3();
-    string4 = await SharedPrefHelper.instance.getString4();
-    string5 = await SharedPrefHelper.instance.getString5();
-    string6 = await SharedPrefHelper.instance.getString6();
+    // Only pull the saved string set on a fresh session. Once the user has
+    // picked strings (wizard or Settings), keep their live choice — otherwise
+    // opening the board would silently turn every string back on.
+    if (!stringsChosen) {
+      string1 = await SharedPrefHelper.instance.getString1();
+      string2 = await SharedPrefHelper.instance.getString2();
+      string3 = await SharedPrefHelper.instance.getString3();
+      string4 = await SharedPrefHelper.instance.getString4();
+      string5 = await SharedPrefHelper.instance.getString5();
+      string6 = await SharedPrefHelper.instance.getString6();
+      for (var i = 0; i < offString.length; i++) {
+        offString[i] = isStringOn(6 - i); // keep offString in sync (idx0=lowE)
+      }
+    }
   }
 }

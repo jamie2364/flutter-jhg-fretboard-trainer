@@ -1,3 +1,4 @@
+import 'dart:math' show pi, sin;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -5,25 +6,17 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/intervals.dart';
+import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/features/tour/tour_keys.dart';
-import 'package:fretboard/main.dart';
-import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
-import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
-import 'package:fretboard/views/screens/setting/settings_screen.dart';
-import 'package:fretboard/views/screens/mode_select_screen.dart';
+import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widgets/count_timer_widget.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const _kNavBg       = Color(0xFF0F0F0F);
 const _kPanelCard   = Color(0xFF1A1A1A);   // dictionaries card bg
-// Nav bar: white for the active tab, muted white for the rest — matches the
-// dictionaries / drills AppBottomNav (no coral on the icons).
-const _kNavActive   = Colors.white;
-const _kNavInactive = Colors.white38;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PortraitBoard
@@ -123,11 +116,13 @@ class _PortraitBoardState extends State<PortraitBoard> {
                               ? (c.isStart || c.isPaused)
                                   // Interval / chord NAME need room for the 2×2
                                   // choice grid; chord BUILD needs its controls.
-                                  ? (c.isIntervalName || c.isChordName
+                                  ? (c.isIntervalName ||
+                                          c.isChordName ||
+                                          c.isChordLabName
                                       ? 210
                                       : isReverse
                                           ? 148
-                                          : c.isChordBuild
+                                          : (c.isChordBuild || c.isChordLab)
                                               ? 104
                                               : 84)
                                   : 84
@@ -172,11 +167,13 @@ class _PortraitBoardState extends State<PortraitBoard> {
                 ),
               ),
 
-              // ── Nav bar ──────────────────────────────────────────────────
-              _FretboardNavBar(
+              // ── Nav bar (shared AppNavBar, so height/placement stay
+              // identical across the board and every other screen) ──────────
+              AppNavBar(
                 key: tourKeyNavBar,
-                safeBottom: bottomInset,
+                activeTab: AppTab.train,
                 controller: c,
+                safeBottom: bottomInset,
               ),
             ],
           ),
@@ -231,33 +228,67 @@ class _ExpandedPanel extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    !c.isStart && !c.isPaused
-                        ? (isChord
-                            ? 'CHORD MODE'
-                            : isInterval
-                                ? 'INTERVALS MODE'
-                                : isReverse
-                                    ? 'IDENTIFY MODE'
-                                    : 'FIND NOTE MODE')
-                        : isChord
-                            ? (c.isChordBuild
+                    // Always the game type, so the user knows exactly what
+                    // they're practising (matters most in Random Practice,
+                    // where the type was rolled for them).
+                    isChord
+                        ? (c.isChordLab
+                            ? _chordLabHeader(c)
+                            : c.isChordBuild
                                 ? 'BUILD THE CHORD'
                                 : 'NAME THE CHORD')
-                            : isInterval
-                                ? (c.isIntervalBuild
-                                    ? 'BUILD THE INTERVAL'
-                                    : 'NAME THE INTERVAL')
-                                : isReverse
-                                    ? 'WHICH NOTE IS THIS?'
-                                    : 'FIND THE NOTE',
+                        : isInterval
+                            ? (c.isIntervalBuild
+                                ? 'BUILD THE INTERVAL'
+                                : 'NAME THE INTERVAL')
+                            : isReverse
+                                ? 'IDENTIFY THE NOTE'
+                                : 'FIND THE NOTE',
                     style: const TextStyle(
-                      color: Color(0xFFE3BEB7),
+                      color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.4,
                     ),
                   ),
                   const Spacer(),
+                  // Skip — draw a fresh question, no score change. Only while a
+                  // round is running.
+                  if (c.isStart)
+                    GestureDetector(
+                      onTap: c.skipQuestion,
+                      child: Container(
+                        width: 28, height: 28,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.10)),
+                        ),
+                        child: const Icon(Icons.skip_next_rounded,
+                            color: Colors.white54, size: 16),
+                      ),
+                    ),
+                  // Listen — audio is no longer auto-played during a round;
+                  // tap to hear the current note/chord. Active only while a
+                  // round is running.
+                  GestureDetector(
+                    onTap: c.isStart ? c.playCurrentPrompt : null,
+                    child: Container(
+                      width: 28, height: 28,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      child: Icon(Icons.volume_up_rounded,
+                          color: c.isStart ? Colors.white54 : Colors.white24,
+                          size: 15),
+                    ),
+                  ),
                   GestureDetector(
                     onTap: onCollapse,
                     child: Container(
@@ -288,27 +319,10 @@ class _ExpandedPanel extends StatelessWidget {
 
               // ── Content: depends on game state ───────────────────────────
 
-              // Idle: hint only. Mode + difficulty are chosen before this
-              // screen (startup / interval setup wizard).
+              // Idle: no explainer line — the header already names the game and
+              // "Press play to start" guidance lives in the prompt widgets.
               if (!c.isStart && !c.isPaused) ...[
-                Text(
-                  isChord
-                      ? (c.isChordBuild
-                          ? 'A chord name shows — tap the frets to build the shape'
-                          : 'A chord lights up — name it from the choices')
-                      : isInterval
-                          ? (c.isIntervalBuild
-                              ? 'A root note lights up — tap the fret an interval away'
-                              : 'Two notes light up — name the interval between them')
-                          : isReverse
-                              ? 'A fret lights up — pick the correct note name'
-                              : 'Find the note shown here on the fretboard',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: Colors.white38, fontSize: 13,
-                    fontWeight: FontWeight.w500, height: 1.4),
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 4),
               ]
 
               // Interval NAME playing: 2×2 interval-name grid
@@ -332,6 +346,12 @@ class _ExpandedPanel extends StatelessWidget {
               // Chord BUILD playing: the chord to place + score + controls
               else if (c.isChordBuild) ...[
                 _ChordBuildPrompt(controller: c),
+                const SizedBox(height: 14),
+              ]
+
+              // Chord Lab playing: per-round prompt + score (+ name grid)
+              else if (c.isChordLab) ...[
+                _ChordLabPanel(controller: c),
                 const SizedBox(height: 14),
               ]
 
@@ -416,13 +436,18 @@ class _CollapsedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
     final isPlaying = c.isStart || c.isPaused;
+    // Game type, not "… MODE" — so the user always sees what they're playing.
     final modeLabel = isChord
-        ? 'CHORD MODE'
+        ? (c.isChordLab
+            ? _chordLabHeader(c)
+            : c.isChordBuild
+                ? 'BUILD THE CHORD'
+                : 'NAME THE CHORD')
         : isInterval
-            ? 'INTERVALS MODE'
+            ? (c.isIntervalBuild ? 'BUILD THE INTERVAL' : 'NAME THE INTERVAL')
             : isReverse
-                ? 'IDENTIFY MODE'
-                : 'FIND NOTE MODE';
+                ? 'IDENTIFY THE NOTE'
+                : 'FIND THE NOTE';
     final showAnswers =
         isReverse && isPlaying && c.reverseChoices.isNotEmpty;
     final showIntervalAnswers =
@@ -430,56 +455,64 @@ class _CollapsedTile extends StatelessWidget {
     final showChordAnswers =
         c.isChordName && isPlaying && c.chordChoicesList.isNotEmpty;
     final showChordBuildControls = c.isChordBuild && isPlaying;
+    final showChordLabAnswers =
+        c.isChordLabName && isPlaying && c.chordChoicesList.isNotEmpty;
+    // Complete / Build rounds get a Clear control while collapsed; Remove has
+    // nothing to clear.
+    final showChordLabClear = c.isChordLab &&
+        !c.isChordLabName &&
+        isPlaying &&
+        c.chordLabPrompt?.round != ChordLabRound.remove;
     final locked = c.reverseSelectedNote != null;
     final intervalLocked = c.intervalSelected != null;
 
-    // Compact time pill — the clock now lives here when the tile is collapsed.
+    // Score + time as compact stat pills — legible at a glance and visually
+    // separated from the prompt so the collapsed tile doesn't read as one
+    // cramped block.
     final timeChip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(LucideIcons.timer300,
-              size: 13, color: Colors.white.withValues(alpha: 0.6)),
+              size: 14, color: Colors.white.withValues(alpha: 0.5)),
           const SizedBox(width: 5),
           Text(
             c.formatTime(c.secondsRemaining.value),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
               fontSize: 14,
               fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
       ),
     );
 
-    // Compact score pill — shown collapsed in every mode so the running total
-    // stays visible without expanding the panel.
     final scoreChip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: JHGColors.primary.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.stars_rounded,
-              size: 13, color: JHGColors.primary.withValues(alpha: 0.8)),
+          const Icon(Icons.stars_rounded,
+              size: 15, color: JHGColors.primary),
           const SizedBox(width: 5),
           Text(
             c.score.toString(),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -488,24 +521,30 @@ class _CollapsedTile extends StatelessWidget {
 
     Widget answerButton(String note) {
       final s = _answerStyle(note, c);
-      return GestureDetector(
-        onTap: locked ? null : () => c.selectReverseAnswer(note),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 40,
-          decoration: BoxDecoration(
-            color: s.bg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: s.border, width: 1.4),
-          ),
-          child: Center(
-            child: Text(
-              note,
-              style: TextStyle(
-                color: s.text,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
+      final isWrongPick = c.reverseSelectedNote != null &&
+          !c.reverseWasCorrect &&
+          note == c.reverseSelectedNote;
+      return _ShakeOnWrong(
+        wrong: isWrongPick,
+        child: GestureDetector(
+          onTap: locked ? null : () => c.selectReverseAnswer(note),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 40,
+            decoration: BoxDecoration(
+              color: s.bg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: s.border, width: 1.4),
+            ),
+            child: Center(
+              child: Text(
+                note,
+                style: TextStyle(
+                  color: s.text,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
               ),
             ),
           ),
@@ -523,8 +562,8 @@ class _CollapsedTile extends StatelessWidget {
                   c.startTheGame();
                 },
       child: Container(
-        width: 44,
-        height: 44,
+        width: 38,
+        height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: JHGColors.primary,
@@ -540,7 +579,7 @@ class _CollapsedTile extends StatelessWidget {
         child: Icon(
           c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
           color: Colors.white,
-          size: 22,
+          size: 20,
         ),
       ),
     );
@@ -549,15 +588,33 @@ class _CollapsedTile extends StatelessWidget {
       onTap: onExpand,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 34,
+        height: 34,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
         ),
         child: const Icon(LucideIcons.chevronUp300,
+            color: Colors.white54, size: 16),
+      ),
+    );
+
+    // Skip → draw a fresh question, no score change. Only while a round runs.
+    final skipBtn = GestureDetector(
+      onTap: c.skipQuestion,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: const Icon(Icons.skip_next_rounded,
             color: Colors.white54, size: 18),
       ),
     );
@@ -588,7 +645,7 @@ class _CollapsedTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFFCBC8C6),
+                            color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.2,
@@ -602,12 +659,40 @@ class _CollapsedTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFFE5D43),
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
                               height: 1.1,
                             ),
                           )
+                        else if (isChord && c.isChordLab)
+                          // Board rounds surface the target symbol; the name
+                          // round asks for the name.
+                          (c.isChordLabName
+                              ? const Text(
+                                  'Which chord?',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Color(0xFFE5E2E1),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
+                                    height: 1.1,
+                                  ),
+                                )
+                              : Text(
+                                  c.chordLabPrompt?.target.symbol ?? '—',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFE5D43),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                    height: 1.1,
+                                  ),
+                                ))
                         else if (isChord && c.isChordBuild)
                           Row(
                             children: [
@@ -615,7 +700,7 @@ class _CollapsedTile extends StatelessWidget {
                                 'Play',
                                 style: TextStyle(
                                   color: Color(0xFFE5E2E1),
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -0.3,
                                   height: 1.1,
@@ -629,7 +714,7 @@ class _CollapsedTile extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFFFE5D43),
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.3,
                                     height: 1.1,
@@ -645,7 +730,7 @@ class _CollapsedTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFE5E2E1),
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
                               height: 1.1,
@@ -658,7 +743,7 @@ class _CollapsedTile extends StatelessWidget {
                                 'Play',
                                 style: TextStyle(
                                   color: Color(0xFFE5E2E1),
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -0.3,
                                   height: 1.1,
@@ -672,7 +757,7 @@ class _CollapsedTile extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFFFE5D43),
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.3,
                                     height: 1.1,
@@ -688,7 +773,7 @@ class _CollapsedTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFE5E2E1),
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
                               height: 1.1,
@@ -701,7 +786,7 @@ class _CollapsedTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFE5E2E1),
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.3,
                               height: 1.1,
@@ -716,7 +801,7 @@ class _CollapsedTile extends StatelessWidget {
                                 'Find',
                                 style: TextStyle(
                                   color: Color(0xFFE5E2E1),
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -0.3,
                                   height: 1.1,
@@ -727,7 +812,7 @@ class _CollapsedTile extends StatelessWidget {
                                 c.highlightNode ?? '—',
                                 style: const TextStyle(
                                   color: Color(0xFFFE5D43),
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.3,
                                   height: 1.1,
@@ -739,14 +824,25 @@ class _CollapsedTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // Score over time — stacked to save width for the prompt.
                   if (isPlaying) ...[
-                    scoreChip,
-                    const SizedBox(width: 6),
-                    timeChip,
-                    const SizedBox(width: 8),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        scoreChip,
+                        const SizedBox(height: 4),
+                        timeChip,
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  if (c.isStart) ...[
+                    skipBtn,
+                    const SizedBox(width: 7),
                   ],
                   playBtn,
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 7),
                   expandBtn,
                 ],
               ),
@@ -783,6 +879,47 @@ class _CollapsedTile extends StatelessWidget {
                 const SizedBox(height: 10),
                 _ChordBuildControls(controller: c),
               ],
+              // Chord Lab NAME round: symbol grid stays usable while collapsed.
+              if (showChordLabAnswers) ...[
+                const SizedBox(height: 10),
+                _ChordChoiceGrid(
+                  controller: c,
+                  locked: c.chordSelected != null,
+                  onPick: c.selectChordLabName,
+                ),
+              ],
+              // Chord Lab Complete / Build rounds: a Clear control.
+              if (showChordLabClear) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: GestureDetector(
+                    onTap: c.clearChordLab,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.backspace_outlined,
+                              color: Colors.white60, size: 15),
+                          const SizedBox(width: 8),
+                          Text('Clear',
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -795,32 +932,37 @@ class _CollapsedTile extends StatelessWidget {
 
 _BtnStyle _answerStyle(String note, HomeController c) {
   final selected = c.reverseSelectedNote;
-  if (selected == null) {
+  final neutral = _BtnStyle(
+    bg: Colors.white.withValues(alpha: 0.08),
+    border: Colors.white.withValues(alpha: 0.12),
+    text: Colors.white,
+  );
+  if (selected == null) return neutral;
+  // Correct pick → reveal green and fade the rest as the round ends.
+  if (c.reverseWasCorrect) {
+    if (note == c.highlightNode) {
+      return _BtnStyle(
+        bg: JHGColors.green.withValues(alpha: 0.20),
+        border: JHGColors.green,
+        text: JHGColors.green,
+      );
+    }
     return _BtnStyle(
-      bg: Colors.white.withValues(alpha: 0.08),
-      border: Colors.white.withValues(alpha: 0.12),
-      text: Colors.white,
+      bg: Colors.white.withValues(alpha: 0.03),
+      border: Colors.white.withValues(alpha: 0.05),
+      text: Colors.white30,
     );
   }
-  if (note == c.highlightNode) {
-    return _BtnStyle(
-      bg: JHGColors.green.withValues(alpha: 0.20),
-      border: JHGColors.green,
-      text: JHGColors.green,
-    );
-  }
-  if (note == selected && !c.reverseWasCorrect) {
+  // Wrong pick → flash only the tapped button; leave the others tappable so
+  // the user can keep guessing (we never reveal the correct answer).
+  if (note == selected) {
     return _BtnStyle(
       bg: JHGColors.primary.withValues(alpha: 0.18),
       border: JHGColors.primary,
       text: JHGColors.primary,
     );
   }
-  return _BtnStyle(
-    bg: Colors.white.withValues(alpha: 0.03),
-    border: Colors.white.withValues(alpha: 0.05),
-    text: Colors.white30,
-  );
+  return neutral;
 }
 
 // ─── Shared control row ───────────────────────────────────────────────────────
@@ -915,149 +1057,6 @@ class _ControlRow extends StatelessWidget {
   }
 }
 
-// ─── Mode tile (bottom sheet) ─────────────────────────────────────────────────
-
-class _FretboardNavBar extends StatelessWidget {
-  const _FretboardNavBar({
-    super.key, required this.safeBottom, required this.controller,
-  });
-  final double safeBottom;
-  final HomeController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    // Mid-session, Leaders/Stats are locked so the running game can't be
-    // abandoned. Home and Train reset/return deliberately, so they stay open.
-    // Settings is additionally locked in leaderboard mode.
-    final sessionActive = controller.sessionActive;
-    final canOpenSettings =
-        controller.currentGameMode.value != 'leaderboard' && !sessionActive;
-    return Container(
-      height: 56 + safeBottom,
-      decoration: BoxDecoration(
-        color: _kNavBg,
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 568),
-          child: Padding(
-            padding: EdgeInsets.only(bottom: safeBottom),
-            child: Row(
-              children: [
-                // Home → the very first screen, where the user picks a mode.
-                _NavItem(
-                  icon: LucideIcons.home300,
-                  label: 'Home',
-                  isActive: false,
-                  onTap: () {
-                    controller.resetGame(false);
-                    Get.off(() => const ModeSelectScreen(),
-                        transition: Transition.noTransition,
-                        duration: Duration.zero);
-                  },
-                ),
-                // Train → the main training board (this screen).
-                _NavItem(
-                  icon: Icons.center_focus_strong_rounded,
-                  label: 'Train',
-                  isActive: true,
-                  onTap: () => Get.until((route) => route.isFirst),
-                ),
-                _NavItem(
-                  icon: LucideIcons.trophy300,
-                  label: 'Leaders',
-                  disabled: sessionActive,
-                  onTap: sessionActive
-                      ? null
-                      : () {
-                          Get.to(() => LeadershipScreen(),
-                              transition: Transition.noTransition,
-                              duration: Duration.zero);
-                          if (isFreePlan) {
-                            controller.interstitialAds?.showInterstitial();
-                          }
-                        },
-                ),
-                _NavItem(
-                  key: tourKeyHeatmapNav,
-                  icon: Icons.insights_rounded,
-                  label: 'Stats',
-                  disabled: sessionActive,
-                  onTap: sessionActive
-                      ? null
-                      : () => Get.to(
-                            () => const HeatmapScreen(),
-                            transition: Transition.noTransition,
-                            duration: Duration.zero,
-                          ),
-                ),
-                _NavItem(
-                  icon: LucideIcons.settings300,
-                  label: 'Settings',
-                  onTap: canOpenSettings
-                      ? () {
-                          controller.resetGame(false);
-                          Get.to(() => SettingScreen(),
-                              transition: Transition.noTransition,
-                              duration: Duration.zero);
-                          if (isFreePlan) {
-                            controller.interstitialAds?.showInterstitial();
-                          }
-                        }
-                      : null,
-                  disabled: !canOpenSettings,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    super.key, required this.icon, required this.label,
-    this.onTap, this.isActive = false, this.disabled = false,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final bool isActive;
-  final bool disabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = disabled ? Colors.white12
-        : isActive ? _kNavActive : _kNavInactive;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontSize: 10,
-                decoration: TextDecoration.none,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ─── Reverse mode choice panel ────────────────────────────────────────────────
 
@@ -1103,23 +1102,31 @@ class _ReverseChoicePanel extends StatelessWidget {
         Row(
           children: controller.reverseChoices.map((note) {
             final s = _answerStyle(note, controller);
+            final isWrongPick = controller.reverseSelectedNote != null &&
+                !controller.reverseWasCorrect &&
+                note == controller.reverseSelectedNote;
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: GestureDetector(
-                  onTap: locked ? null : () => controller.selectReverseAnswer(note),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: s.bg,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: s.border, width: 1.5),
-                    ),
-                    child: Center(
-                      child: Text(note, style: GoogleFonts.poppins(
-                        color: s.text, fontSize: 16,
-                        fontWeight: FontWeight.w700)),
+                child: _ShakeOnWrong(
+                  wrong: isWrongPick,
+                  child: GestureDetector(
+                    onTap: locked
+                        ? null
+                        : () => controller.selectReverseAnswer(note),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: s.bg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: s.border, width: 1.5),
+                      ),
+                      child: Center(
+                        child: Text(note, style: GoogleFonts.poppins(
+                          color: s.text, fontSize: 16,
+                          fontWeight: FontWeight.w700)),
+                      ),
                     ),
                   ),
                 ),
@@ -1130,6 +1137,53 @@ class _ReverseChoicePanel extends StatelessWidget {
       ],
     );
   }
+}
+
+// Horizontal shake played once when [wrong] flips true (mirrors the Ear
+// Training answer feedback). Paired with the coral colour flash + buzzer SFX.
+class _ShakeOnWrong extends StatefulWidget {
+  const _ShakeOnWrong({required this.wrong, required this.child});
+  final bool wrong;
+  final Widget child;
+
+  @override
+  State<_ShakeOnWrong> createState() => _ShakeOnWrongState();
+}
+
+class _ShakeOnWrongState extends State<_ShakeOnWrong>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 380),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.wrong) _ctrl.forward(from: 0);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ShakeOnWrong old) {
+    super.didUpdateWidget(old);
+    if (widget.wrong && !old.wrong) _ctrl.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, child) => Transform.translate(
+          offset: Offset(sin(4 * pi * _ctrl.value) * 5, 0),
+          child: child,
+        ),
+        child: widget.child,
+      );
 }
 
 class _BtnStyle {
@@ -1199,26 +1253,32 @@ class _IntervalChoiceGrid extends StatelessWidget {
 
     Widget button(MusicInterval choice) {
       final s = _intervalStyle(choice, c);
-      return GestureDetector(
-        onTap: locked ? null : () => c.selectIntervalAnswer(choice),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 50,
-          decoration: BoxDecoration(
-            color: s.bg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: s.border, width: 1.5),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            choice.name,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: s.text,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+      final isWrongPick = c.intervalSelected != null &&
+          !c.intervalWasCorrect &&
+          choice.semitones == c.intervalSelected!.semitones;
+      return _ShakeOnWrong(
+        wrong: isWrongPick,
+        child: GestureDetector(
+          onTap: locked ? null : () => c.selectIntervalAnswer(choice),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 50,
+            decoration: BoxDecoration(
+              color: s.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: s.border, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              choice.name,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                color: s.text,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -1336,32 +1396,37 @@ class _IntervalBuildPrompt extends StatelessWidget {
 _BtnStyle _intervalStyle(MusicInterval choice, HomeController c) {
   final selected = c.intervalSelected;
   final correct = c.intervalPrompt?.interval;
-  if (selected == null || correct == null) {
+  final neutral = _BtnStyle(
+    bg: Colors.white.withValues(alpha: 0.08),
+    border: Colors.white.withValues(alpha: 0.12),
+    text: Colors.white,
+  );
+  if (selected == null || correct == null) return neutral;
+  // Correct pick → reveal green and fade the rest as the round ends.
+  if (c.intervalWasCorrect) {
+    if (choice.semitones == correct.semitones) {
+      return _BtnStyle(
+        bg: JHGColors.green.withValues(alpha: 0.20),
+        border: JHGColors.green,
+        text: JHGColors.green,
+      );
+    }
     return _BtnStyle(
-      bg: Colors.white.withValues(alpha: 0.08),
-      border: Colors.white.withValues(alpha: 0.12),
-      text: Colors.white,
+      bg: Colors.white.withValues(alpha: 0.03),
+      border: Colors.white.withValues(alpha: 0.05),
+      text: Colors.white30,
     );
   }
-  if (choice.semitones == correct.semitones) {
-    return _BtnStyle(
-      bg: JHGColors.green.withValues(alpha: 0.20),
-      border: JHGColors.green,
-      text: JHGColors.green,
-    );
-  }
-  if (choice.semitones == selected.semitones && !c.intervalWasCorrect) {
+  // Wrong pick → flash only the tapped choice; leave the others tappable so
+  // the user can keep guessing (we never reveal the correct answer).
+  if (choice.semitones == selected.semitones) {
     return _BtnStyle(
       bg: JHGColors.primary.withValues(alpha: 0.18),
       border: JHGColors.primary,
       text: JHGColors.primary,
     );
   }
-  return _BtnStyle(
-    bg: Colors.white.withValues(alpha: 0.03),
-    border: Colors.white.withValues(alpha: 0.05),
-    text: Colors.white30,
-  );
+  return neutral;
 }
 
 // ─── Chord mode ──────────────────────────────────────────────────────────────
@@ -1370,33 +1435,39 @@ _BtnStyle _intervalStyle(MusicInterval choice, HomeController c) {
 // for the correct symbol and coral for a wrong pick.
 _BtnStyle _chordSymbolStyle(String symbol, HomeController c) {
   final selected = c.chordSelected;
-  final correct = c.chordPrompt?.symbol;
-  if (selected == null || correct == null) {
+  // Chord Lab name rounds keep their target on chordLabPrompt, not chordPrompt.
+  final correct = c.chordPrompt?.symbol ?? c.chordLabPrompt?.target.symbol;
+  final neutral = _BtnStyle(
+    bg: Colors.white.withValues(alpha: 0.08),
+    border: Colors.white.withValues(alpha: 0.12),
+    text: Colors.white,
+  );
+  if (selected == null || correct == null) return neutral;
+  // Correct pick → reveal green and fade the rest as the round ends.
+  if (c.chordWasCorrect) {
+    if (symbol == correct) {
+      return _BtnStyle(
+        bg: JHGColors.green.withValues(alpha: 0.20),
+        border: JHGColors.green,
+        text: JHGColors.green,
+      );
+    }
     return _BtnStyle(
-      bg: Colors.white.withValues(alpha: 0.08),
-      border: Colors.white.withValues(alpha: 0.12),
-      text: Colors.white,
+      bg: Colors.white.withValues(alpha: 0.03),
+      border: Colors.white.withValues(alpha: 0.05),
+      text: Colors.white30,
     );
   }
-  if (symbol == correct) {
-    return _BtnStyle(
-      bg: JHGColors.green.withValues(alpha: 0.20),
-      border: JHGColors.green,
-      text: JHGColors.green,
-    );
-  }
-  if (symbol == selected && !c.chordWasCorrect) {
+  // Wrong pick → flash only the tapped symbol; leave the others tappable so
+  // the user can keep guessing (we never reveal the correct answer).
+  if (symbol == selected) {
     return _BtnStyle(
       bg: JHGColors.primary.withValues(alpha: 0.18),
       border: JHGColors.primary,
       text: JHGColors.primary,
     );
   }
-  return _BtnStyle(
-    bg: Colors.white.withValues(alpha: 0.03),
-    border: Colors.white.withValues(alpha: 0.05),
-    text: Colors.white30,
-  );
+  return neutral;
 }
 
 // Expanded-panel version: score chip above the 2×2 symbol grid.
@@ -1423,41 +1494,177 @@ class _ChordChoicePanel extends StatelessWidget {
   }
 }
 
+// ── Chord Lab ────────────────────────────────────────────────────────────────
+
+/// Header eyebrow for the current Chord Lab round.
+String _chordLabHeader(HomeController c) {
+  final p = c.chordLabPrompt;
+  if (p == null) return 'CHORD LAB';
+  switch (p.round) {
+    case ChordLabRound.name:
+      return 'NAME THIS CHORD';
+    case ChordLabRound.complete:
+      return 'COMPLETE THE CHORD';
+    case ChordLabRound.remove:
+      return 'REMOVE THE EXTRA NOTE';
+    case ChordLabRound.build:
+      return 'BUILD ${p.target.symbol} HERE';
+  }
+}
+
+String _chordLabHint(ChordLabRound round) {
+  switch (round) {
+    case ChordLabRound.name:
+      return 'Pick its name.';
+    case ChordLabRound.complete:
+      return 'Tap the missing note(s).';
+    case ChordLabRound.remove:
+      return "Tap the note that doesn't belong.";
+    case ChordLabRound.build:
+      return 'Build it inside the band.';
+  }
+}
+
+/// Panel body for a Chord Lab round: score (+ target symbol on board rounds), a
+/// one-line task hint, and either the name grid or a Clear control.
+class _ChordLabPanel extends StatelessWidget {
+  const _ChordLabPanel({required this.controller});
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final p = c.chordLabPrompt;
+    if (p == null) return _chordLoadingHint(c);
+    final isName = p.round == ChordLabRound.name;
+    final showClear = p.round == ChordLabRound.complete ||
+        p.round == ChordLabRound.build;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (!isName) ...[
+              _labSymbolChip(p.target.symbol),
+              const SizedBox(width: 10),
+            ],
+            _intervalScoreChip(c),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _chordLabHint(p.round),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+              color: Colors.white38, fontSize: 13, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 12),
+        if (isName)
+          _ChordChoiceGrid(
+            controller: c,
+            locked: c.chordSelected != null,
+            onPick: c.selectChordLabName,
+          )
+        else if (showClear)
+          _labClearButton(c),
+      ],
+    );
+  }
+
+  Widget _labSymbolChip(String symbol) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: JHGColors.primary.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: JHGColors.primary.withValues(alpha: 0.4)),
+        ),
+        child: Text(
+          symbol,
+          style: GoogleFonts.poppins(
+            color: JHGColors.primary,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+
+  Widget _labClearButton(HomeController c) => GestureDetector(
+        onTap: c.clearChordLab,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.backspace_outlined,
+                  color: Colors.white60, size: 16),
+              const SizedBox(width: 8),
+              Text('Clear',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+}
+
 // 2×2 grid of chord-symbol choices — shared by the expanded panel and the
 // collapsed tile.
 class _ChordChoiceGrid extends StatelessWidget {
-  const _ChordChoiceGrid({required this.controller, required this.locked});
+  const _ChordChoiceGrid({
+    required this.controller,
+    required this.locked,
+    this.onPick,
+  });
   final HomeController controller;
   final bool locked;
+
+  /// Defaults to the Name-mode handler; Chord Lab passes selectChordLabName.
+  final void Function(String symbol)? onPick;
 
   @override
   Widget build(BuildContext context) {
     final c = controller;
     final choices = c.chordChoicesList;
     if (choices.isEmpty) return const SizedBox.shrink();
+    final pick = onPick ?? c.selectChordAnswer;
 
     Widget button(String symbol) {
       final s = _chordSymbolStyle(symbol, c);
-      return GestureDetector(
-        onTap: locked ? null : () => c.selectChordAnswer(symbol),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 50,
-          decoration: BoxDecoration(
-            color: s.bg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: s.border, width: 1.5),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            symbol,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: s.text,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+      final isWrongPick = c.chordSelected != null &&
+          !c.chordWasCorrect &&
+          symbol == c.chordSelected;
+      return _ShakeOnWrong(
+        wrong: isWrongPick,
+        child: GestureDetector(
+          onTap: locked ? null : () => pick(symbol),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 50,
+            decoration: BoxDecoration(
+              color: s.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: s.border, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              symbol,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                color: s.text,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -1538,7 +1745,7 @@ class _ChordBuildPrompt extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${shape.qualityName} — tap the frets to build the shape',
+          shape.qualityName,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
               color: Colors.white54, fontSize: 12.5, height: 1.35),
@@ -1631,12 +1838,21 @@ class _ChordBuildControls extends StatelessWidget {
   }
 }
 
-// Shown while the chord library is still parsing on the first play.
+// Placeholder copy for the chord panel: distinguishes the (rare) parse wait
+// from the idle "not started yet" state so an idle board never looks stuck.
 Widget _chordLoadingHint(HomeController c) {
+  final String hint;
+  if (c.chordCatalogLoading) {
+    hint = 'Loading chords…';
+  } else if (!c.isStart) {
+    hint = 'Press play to start';
+  } else {
+    hint = 'Getting the next chord…';
+  }
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
     child: Text(
-      c.chordCatalogLoading ? 'Loading chords…' : 'Getting the next chord…',
+      hint,
       textAlign: TextAlign.center,
       style: GoogleFonts.inter(
         color: Colors.white38,

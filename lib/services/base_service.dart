@@ -32,7 +32,7 @@ class BaseService {
     Uri? uri;
     headers = _setHeaders();
     try {
-      uri = Uri.parse(baseUrl + '/' + api);
+      uri = Uri.parse('$baseUrl/$api');
       uri = uri.replace(queryParameters: queryParams);
       requestLog(uri, 'GET');
       var response = await http
@@ -60,7 +60,7 @@ class BaseService {
     Map<String, dynamic>? queryParams,
     String baseUrl = AppUrls.base,
   }) async {
-    Uri uri = Uri.parse(baseUrl + '/' + api);
+    Uri uri = Uri.parse('$baseUrl/$api');
     uri = uri.replace(queryParameters: queryParams);
     header = _setHeaders();
 

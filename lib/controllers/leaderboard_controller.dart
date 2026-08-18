@@ -69,18 +69,19 @@ class LeaderBoardController extends GetxController {
         username: kIsWeb
             ? Get.find<HomeController>().userNameWeb.value
             : SplashScreen.session.user?.userName ?? 'jamieharrisontest');
-    print("object====score--${score}  myCurrentScore===${myCurrentScore}");
+    print("object====score--$score  myCurrentScore===$myCurrentScore");
     if (score < myCurrentScore) {
       JHGDialogHelper.showInfoDialog(
           context: navKey.currentState!.context,
           buttonLabel: 'OK',
           title: 'Congratulations',
           description:
-              'You achieved a new milestone. Your previous\'s highest score was $myCurrentScore and current score is ${score}');
+              'You achieved a new milestone. Your previous\'s highest score was $myCurrentScore and current score is $score');
       return;
     }
     var response = await updateScoreApiRequest(data);
     JHGDialogHelper.showInfoDialog(
+        // ignore: use_build_context_synchronously
         context: navKey.currentState!.context,
         buttonLabel: 'OK',
         title: 'Congratulations',

@@ -60,7 +60,7 @@ class LandscapeBoard extends StatelessWidget {
               // Leaderboard
               GestureDetector(
                 onTap: () {
-                  Get.to(() => LeadershipScreen(),
+                  Get.to(() => const LeadershipScreen(),
                       transition: Transition.leftToRight);
                   if (isFreePlan) {
                     controller.interstitialAds?.showInterstitial();
@@ -188,7 +188,7 @@ class LandscapeBoard extends StatelessWidget {
               ),
 
               // Timer area
-              Expanded(
+              const Expanded(
                 flex: 1,
                 child: Center(
                   child: RotatedBox(
@@ -237,7 +237,7 @@ class LandscapeBoard extends StatelessWidget {
                       ? null
                       : () {
                           controller.resetGame(false);
-                          Get.to(() => SettingScreen(),
+                          Get.to(() => const SettingScreen(),
                               transition: Transition.rightToLeft);
                           if (isFreePlan) {
                             controller.interstitialAds?.showInterstitial();

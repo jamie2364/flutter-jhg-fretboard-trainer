@@ -49,6 +49,9 @@ dependencies:
     path: ../flutter_jhg_elements
 
   vs_scrollbar: ^1.0.0
+  shared_preferences: any
+  google_fonts: any
+  http: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -92,6 +95,7 @@ flutter:
   assets:
     - assets/images/
     - assets/dictionary/
+    - assets/sounds/
     - web/assets/audio/str_1/
     - web/assets/audio/str_2/
     - web/assets/audio/str_3/

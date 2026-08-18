@@ -4,7 +4,8 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/features/tour/tour_keys.dart';
 import 'package:fretboard/main.dart';
-import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
+import 'package:fretboard/utils/routes.dart';
+import 'package:fretboard/views/screens/stats/stats_hub_screen.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:get/get.dart';
@@ -15,7 +16,7 @@ import 'package:google_fonts/google_fonts.dart';
 const _kNavBg = Color(0xFF0F0F0F);
 const _kNavInactive = Color(0xFF9E9A98);
 
-enum AppTab { home, leaderboard, heatmap, settings }
+enum AppTab { home, train, leaderboard, heatmap, settings }
 
 class AppNavBar extends StatelessWidget {
   const AppNavBar({
@@ -33,54 +34,111 @@ class AppNavBar extends StatelessWidget {
     if (tab == activeTab) return;
     final hc = controller ?? Get.find<HomeController>();
 
-    // Guard: while a session is in progress the user may only return Home —
-    // every other tab is blocked so the running game can't be abandoned.
-    if (tab != AppTab.home && hc.sessionActive) return;
-    // Guard: settings is off-limits in leaderboard mode, from any screen.
-    if (tab == AppTab.settings && hc.currentGameMode.value == 'leaderboard') {
+    // Leaving an in-progress session (anything except staying on Train) ends
+    // the round — confirm first with a professional dialog so a good streak
+    // isn't lost by a stray tap.
+    if (hc.sessionActive && tab != AppTab.train) {
+      _confirmLeaveSession(context, () => _go(tab, hc, endSession: true));
       return;
     }
+    _go(tab, hc, endSession: false);
+  }
 
+  void _go(AppTab tab, HomeController hc, {required bool endSession}) {
+    if (endSession) hc.resetGame(false);
+    final fromBoard = activeTab == AppTab.train;
     switch (tab) {
       case AppTab.home:
-        Get.back();
+        // Home → the very first screen (StartScreen is the root route).
+        hc.resetGame(false);
+        Get.until((r) => r.isFirst);
+        break;
+      case AppTab.train:
+        // Practice → back to the training board (tagged with kBoardRoute when
+        // launched). Falls back to the first route if it isn't in the stack.
+        Get.until((r) => r.settings.name == kBoardRoute || r.isFirst);
         break;
       case AppTab.leaderboard:
-        if (activeTab == AppTab.home) {
-          Get.to(() => LeadershipScreen(), transition: Transition.noTransition, duration: Duration.zero);
-          if (isFreePlan) hc.interstitialAds?.showInterstitial();
-        } else {
-          Get.off(() => LeadershipScreen(), transition: Transition.noTransition, duration: Duration.zero);
-        }
+        // From the board, push (so Practice can return to it); between the
+        // secondary screens, replace so the stack stays flat.
+        fromBoard
+            ? Get.to(() => const LeadershipScreen(),
+                transition: Transition.noTransition, duration: Duration.zero)
+            : Get.off(() => const LeadershipScreen(),
+                transition: Transition.noTransition, duration: Duration.zero);
+        if (isFreePlan) hc.interstitialAds?.showInterstitial();
         break;
       case AppTab.heatmap:
-        if (activeTab == AppTab.home) {
-          Get.to(() => const HeatmapScreen(), transition: Transition.noTransition, duration: Duration.zero);
-        } else {
-          Get.off(() => const HeatmapScreen(), transition: Transition.noTransition, duration: Duration.zero);
-        }
+        fromBoard
+            ? Get.to(() => const StatsHubScreen(),
+                transition: Transition.noTransition, duration: Duration.zero)
+            : Get.off(() => const StatsHubScreen(),
+                transition: Transition.noTransition, duration: Duration.zero);
         break;
       case AppTab.settings:
-        if (activeTab == AppTab.home) {
-          hc.resetGame(false);
-          Get.to(() => SettingScreen(), transition: Transition.noTransition, duration: Duration.zero);
-          if (isFreePlan) hc.interstitialAds?.showInterstitial();
-        } else {
-          Get.off(() => SettingScreen(), transition: Transition.noTransition, duration: Duration.zero);
-        }
+        fromBoard
+            ? Get.to(() => const SettingScreen(),
+                transition: Transition.noTransition, duration: Duration.zero)
+            : Get.off(() => const SettingScreen(),
+                transition: Transition.noTransition, duration: Duration.zero);
+        if (isFreePlan) hc.interstitialAds?.showInterstitial();
         break;
     }
   }
 
+  void _confirmLeaveSession(BuildContext context, VoidCallback onConfirm) {
+    showJHGBlurDialog(
+      context: context,
+      builder: (ctx) => JHGFrostedDialog(
+        icon: Icons.logout_rounded,
+        title: 'End this session?',
+        description:
+            'Leaving this screen will end your current practice session. '
+            'Your score for this round won\'t be saved.',
+        content: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(),
+                child: Container(
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.14)),
+                  ),
+                  child: Text('Cancel',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      )),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: JHGFrostedPrimaryButton(
+                label: 'Continue',
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  onConfirm();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hc = controller ?? Get.find<HomeController>();
-    // Mid-session everything but Home is locked; settings is also locked
-    // whenever leaderboard mode is selected.
-    final navLocked = hc.sessionActive;
-    final settingsLocked =
-        navLocked || hc.currentGameMode.value == 'leaderboard';
-
+    // Every tab stays enabled and uniformly coloured — only the active one is
+    // white. Leaving mid-session is gated by a confirm dialog (see _navigate),
+    // not by greying tabs out.
     final bar = Container(
       height: 56 + safeBottom,
       decoration: BoxDecoration(
@@ -93,9 +151,9 @@ class AppNavBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.center,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 568),
           child: Padding(
-            padding: EdgeInsets.only(bottom: safeBottom * 0.4),
+            padding: EdgeInsets.only(bottom: safeBottom),
             child: Row(
               children: [
                 _NavItem(
@@ -105,27 +163,30 @@ class AppNavBar extends StatelessWidget {
                   onTap: () => _navigate(AppTab.home, context),
                 ),
                 _NavItem(
+                  icon: Icons.center_focus_strong_rounded,
+                  label: 'Practice',
+                  isActive: activeTab == AppTab.train,
+                  onTap: () => _navigate(AppTab.train, context),
+                ),
+                _NavItem(
                   icon: LucideIcons.trophy300,
                   label: 'Leaders',
                   isActive: activeTab == AppTab.leaderboard,
-                  disabled: navLocked && activeTab != AppTab.leaderboard,
                   onTap: () => _navigate(AppTab.leaderboard, context),
                 ),
                 _NavItem(
-                  // Tour key only needed on the home screen; other screens
-                  // share the same GlobalKey instance which would duplicate it.
-                  key: activeTab == AppTab.home ? tourKeyHeatmapNav : null,
+                  // Tour key only needed on the training board (where the tour
+                  // runs); other screens would duplicate the same GlobalKey.
+                  key: activeTab == AppTab.train ? tourKeyHeatmapNav : null,
                   icon: Icons.insights_rounded,
                   label: 'Stats',
                   isActive: activeTab == AppTab.heatmap,
-                  disabled: navLocked && activeTab != AppTab.heatmap,
                   onTap: () => _navigate(AppTab.heatmap, context),
                 ),
                 _NavItem(
                   icon: LucideIcons.settings300,
                   label: 'Settings',
                   isActive: activeTab == AppTab.settings,
-                  disabled: settingsLocked && activeTab != AppTab.settings,
                   onTap: () => _navigate(AppTab.settings, context),
                 ),
               ],
@@ -164,26 +225,20 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.isActive = false,
-    this.disabled = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool isActive;
-  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
-    final color = disabled
-        ? Colors.white12
-        : isActive
-            ? Colors.white
-            : _kNavInactive;
+    final color = isActive ? Colors.white : _kNavInactive;
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: disabled ? null : onTap,
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
