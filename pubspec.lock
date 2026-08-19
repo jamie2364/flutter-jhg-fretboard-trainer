@@ -313,9 +313,11 @@ packages:
   flutter_jhg_elements:
     dependency: "direct main"
     description:
-      path: "../flutter_jhg_elements"
-      relative: true
-    source: path
+      path: "."
+      ref: NewElements
+      resolved-ref: "190afe41cfbf63aadf0a4b433441fe6912fa7bcb"
+      url: "https://github.com/jamie2364/flutter_jhg_elements"
+    source: git
     version: "0.0.1"
   flutter_launcher_icons:
     dependency: "direct dev"
@@ -858,9 +860,11 @@ packages:
   reg_page:
     dependency: "direct main"
     description:
-      path: "../flutter-jhg-reg-page"
-      relative: true
-    source: path
+      path: "."
+      ref: master
+      resolved-ref: "4125b60b20ff4cbc3bcab084a5fa5ac27b858d69"
+      url: "https://github.com/jamie2364/flutter-jhg-reg-page"
+    source: git
     version: "0.0.1"
   rxdart:
     dependency: transitive
