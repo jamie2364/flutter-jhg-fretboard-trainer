@@ -1,0 +1,19 @@
+name: DS Guard
+
+# Design-system literal ratchet. Pure bash + grep — no Flutter toolchain needed,
+# so it runs in seconds. Fails ONLY when the count of raw Color(0x…)/GoogleFonts.
+# literals in lib/ grows past the committed .ds_guard_baseline. Route new
+# colours/fonts through context.jhg / JhgTypography, or waive a deliberate one
+# with a trailing `// ds-guard: allow`. Tighten the gate any time by re-running
+# `bash tool/ds_guard.sh lib --baseline` and committing the lowered baseline.
+on:
+  push:
+  pull_request:
+
+jobs:
+  ds-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Design-system literal ratchet
+        run: bash tool/ds_guard.sh lib --check
