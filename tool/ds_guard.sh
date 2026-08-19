@@ -99,7 +99,10 @@ case "$MODE" in
       exit 1
     fi
     echo "ds_guard: OK — $count <= baseline $base in $TARGET"
-    [[ "$count" -lt "$base" ]] && echo "ds_guard: tip — down from $base; run --baseline to ratchet the gate tighter."
+    if [[ "$count" -lt "$base" ]]; then
+      echo "ds_guard: tip — down from $base; run --baseline to ratchet the gate tighter."
+    fi
+    exit 0
     ;;
   --strict)
     print_report
