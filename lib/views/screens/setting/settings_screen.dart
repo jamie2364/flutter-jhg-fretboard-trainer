@@ -6,7 +6,6 @@ import 'package:fretboard/features/tour/tour_controller.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/utils/app_strings.dart';
-import 'package:fretboard/views/screens/setting/widgets/settings_ui.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/views/widgets/default_timer.dart';
 import 'package:get/get.dart';
@@ -38,7 +37,7 @@ class _SettingScreenState extends State<SettingScreen> {
     );
 
     return Scaffold(
-      backgroundColor: SettingsTokens.page,
+      backgroundColor: context.jhg.page,
       bottomNavigationBar: navBar,
       body: SafeArea(
         bottom: false,
@@ -292,9 +291,9 @@ class _SettingsHeader extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: SettingsTokens.chip,
+                color: context.jhg.surfaceChip,
                 borderRadius: BorderRadius.circular(11),
-                border: Border.all(color: SettingsTokens.border),
+                border: Border.all(color: context.jhg.border),
               ),
               child: const Icon(LucideIcons.chevronLeft,
                   color: Colors.white70, size: 18),
@@ -315,10 +314,10 @@ class _SettingsHeader extends StatelessWidget {
           GestureDetector(
             onTap: () => Nav.to(const BugReportScreen()),
             behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.all(6),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
               child: Icon(LucideIcons.messageSquareWarning,
-                  color: SettingsTokens.accent, size: 22),
+                  color: context.jhg.accent, size: 22),
             ),
           ),
         ],

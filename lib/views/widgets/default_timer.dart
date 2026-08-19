@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
-import 'package:fretboard/views/screens/setting/widgets/settings_ui.dart';
 import 'package:fretboard/views/widgets/duration_picker.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
