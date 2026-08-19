@@ -310,16 +310,8 @@ class _SettingsHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Plain coral report/bug icon — a genuine focus point, no tile.
-          GestureDetector(
-            onTap: () => Nav.to(const BugReportScreen()),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(LucideIcons.messageSquareWarning,
-                  color: context.jhg.accent, size: 22),
-            ),
-          ),
+          // Report/bug affordance — owned by the design system.
+          const SettingsReportButton(),
         ],
       ),
     );
