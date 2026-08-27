@@ -118,25 +118,32 @@ Widget _focusCentredStep({
   required Widget focus,
   List<Widget> below = const [],
 }) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 24),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          flex: 3,
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: heading,
+  return Center(
+    child: ConstrainedBox(
+      // Keep the setup steps at mobile-like proportions on wide web viewports
+      // instead of stretching edge-to-edge (matches the sibling apps).
+      constraints: const BoxConstraints(maxWidth: 520),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: heading,
+                ),
+              ),
             ),
-          ),
+            focus,
+            ...below,
+            const Spacer(flex: 4),
+          ],
         ),
-        focus,
-        ...below,
-        const Spacer(flex: 4),
-      ],
+      ),
     ),
   );
 }
@@ -426,7 +433,9 @@ class StartScreen extends StatelessWidget {
       backgroundColor: _kBg,
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -467,6 +476,7 @@ class StartScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
@@ -534,7 +544,9 @@ class RandomModeScreen extends StatelessWidget {
             ),
             Expanded(
               child: Center(
-                child: Padding(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -582,6 +594,7 @@ class RandomModeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ),
@@ -638,7 +651,9 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
             ),
             Expanded(
               child: Center(
-                child: Padding(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -686,6 +701,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ),
