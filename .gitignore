@@ -45,7 +45,9 @@ app.*.map.json
 /android/app/.cxx
 /android/app/profile
 /android/app/release
-/android/fastlane/*
-/ios/fastlane/*
+# fastlane: track Appfile/Fastfile/metadata so deploys work on a fresh clone,
+# but never commit the deploy secrets.
+**/fastlane/auth/
+**/fastlane/report.xml
 # FVM Version Cache
 .fvm/

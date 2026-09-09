@@ -1,0 +1,47 @@
+default_platform(:android)
+
+platform :android do
+  desc "Builds and uploads a new release to the Google Play Store."
+  lane :release do |options|
+    
+    # ------------------------------------------------------------------
+    # 1. DYNAMIC CHANGELOG HANDLING
+    # ------------------------------------------------------------------
+    # Fastlane for Android requires changelogs to be in a specific file:
+    # fastlane/metadata/android/en-US/changelogs/[VERSION_CODE].txt
+    
+    # Create the directory if it doesn't exist
+    changelog_dir = "metadata/android/en-US/changelogs"
+    FileUtils.mkdir_p(changelog_dir)
+
+    # Write the content from your script to a file named after the version code (e.g., 67.txt)
+    # We fallback to 'default.txt' if version_code is missing to prevent crashes
+    file_name = options[:version_code] ? "#{options[:version_code]}.txt" : "default.txt"
+    File.write("#{changelog_dir}/#{file_name}", options[:changelog])
+    
+    puts "✅ Created changelog file at #{changelog_dir}/#{file_name}"
+
+    # ------------------------------------------------------------------
+    # 2. UPLOAD TO PLAY STORE
+    # ------------------------------------------------------------------
+    upload_to_play_store(
+      track: 'production',
+      aab: options[:aab_path],
+      json_key: "fastlane/auth/play-store-credentials.json",
+      changes_not_sent_for_review: true,
+      
+      # We must NOT skip metadata, because the changelog file counts as metadata
+      skip_upload_metadata: false, 
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+
+    # ------------------------------------------------------------------
+    # 3. GIT TAGGING
+    # ------------------------------------------------------------------
+    add_git_tag(
+      tag: "v#{options[:version_name]}"
+    )
+    push_git_tags
+  end
+end

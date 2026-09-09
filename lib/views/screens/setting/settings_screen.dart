@@ -5,9 +5,12 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/features/tour/tour_controller.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:fretboard/main.dart';
+import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/app_strings.dart';
+import 'package:fretboard/views/screens/saved/saved_sessions_screen.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/views/widgets/default_timer.dart';
+import 'package:fretboard/utils/routes.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:reg_page/reg_page.dart';
@@ -27,14 +30,14 @@ class _SettingScreenState extends State<SettingScreen> {
   void initState() {
     super.initState();
     homeController = Get.find<HomeController>()..onDefaultTimerInitialized();
+    // Populate SavedSessionsService.count so the Saved Sessions row can label
+    // itself before the user taps it.
+    SavedSessionsService.refreshCount();
   }
 
   @override
   Widget build(BuildContext context) {
-    final navBar = AppNavBar(
-      activeTab: AppTab.settings,
-      safeBottom: MediaQuery.paddingOf(context).bottom,
-    );
+    const navBar = AppNavBar(activeTab: AppTab.settings);
 
     return Scaffold(
       backgroundColor: context.jhg.page,
@@ -59,6 +62,69 @@ class _SettingScreenState extends State<SettingScreen> {
                         return ListView(
                           padding: const EdgeInsets.fromLTRB(20, 6, 20, 28),
                           children: [
+                            const SettingsSectionLabel('SESSIONS'),
+                            SettingsCard(
+                              child: InkWell(
+                                onTap: () {
+                                  SavedSessionsService.refreshCount();
+                                  // Both screens carry the nav bar — a sliding
+                                  // push would drag the bar across.
+                                  Get.off(() => const SavedSessionsScreen(),
+                                      routeName: kSavedRoute,
+                                      transition: Transition.noTransition,
+                                      duration: Duration.zero);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  child: Row(
+                                    children: [
+                                      const SettingsIconChip(
+                                          icon: LucideIcons.save),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Saved Sessions',
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            // Live count, so the row shows at a
+                                            // glance whether anything is in
+                                            // there to resume.
+                                            ValueListenableBuilder<int>(
+                                              valueListenable:
+                                                  SavedSessionsService.count,
+                                              builder: (_, count, __) => Text(
+                                                count == 0
+                                                    ? 'Nothing in here yet. Hit Save while you practise.'
+                                                    : count == 1
+                                                        ? 'One session waiting for you'
+                                                        : '$count sessions waiting for you',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.white38,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(LucideIcons.chevronRight,
+                                          color: Colors.white24, size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 26),
                             const SettingsSectionLabel('IDENTIFY MODE'),
                             SettingsCard(
                               child: Column(
@@ -93,7 +159,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                     icon: LucideIcons.volume2,
                                     title: 'Auto-play sound',
                                     subtitle:
-                                        'Play each note/chord automatically. Off by default — use the Listen button to hear it on demand',
+                                        'Sound every note and chord as it comes up. Off by default, so use the Listen button when you want to hear one.',
                                     value: controller.identifyPlaySound,
                                     onChanged: (_) {
                                       controller.identifyPlaySound =
@@ -275,49 +341,20 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 }
 
+/// Screen header. `JhgScreenHeader` (not `.detail`) because Settings is a nav
+/// DESTINATION — the bar below is the way in and out, so it carries no back
+/// arrow. Title style, paddings and the action gap all come from the package.
 class _SettingsHeader extends StatelessWidget {
   const _SettingsHeader();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: context.jhg.surfaceChip,
-                borderRadius: BorderRadius.circular(11),
-                border: Border.all(color: context.jhg.border),
-              ),
-              child: const Icon(LucideIcons.chevronLeft,
-                  color: Colors.white70, size: 18),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              'Settings',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          // Report/bug affordance — owned by the design system.
-          const SettingsReportButton(),
-        ],
-      ),
+    return const JhgScreenHeader(
+      title: 'Settings',
+      actions: [SettingsReportButton()],
     );
   }
 }
-
 class _SupportSection extends StatelessWidget {
   const _SupportSection();
 

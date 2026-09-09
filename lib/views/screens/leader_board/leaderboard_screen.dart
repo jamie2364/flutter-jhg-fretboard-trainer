@@ -24,7 +24,7 @@ class LeadershipScreen extends StatelessWidget {
         if (!kIsWeb) return LeaderPortraitView(controller: controller);
         return Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 568),
+            constraints: const BoxConstraints(maxWidth: 520),
             child: LeaderPortraitView(controller: controller),
           ),
         );
@@ -39,32 +39,16 @@ class LeaderPortraitView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safeBottom = MediaQuery.paddingOf(context).bottom;
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
           // ─── TOP NAV ────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  height: 44, width: 44,
-                  decoration: BoxDecoration(
-                    color: JHGColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: JHGColors.primary.withValues(alpha: 0.35)),
-                  ),
-                  child: const Icon(LucideIcons.trophy300, color: JHGColors.primary, size: 20),
-                ),
-                Text('Leaderboard',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 44),
-              ],
-            ),
+          // Pushed from the Stats hub tile, so it is a detail screen and gets
+          // the canonical back chip.
+          JhgScreenHeader.detail(
+            title: 'Leaderboard',
+            onBack: () => Get.back<void>(),
           ),
 
           // ─── CONTENT ────────────────────────────────────────────────
@@ -72,107 +56,49 @@ class LeaderPortraitView extends StatelessWidget {
             child: controller.isLoading.value
                 ? const Center(
                     child: CircularProgressIndicator(color: JHGColors.primary, strokeWidth: 2))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildLeaderCard(),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('RANKINGS',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38, fontSize: 11,
-                                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-                              Text(AppStrings.scoreTemp.toUpperCase(),
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38, fontSize: 11,
-                                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-                            ],
-                          ),
-                        ),
-                        populateScoreList(controller.scoreList),
-                      ],
-                    ),
-                  ),
+                : controller.scoreList.isEmpty
+                    ? const _EmptyLeaderboard()
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                        child: populateScoreList(controller.scoreList),
+                      ),
           ),
 
           // ─── NAV BAR ────────────────────────────────────────────────
-          AppNavBar(activeTab: AppTab.leaderboard, safeBottom: safeBottom),
+          const AppNavBar(activeTab: AppTab.heatmap),
         ],
       ),
     );
   }
 
-  Widget _buildLeaderCard() {
-    final username = controller.leader.value.username ?? '—';
-    final score = controller.leader.value.score?.toString() ?? '0';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: JHGColors.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: JHGColors.primary.withValues(alpha: 0.45)),
-      ),
-      child: Row(
+}
+
+/// Shown when the board has no scores yet.
+class _EmptyLeaderboard extends StatelessWidget {
+  const _EmptyLeaderboard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: JHGColors.primary.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(LucideIcons.trophy300,
-                color: JHGColors.primary, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'CURRENT LEADER',
-                  style: GoogleFonts.inter(
-                    color: JHGColors.primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  username,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          Icon(LucideIcons.trophy,
+              color: Colors.white.withValues(alpha: 0.25), size: 40),
+          const SizedBox(height: 12),
+          Text(
+            'No scores yet',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white54,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: JHGColors.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              score,
-              style: GoogleFonts.poppins(
-                color: JHGColors.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          const SizedBox(height: 4),
+          Text(
+            'Play a round to claim the top spot',
+            style: GoogleFonts.poppins(
+                fontSize: 12, color: Colors.white.withValues(alpha: 0.35)),
           ),
         ],
       ),
@@ -203,7 +129,7 @@ class LeaderLandscapeView extends StatelessWidget {
               trailingWidget: JHGIconButton(
                 size: 24,
                 onTap: () => Get.back(),
-                iconData: LucideIcons.chevronRight300,
+                iconData: LucideIcons.chevronRight,
               ),
               bottom: leaderBoardTitleWidget(),
             ),

@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kPrimary = Color(0xFFFE5D43);
 const _kCard = Color(0xFF141414);
-const _kOnSurface = Color(0xFFE5E2E1);
-const _kMuted = Color(0xFF9A9694);
+const _kOnSurface = Color(0xFFF1F1F1);
+const _kMuted = Color(0xFF8A8A8A);
 
 /// A single "what you'll be doing" row inside the Chord Lab briefing.
 class _LabFacet {
@@ -19,13 +19,13 @@ class _LabFacet {
 
 const List<_LabFacet> _kFacets = [
   _LabFacet(Icons.abc_rounded, 'Name it',
-      'A shape lights up — recall the chord it spells.'),
+      'A shape lights up. Name the chord it spells.'),
   _LabFacet(Icons.auto_fix_high_rounded, 'Complete it',
-      'A chord half-formed — add the notes that finish it.'),
+      'A chord is half built. Add the notes that finish it.'),
   _LabFacet(Icons.filter_center_focus_rounded, 'Remove the extra',
-      'One note doesn’t belong — find it and lift it out.'),
+      "One note doesn't belong. Find it and take it out."),
   _LabFacet(Icons.grid_goldenratio_rounded, 'Build it here',
-      'A name and a region — voice the chord from scratch.'),
+      'You get a name and a spot on the neck. Build it from there.'),
 ];
 
 /// A frosted briefing that introduces Chord Lab the first time — and every time
@@ -125,10 +125,10 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'One session, every angle. Choose your chords and the '
-                        'Lab drills them four different ways — rotating so no '
-                        'two rounds feel the same, until the shapes are second '
-                        'nature under your fingers.',
+                        'Pick the chords you want to work on and the Lab '
+                        'drills them four ways, mixing up the rounds so it '
+                        'never gets stale. Great for locking shapes into '
+                        'muscle memory.',
                         style: GoogleFonts.inter(
                           color: _kMuted,
                           fontSize: 14.5,

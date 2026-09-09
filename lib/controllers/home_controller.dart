@@ -8,8 +8,10 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:fretboard/services/feedback_sounds.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
+import 'package:fretboard/models/saved_session.dart';
 import 'package:fretboard/services/heatmap_service.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
+import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/services/chord_service.dart';
@@ -137,8 +139,8 @@ class HomeController extends GetxController {
 
   void onDefaultTimerInitialized() {
     selectedDropDownValue.value = defaultTimerSelectedValue.value;
-    if (timerIntervalValue.value <= 0) {
-      timerIntervalValue.value = 1;
+    if (timerIntervalValue.value < kMinTimerIntervalSeconds) {
+      timerIntervalValue.value = kMinTimerIntervalSeconds;
     }
   }
 
@@ -154,7 +156,9 @@ class HomeController extends GetxController {
   String? userName;
 
   RxBool timerIntervalExpanded = false.obs;
-  RxInt timerIntervalValue = 1.obs; // Fixed: Changed back to 1 from 120
+  /// Countdown length in seconds. Defaults to 2 minutes — a 1-second default
+  /// made every unconfigured countdown end the moment it started.
+  RxInt timerIntervalValue = 120.obs;
   RxInt minutesValue = 2.obs;
 
   JHGInterstitialAd? interstitialAds;
@@ -246,6 +250,10 @@ class HomeController extends GetxController {
     resetTimer();
     await getUserName();
     update();
+
+    // A resume was queued from the Saved Sessions screen — apply it now that the
+    // fresh-session reset above has run, so the restored score/clock survive.
+    if (_pendingRestore != null) _applyPendingRestore();
   }
 
   bool isPlayed = false;
@@ -274,6 +282,8 @@ class HomeController extends GetxController {
             if (!isChoiceMode) {
               unawaited(PracticeStatsService.record(
                   StatsModule.note, 'mode:find', true));
+              unawaited(
+                  PracticeStatsService.recordHistory(StatsModule.note, true));
             }
             previousHighlightFret = highlightFret;
             previousHighlightNode = highlightNode;
@@ -291,6 +301,8 @@ class HomeController extends GetxController {
             if (!isChoiceMode) {
               unawaited(PracticeStatsService.record(
                   StatsModule.note, 'mode:find', false));
+              unawaited(
+                  PracticeStatsService.recordHistory(StatsModule.note, false));
             }
             decrementScore();
           }
@@ -335,6 +347,13 @@ class HomeController extends GetxController {
 
   bool isStart = false;
   bool isPaused = false;
+
+  /// True only for a session launched from Home → **Quick start**. Quick start
+  /// picks nothing for the user, so the board offers the in-place Modes shifter
+  /// to swap Notes / Intervals / Chords. A Customized Practice session (or a
+  /// resumed saved one) was configured deliberately in the wizard, so the
+  /// shifter stays hidden there and the mode is changed from Home.
+  bool quickStartSession = false;
 
   // A session is "in progress" once the user has started (and not yet reset)
   // the game — running OR paused. While active, navigation away from the game
@@ -470,12 +489,25 @@ class HomeController extends GetxController {
     _lastLabRound = null;
   }
 
+  /// The configured countdown length, floored so a stale or zeroed stored
+  /// value can never produce a round that ends instantly.
+  int get _countdownSeconds =>
+      timerIntervalValue.value < kMinTimerIntervalSeconds
+          ? kMinTimerIntervalSeconds
+          : timerIntervalValue.value;
+
+  /// Set once the session's timing has been chosen explicitly (the wizard's
+  /// timing step, Quick start, or a restored session). While true,
+  /// [initLocalDbData] leaves the timer alone — it used to overwrite the
+  /// wizard's choice with the stored default every time the board was opened,
+  /// so "10 minutes" became whatever Settings last held.
+  bool timingChosen = false;
+
   void resetTimer() {
     // In choice modes (identify / interval) use timerMode; otherwise currentGameMode
     final effective = isChoiceMode ? timerMode.value : currentGameMode.value;
     if (effective == 'countdown') {
-      secondsRemaining.value =
-          timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
+      secondsRemaining.value = _countdownSeconds;
     } else if (effective == 'leaderboard') {
       secondsRemaining.value = 120;
     } else {
@@ -524,6 +556,9 @@ class HomeController extends GetxController {
 
   // Cycles timer modes. In identify mode only stopwatch↔countdown (no leaderboard).
   void cycleGameMode() {
+    // Picking the clock from the board is as explicit as picking it in the
+    // wizard — see [timingChosen].
+    timingChosen = true;
     if (isChoiceMode) {
       timerMode.value = timerMode.value == 'stopwatch' ? 'countdown' : 'stopwatch';
     } else {
@@ -540,6 +575,201 @@ class HomeController extends GetxController {
     }
     resetTimer();
     update();
+  }
+
+  /// Applies the customize-session timing choice made in the wizard's timing
+  /// step. [useTimer] false → a count-up stopwatch; true → a countdown from
+  /// [minutes]. Sets the shared [timerMode] (which drives the timer in the
+  /// choice modes) and, for the plain find-note modes, mirrors it onto
+  /// [currentGameMode]. Call AFTER switchToXxx so isChoiceMode is already known.
+  void applySessionTiming({required bool useTimer, int minutes = 10}) {
+    timingChosen = true;
+    if (useTimer) {
+      timerMode.value = 'countdown';
+      timerIntervalValue.value = (minutes <= 0 ? 1 : minutes) * 60;
+    } else {
+      timerMode.value = 'stopwatch';
+    }
+    if (!isChoiceMode) {
+      currentGameMode.value = useTimer ? 'countdown' : 'stopwatch';
+    }
+    resetTimer();
+    update();
+  }
+
+  // ── Saved sessions ─────────────────────────────────────────────────────────
+  // A session snapshot the player can leave and return to. Restored config is
+  // held in [_pendingRestore] until the board's initializeData() has run (which
+  // otherwise resets score/state), then applied.
+  SavedSession? _pendingRestore;
+
+  int get _activeStringCount =>
+      [string1, string2, string3, string4, string5, string6]
+          .where((s) => s)
+          .length;
+
+  String _difficultyLabel(int index) =>
+      const ['Easy', 'Medium', 'Difficult'][index.clamp(0, 2)];
+
+  String _sessionTitle() {
+    if (isChordMode) {
+      if (isChordLab) return 'Chord Lab';
+      return isChordBuild ? 'Build the Chord' : 'Name the Chord';
+    }
+    if (isIntervalMode) {
+      return isIntervalBuild ? 'Build the Interval' : 'Name the Interval';
+    }
+    if (currentGameMode.value == 'reverse') return 'Identify the Note';
+    return 'Find the Note';
+  }
+
+  String _sessionSubtitle() {
+    final strings = _activeStringCount == 6
+        ? 'all strings'
+        : '$_activeStringCount string${_activeStringCount == 1 ? '' : 's'}';
+    if (isChordMode) {
+      if (isChordLab) {
+        final n = chordLabTonalities.length;
+        return '${_difficultyLabel(chordDifficulty.index)} · $n chord '
+            'type${n == 1 ? '' : 's'}';
+      }
+      return _difficultyLabel(chordDifficulty.index);
+    }
+    if (isIntervalMode) {
+      return '${_difficultyLabel(intervalDifficulty.index)} · $strings';
+    }
+    return strings;
+  }
+
+  /// Builds a snapshot of the current session (config + score + clock).
+  SavedSession captureSession({String? customName, String? folderId}) {
+    return SavedSession(
+      customName: customName,
+      folderId: folderId,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      createdAt: DateTime.now(),
+      gameMode: currentGameMode.value,
+      intervalGameType: intervalGameType.index,
+      chordGameType: chordGameType.index,
+      intervalDifficulty: intervalDifficulty.index,
+      chordDifficulty: chordDifficulty.index,
+      strings: [string1, string2, string3, string4, string5, string6],
+      selectedIntervals: selectedIntervals.toList(),
+      chordLabKeys: chordLabKeys.toList(),
+      chordLabTonalities: chordLabTonalities.toList(),
+      chordLabRounds: chordLabRounds.map((r) => r.name).toList(),
+      timerMode: timerMode.value,
+      timerIntervalValue: timerIntervalValue.value,
+      score: score,
+      secondsRemaining: secondsRemaining.value,
+      title: _sessionTitle(),
+      subtitle: _sessionSubtitle(),
+    );
+  }
+
+  /// Persists the current session so it can be resumed later. Returns false if
+  /// there's nothing in progress to save.
+  Future<bool> saveCurrentSession({
+    String? customName,
+    String? folderId,
+  }) async {
+    if (!sessionActive) return false;
+    await SavedSessionsService.add(
+        captureSession(customName: customName, folderId: folderId));
+    return true;
+  }
+
+  /// The name pre-filled in the Save dialog, e.g. "Name the Interval, 24 pts".
+  String defaultSessionName() =>
+      score > 0 ? '${_sessionTitle()}, $score pts' : _sessionTitle();
+
+  /// Stashes [s] to be restored once the board has finished initialising. Call
+  /// then navigate to the board.
+  void prepareRestore(SavedSession s) {
+    _pendingRestore = s;
+    modeChosen = true;
+    stringsChosen = true;
+  }
+
+  void _applyPendingRestore() {
+    final s = _pendingRestore;
+    if (s == null) return;
+    _pendingRestore = null;
+
+    modeChosen = true;
+    currentGameMode.value = s.gameMode;
+    intervalGameType = IntervalGameType.values[
+        s.intervalGameType.clamp(0, IntervalGameType.values.length - 1)];
+    chordGameType = ChordGameType
+        .values[s.chordGameType.clamp(0, ChordGameType.values.length - 1)];
+    intervalDifficulty = IntervalDifficulty.values[
+        s.intervalDifficulty.clamp(0, IntervalDifficulty.values.length - 1)];
+    chordDifficulty = ChordDifficulty
+        .values[s.chordDifficulty.clamp(0, ChordDifficulty.values.length - 1)];
+
+    // Strings
+    final st = s.strings;
+    if (st.length == 6) {
+      string1 = st[0];
+      string2 = st[1];
+      string3 = st[2];
+      string4 = st[3];
+      string5 = st[4];
+      string6 = st[5];
+      for (var i = 0; i < offString.length; i++) {
+        offString[i] = isStringOn(6 - i);
+      }
+      stringsChosen = true;
+    }
+
+    if (s.selectedIntervals.isNotEmpty) {
+      selectedIntervals = s.selectedIntervals.toSet();
+    }
+    if (s.chordLabKeys.isNotEmpty) chordLabKeys = s.chordLabKeys.toSet();
+    if (s.chordLabTonalities.isNotEmpty) {
+      chordLabTonalities = s.chordLabTonalities.toSet();
+    }
+    if (s.chordLabRounds.isNotEmpty) {
+      chordLabRounds = s.chordLabRounds
+          .map((n) => ChordLabRound.values
+              .firstWhere((r) => r.name == n, orElse: () => ChordLabRound.name))
+          .toSet();
+    }
+
+    timerMode.value = s.timerMode;
+    timerIntervalValue.value = s.timerIntervalValue;
+    timingChosen = true;
+
+    // Restore the live progress and park it paused — the player taps Resume
+    // (the play control) to continue from exactly here.
+    score = s.score;
+    secondsRemaining.value = s.secondsRemaining;
+    isStart = false;
+    isPaused = true;
+
+    _primeRestoredRound();
+    update();
+  }
+
+  /// Generates the first prompt for a restored session so the board isn't empty
+  /// while it sits paused (score + clock already restored).
+  void _primeRestoredRound() {
+    if (isIntervalMode) {
+      isIntervalBuild ? newBuildIntervalPrompt() : newIntervalPrompt();
+    } else if (isChordMode) {
+      if (_chordCatalog == null) {
+        ensureChordCatalog().then((_) {
+          if (isPaused) {
+            _startNextChordRound();
+            update();
+          }
+        });
+      } else {
+        _startNextChordRound();
+      }
+    } else {
+      highLightTheGame();
+    }
   }
 
   void switchToIdentifyMode() {
@@ -731,6 +961,7 @@ class HomeController extends GetxController {
       ['q:${interval.short}', 'mode:${isIntervalBuild ? 'build' : 'name'}'],
       correct,
     ));
+    unawaited(PracticeStatsService.recordHistory(StatsModule.interval, correct));
   }
 
   Future<void> _playIntervalNotes() async {
@@ -923,6 +1154,7 @@ class HomeController extends GetxController {
       ['q:${shape.tonality}', 'mode:${isChordBuild ? 'build' : 'name'}'],
       correct,
     ));
+    unawaited(PracticeStatsService.recordHistory(StatsModule.chord, correct));
   }
 
   /// Prepares the next Build question: a chord symbol is shown; the actual
@@ -1031,8 +1263,10 @@ class HomeController extends GetxController {
     update();
   }
 
-  /// Build mode: give up on the current chord — reveal a correct shape (green)
-  /// and move on. Counts as a miss.
+  /// Build mode: give up on the current chord — reveal a correct shape (green,
+  /// with note names on the board) and wait. Counts as a miss. The round does
+  /// NOT auto-advance: the Reveal control becomes "Next" and the user taps it
+  /// (nextBuildChord) when they've studied the answer.
   void revealChordBuild() {
     if (!isStart || chordBuildDone) return;
     final sets = chordPrompt?.acceptableFrettedSets;
@@ -1041,10 +1275,13 @@ class HomeController extends GetxController {
     chordBuildDone = true;
     _recordChordStat(false);
     decrementScore();
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (isStart) newBuildChordPrompt();
-    });
     update();
+  }
+
+  /// Build mode: advance to the next chord after a reveal (the "Next" control).
+  void nextBuildChord() {
+    if (!isStart) return;
+    newBuildChordPrompt();
   }
 
   // ── Chord Lab ────────────────────────────────────────────────────────────
@@ -1094,6 +1331,7 @@ class HomeController extends GetxController {
       ['round:${p.round.name}', 'q:${p.target.tonality}'],
       correct,
     ));
+    unawaited(PracticeStatsService.recordHistory(StatsModule.chordLab, correct));
   }
 
   void _advanceChordLab({Duration delay = const Duration(milliseconds: 700)}) {
@@ -1258,6 +1496,7 @@ class HomeController extends GetxController {
     }
     unawaited(PracticeStatsService.record(
         StatsModule.note, 'mode:identify', isCorrect));
+    unawaited(PracticeStatsService.recordHistory(StatsModule.note, isCorrect));
 
     if (isCorrect) {
       previousHighlightFret = highlightFret;
@@ -1457,8 +1696,7 @@ class HomeController extends GetxController {
 
   void startCountDownTimer() {
     if (secondsRemaining.value == 0) {
-      secondsRemaining.value =
-          timerIntervalValue.value <= 0 ? 1 : timerIntervalValue.value;
+      secondsRemaining.value = _countdownSeconds;
     }
     update();
     if (timer != null) {
@@ -1541,10 +1779,14 @@ class HomeController extends GetxController {
   Future<void> initLocalDbData() async {
     defaultTimerSelectedValue.value =
         await SharedPrefHelper.instance.getDefaultTimerType() ?? 'Stopwatch';
-    minutesValue.value =
-        await SharedPrefHelper.instance.getDefaultTimerMinutes();
-    timerIntervalValue.value =
-        await SharedPrefHelper.instance.getTimerInterval();
+    // Only fall back to the stored defaults when the session hasn't already
+    // said what it wants — see [timingChosen].
+    if (!timingChosen) {
+      minutesValue.value =
+          await SharedPrefHelper.instance.getDefaultTimerMinutes();
+      timerIntervalValue.value =
+          await SharedPrefHelper.instance.getTimerInterval();
+    }
     // Only pull the saved string set on a fresh session. Once the user has
     // picked strings (wizard or Settings), keep their live choice — otherwise
     // opening the board would silently turn every string back on.

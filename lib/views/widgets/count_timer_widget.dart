@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:fretboard/controllers/home_controller.dart'; // ** Import HomeController **
+import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/services/local_db_service.dart'
+    show kMinTimerIntervalSeconds;
 import 'package:get/get.dart';
 
 class CountTimerWidget extends StatelessWidget {
@@ -13,8 +15,12 @@ class CountTimerWidget extends StatelessWidget {
     // ** Get HomeController instead of TimerController **
     final controller = Get.find<HomeController>();
     return Obx(() {
-      // In identify mode the timer sub-mode is tracked via timerMode, not currentGameMode
-      final effectiveMode = controller.currentGameMode.value == 'reverse'
+      // In the choice modes (identify / interval / chord) the timer sub-mode is
+      // tracked via timerMode, not currentGameMode — this has to resolve
+      // exactly the way the controller's resetTimer/startTimer do, or the
+      // display and the running clock disagree (Interval and Chord modes were
+      // missing the countdown adjuster entirely while a countdown ran).
+      final effectiveMode = controller.isChoiceMode
           ? controller.timerMode.value
           : controller.currentGameMode.value;
       return effectiveMode == 'countdown'
@@ -24,6 +30,9 @@ class CountTimerWidget extends StatelessWidget {
               onChanged: (value) {
                 controller.secondsRemaining.value = value;
                 controller.timerIntervalValue.value = value;
+                // An explicit choice — don't let re-entering the board reset it
+                // to the stored Settings default.
+                controller.timingChosen = true;
               },
             )
           : Text(
@@ -66,7 +75,7 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _TimerAdjustButton(
-          icon: LucideIcons.minus300,
+          icon: LucideIcons.minus,
           enabled: widget.isEnabled,
           onTap: _decrement,
           onLongPressStart: () => _startRepeating(_decrement),
@@ -81,7 +90,7 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
           ),
         ),
         _TimerAdjustButton(
-          icon: LucideIcons.plus300,
+          icon: LucideIcons.plus,
           enabled: widget.isEnabled,
           onTap: _increment,
           onLongPressStart: () => _startRepeating(_increment),
@@ -111,9 +120,12 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
   }
 
   void _decrement() {
-    if (!widget.isEnabled || widget.value <= 0) return;
+    // Never below the minimum round length — a 0s countdown ends the instant
+    // it starts.
+    if (!widget.isEnabled || widget.value <= kMinTimerIntervalSeconds) return;
     final nextValue = widget.value - 10;
-    widget.onChanged(nextValue < 0 ? 0 : nextValue);
+    widget.onChanged(
+        nextValue < kMinTimerIntervalSeconds ? kMinTimerIntervalSeconds : nextValue);
   }
 
   String _formatSecondsToMMSS(int totalSeconds) {

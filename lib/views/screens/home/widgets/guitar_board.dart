@@ -34,6 +34,11 @@ const List<String> _kOpenStringLabels = ['E', 'A', 'D', 'G', 'B', 'E'];
 const Color _kNoteGrey = Color(0xFF888888);
 // Distinct pure red for the wrong-tap flash (stands apart from the coral notes).
 const Color _kFlashRed = Color(0xFFE53935);
+// Muted-string "×" colour — a clear blue so the open-string mutes read against
+// the dark nut (they were near-invisible white38 before).
+const Color _kMutedBlue = Color(0xFF5AA9FF);
+// Dimmed look for a string the user has switched off (chip + wire).
+const Color _kStringOffText = Color(0xFF6E6E6E);
 
 // Ball top so the 28px ball sits in the MIDDLE of fret [fret]'s playing area
 // (between wire F-1 and wire F), NOT on the wire itself — pixel-identical to the
@@ -271,6 +276,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final bool isChordBuild = controller.isChordBuild;
     final bool isChordName = controller.isChordName;
     final bool isChordLab = controller.isChordLab;
+
+    // Notes (find / identify) and interval modes let the player narrow the neck
+    // to a chosen set of strings, so the string chips become live toggles and
+    // the muted strings dim. Chord modes use fixed shapes, so their chips stay
+    // static (dimming a string a chord actually uses would just mislead).
+    final bool stringSelectable = !isChord;
     // Chord Lab is board-interactive on every round except Name (answered on
     // the choice grid).
     final bool isChordLabBoard = isChordLab &&
@@ -323,7 +334,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         Center(
           child: Padding(
             padding: const EdgeInsets.only(right: 26),
-            child: _stringLabelsRow(),
+            child: _stringLabelsRow(controller, interactive: stringSelectable),
           ),
         ),
         const SizedBox(height: 8),
@@ -384,7 +395,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                             for (int i = 0; i <= _kTotalFrets; i++) _fretWire(i),
                             for (int i = 0; i < _kTotalFrets; i++) ..._inlay(i),
                             for (int col = 0; col < 6; col++)
-                              _string(col, highlightString),
+                              _string(col, highlightString,
+                                  dim: stringSelectable &&
+                                      !controller.isStringOn(6 - col)),
 
                             // Correct / wrong feedback ball (find mode)
                             if (selected != null &&
@@ -437,12 +450,15 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                                       : JHGColors.primary,
                                 ),
 
-                            // Chord BUILD: a correct shape revealed in green.
+                            // Chord BUILD: a correct shape revealed in green,
+                            // each note labelled so the answer is a teachable
+                            // moment rather than just dots.
                             if (showChordReveal)
                               for (final idx in controller.chordBuildReveal!)
                                 _noteBall(
                                   index: idx,
                                   color: JHGColors.green,
+                                  label: fretList[idx].note,
                                 ),
 
                             // Chord Lab: given/placed notes (+ region band for
@@ -499,7 +515,10 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   }
 
   // ── Pinned string label chips (coral wash, matches dictionaries) ────────────
-  Widget _stringLabelsRow() {
+  // When [interactive] (notes / interval modes) each chip is a live toggle for
+  // its string: tap to include/exclude it. An excluded string greys out so the
+  // player can see at a glance which strings are in play.
+  Widget _stringLabelsRow(HomeController c, {required bool interactive}) {
     const chipSize = 22.0;
     const stringCenters = [15.0, 48.5, 82.0, 115.5, 149.0, 182.5];
 
@@ -510,18 +529,24 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         clipBehavior: Clip.none,
         children: [
           for (int i = 0; i < _kOpenStringLabels.length; i++)
-            Positioned(
-              left: stringCenters[i] - (chipSize / 2),
-              top: 0,
-              child: Container(
+            () {
+              // Column i (left→right) is low-E→high-e, i.e. string number 6-i.
+              final stringNumber = 6 - i;
+              final on = !interactive || c.isStringOn(stringNumber);
+              final chip = AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
                 width: chipSize,
                 height: chipSize,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: JHGColors.primary.withValues(alpha: 0.24),
+                  color: on
+                      ? JHGColors.primary.withValues(alpha: 0.24)
+                      : Colors.white.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: JHGColors.primary.withValues(alpha: 0.55),
+                    color: on
+                        ? JHGColors.primary.withValues(alpha: 0.55)
+                        : Colors.white.withValues(alpha: 0.12),
                     width: 1,
                   ),
                 ),
@@ -535,8 +560,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         applyHeightToFirstAscent: false,
                         applyHeightToLastDescent: false,
                       ),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: on ? Colors.white : _kStringOffText,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0,
@@ -545,8 +570,26 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+              return Positioned(
+                // Shift back by the 4px hit-target padding so the chip stays
+                // centred on its string when it's interactive.
+                left: stringCenters[i] - (chipSize / 2) - (interactive ? 4 : 0),
+                top: interactive ? -4 : 0,
+                child: interactive
+                    ? GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => c.setStringActive(
+                            stringNumber, !c.isStringOn(stringNumber)),
+                        // A little padding grows the tap target past the 22px chip.
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: chip,
+                        ),
+                      )
+                    : chip,
+              );
+            }(),
         ],
       ),
     );
@@ -621,7 +664,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   }
 
   // ── A string wire (thick low-E on the left → thin high-e on the right) ──────
-  Widget _string(int col, int? highlightString) {
+  // [dim] fades a string the player has switched off, so an excluded string is
+  // visibly out of play (paired with the greyed string chip above the neck).
+  Widget _string(int col, int? highlightString, {bool dim = false}) {
     final double thickness = 3.5 - col * 0.5;
     final int stringNumber = 6 - col; // col 0 = low E (string 6)
     final bool highlighted = highlightString == stringNumber;
@@ -631,24 +676,27 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       left: col * _kStringSpacing,
       child: Padding(
         padding: EdgeInsets.only(left: 12.0 - thickness / 2),
-        child: Container(
-          width: thickness,
-          decoration: BoxDecoration(
-            gradient: highlighted
-                ? const LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [JHGColors.primary, JHGColors.primary],
-                  )
-                : LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.55),
-                      const Color(0xFF4A4A4A),
-                      const Color(0xFF222222),
-                    ],
-                  ),
+        child: Opacity(
+          opacity: dim ? 0.28 : 1.0,
+          child: Container(
+            width: thickness,
+            decoration: BoxDecoration(
+              gradient: highlighted
+                  ? const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [JHGColors.primary, JHGColors.primary],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.55),
+                        const Color(0xFF4A4A4A),
+                        const Color(0xFF222222),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -689,7 +737,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   }
 
   // ── A clean note ball (feedback dot) at [index] ─────────────────────────────
-  Widget _noteBall({required int index, required Color color}) {
+  // Pass [label] to print a note name inside the ball (used so chord shapes show
+  // every note, not just the root).
+  Widget _noteBall({required int index, required Color color, String? label}) {
     final model = fretList[index];
     final fret = model.fret ?? (index ~/ 6);
     final col = index % 6;
@@ -699,7 +749,20 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       child: Container(
         width: 28,
         height: 28,
+        alignment: Alignment.center,
         decoration: _cleanBall(color),
+        child: label == null
+            ? null
+            : Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: label.length > 1 ? 10 : 12.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
       ),
     );
   }
@@ -746,9 +809,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       final index = f * 6 + col;
       if (index < 0 || index >= fretList.length) continue;
       final isRoot = fretList[index].note == shape.root;
+      // Every sounding note is labelled with its name — the root keeps its coral
+      // ring so it still stands out, the rest are grey.
       widgets.add(isRoot
-          ? _rootBall(index)
-          : _noteBall(index: index, color: _kNoteGrey));
+          ? _rootBall(index, label: shape.root)
+          : _noteBall(
+              index: index, color: _kNoteGrey, label: fretList[index].note));
     }
     return widgets;
   }
@@ -815,31 +881,35 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     );
   }
 
-  // ── Root ball: coral with a white ring and an "R" so the chord root reads ───
-  Widget _rootBall(int index) {
+  // ── Root ball: coral with a white ring so the chord root reads. Labelled with
+  // the root's note name (falls back to "R" if none is supplied). ─────────────
+  Widget _rootBall(int index, {String? label}) {
     final model = fretList[index];
     final fret = model.fret ?? (index ~/ 6);
     final col = index % 6;
+    final text = (label == null || label.isEmpty) ? 'R' : label;
     return Positioned(
       top: _ballTopFor(fret) - 1.5,
       left: _ballLeftFor(col) - 1.5,
       child: Container(
         width: 31,
         height: 31,
+        alignment: Alignment.center,
         decoration: _cleanBall(JHGColors.primary, ring: true),
-        child: const Center(
-          child: Text('R',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  height: 1)),
-        ),
+        child: Text(text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: text.length > 1 ? 11 : 12.5,
+                fontWeight: FontWeight.w800,
+                height: 1)),
       ),
     );
   }
 
   // ── Muted-string "×" drawn at the nut for that string ───────────────────────
+  // Rendered in a clear blue with extra weight so the open-string mutes actually
+  // read against the dark nut (they were near-invisible white before).
   Widget _mutedMarker(int col) {
     return Positioned(
       top: _ballTopFor(0),
@@ -848,11 +918,11 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         width: 28,
         height: 28,
         child: Center(
-          child: Text('×',
+          child: Text('✕',
               style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  color: _kMutedBlue,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
                   height: 1)),
         ),
       ),

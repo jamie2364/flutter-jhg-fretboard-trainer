@@ -7,6 +7,7 @@ import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:fretboard/views/widgets/count_timer_widget.dart';
+import 'package:fretboard/utils/routes.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -61,14 +62,16 @@ class LandscapeBoard extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   Get.to(() => const LeadershipScreen(),
-                      transition: Transition.leftToRight);
+                      routeName: kLeaderboardRoute,
+                      transition: Transition.noTransition,
+                      duration: Duration.zero);
                   if (isFreePlan) {
                     controller.interstitialAds?.showInterstitial();
                   }
                 },
                 child: RotatedBox(
                   quarterTurns: 1,
-                  child: _iconBtn(LucideIcons.trophy300),
+                  child: _iconBtn(LucideIcons.trophy),
                 ),
               ),
             ],
@@ -238,7 +241,9 @@ class LandscapeBoard extends StatelessWidget {
                       : () {
                           controller.resetGame(false);
                           Get.to(() => const SettingScreen(),
-                              transition: Transition.rightToLeft);
+                              routeName: kSettingsRoute,
+                              transition: Transition.noTransition,
+                              duration: Duration.zero);
                           if (isFreePlan) {
                             controller.interstitialAds?.showInterstitial();
                           }
@@ -246,7 +251,7 @@ class LandscapeBoard extends StatelessWidget {
                   child: RotatedBox(
                     quarterTurns: 1,
                     child: _iconBtn(
-                      LucideIcons.settings300,
+                      LucideIcons.settings,
                       disabled: settingsLocked,
                     ),
                   ),
@@ -262,7 +267,9 @@ class LandscapeBoard extends StatelessWidget {
                       ? null
                       : () => Get.to(
                             () => const HeatmapScreen(),
-                            transition: Transition.downToUp,
+                            routeName: kStatsRoute,
+                            transition: Transition.noTransition,
+                            duration: Duration.zero,
                           ),
                   child: RotatedBox(
                     quarterTurns: 1,
@@ -312,15 +319,15 @@ class LandscapeBoard extends StatelessWidget {
   IconData _modeIcon(String mode) {
     switch (mode) {
       case 'stopwatch':
-        return LucideIcons.timer300;
+        return LucideIcons.timer;
       case 'countdown':
-        return LucideIcons.clock300;
+        return LucideIcons.clock;
       case 'leaderboard':
-        return LucideIcons.trophy300;
+        return LucideIcons.trophy;
       case 'reverse':
         return Icons.quiz_rounded;
       default:
-        return LucideIcons.timer300;
+        return LucideIcons.timer;
     }
   }
 }

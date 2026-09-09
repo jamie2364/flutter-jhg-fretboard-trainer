@@ -6,7 +6,10 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_jhg_elements/jhg_elements.dart'
+    show JhgIconChipButton, JhgScreenHeader;
 import 'package:fretboard/controllers/heatmap_controller.dart';
+import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/stats_breakdown_view.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
@@ -25,12 +28,25 @@ class ModuleStatsScreen extends StatefulWidget {
 class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
   late final HeatmapController controller;
   bool _showInfo = false;
+  List<DayStat> _history = const [];
+
+  StatsModule get _statsModule => switch (widget.module) {
+        1 => StatsModule.interval,
+        2 => StatsModule.chord,
+        _ => StatsModule.chordLab,
+      };
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<HeatmapController>();
     controller.loadBreakdowns();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final h = await PracticeStatsService.loadHistory(_statsModule);
+    if (mounted) setState(() => _history = h);
   }
 
   String get _title => switch (widget.module) {
@@ -74,6 +90,7 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
             onPressed: () {
               Navigator.pop(context);
               controller.resetModule(widget.module);
+              _loadHistory();
             },
             child: Text('Reset',
                 style: GoogleFonts.inter(
@@ -88,49 +105,28 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const webMaxWidth = 568.0;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-
+    const webMaxWidth = 520.0;
     final content = SafeArea(
       bottom: false,
       child: Column(
         children: [
           // ─── TOP BAR ──────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: [
-                _iconButton(
-                  icon: Icons.arrow_back_rounded,
-                  onTap: () => Get.back(),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      _title.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.4,
-                      ),
-                    ),
-                  ),
-                ),
-                _iconButton(
-                  icon: _showInfo
-                      ? Icons.info_rounded
-                      : Icons.info_outline_rounded,
-                  active: _showInfo,
-                  onTap: () => setState(() => _showInfo = !_showInfo),
-                ),
-                const SizedBox(width: 8),
-                _iconButton(
-                  icon: Icons.restart_alt_rounded,
-                  onTap: _confirmReset,
-                ),
-              ],
-            ),
+          JhgScreenHeader.detail(
+            title: _title,
+            onBack: () => Get.back(),
+            actions: [
+              _iconButton(
+                icon: _showInfo
+                    ? Icons.info_rounded
+                    : Icons.info_outline_rounded,
+                active: _showInfo,
+                onTap: () => setState(() => _showInfo = !_showInfo),
+              ),
+              _iconButton(
+                icon: Icons.restart_alt_rounded,
+                onTap: _confirmReset,
+              ),
+            ],
           ),
 
           // ─── BODY ─────────────────────────────────────────────────
@@ -145,13 +141,14 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
               return StatBreakdownView(
                 module: widget.module,
                 data: controller.breakdownFor(widget.module),
+                history: _history,
                 showIntro: _showInfo,
               );
             }),
           ),
 
           // ─── NAV BAR ──────────────────────────────────────────────
-          AppNavBar(activeTab: AppTab.heatmap, safeBottom: bottomInset),
+          const AppNavBar(activeTab: AppTab.heatmap),
         ],
       ),
     );
@@ -175,24 +172,12 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
     bool active = false,
   }) {
     const coral = Color(0xFFFE5D43);
-    return GestureDetector(
+    return JhgIconChipButton(
+      icon: icon,
       onTap: onTap,
-      child: Container(
-        height: 44,
-        width: 44,
-        decoration: BoxDecoration(
-          color: active
-              ? coral.withValues(alpha: 0.16)
-              : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: active
-                ? coral.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.10),
-          ),
-        ),
-        child: Icon(icon, color: active ? coral : Colors.white54, size: 20),
-      ),
+      iconColor: active ? coral : Colors.white54,
+      background: active ? coral.withValues(alpha: 0.16) : null,
+      borderColor: active ? coral.withValues(alpha: 0.5) : null,
     );
   }
 }

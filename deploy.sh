@@ -7,6 +7,37 @@
 # Use pub get here, not pub upgrade. Deployment should use the versions already
 # resolved by pubspec.lock instead of moving dependencies right before release.
 flutter pub get
+
+# --- Preflight: fastlane must be configured, or fastlane drops into its
+# interactive setup wizard mid-deploy and waits for an Apple ID by hand.
+export FASTLANE_SKIP_UPDATE_CHECK=1
+export FASTLANE_HIDE_CHANGELOG=1
+export FASTLANE_DISABLE_COLORS=0
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+export LANG="${LANG:-en_US.UTF-8}"
+
+MISSING=""
+for f in \
+  ios/fastlane/Appfile \
+  ios/fastlane/Fastfile \
+  ios/fastlane/auth/AuthKey_F8YM6T4L3V.p8 \
+  android/fastlane/Appfile \
+  android/fastlane/Fastfile \
+  android/fastlane/auth/play-store-credentials.json \
+  release_notes/whats_new.txt \
+  .env; do
+  [ -e "$f" ] || MISSING="$MISSING\n   - $f"
+done
+
+if [ -n "$MISSING" ]; then
+  echo "❌ Deployment aborted. Missing fastlane/deploy files:"
+  printf "$MISSING\n"
+  echo
+  echo "   Copy them from a sibling app (e.g. ../flutter-jhg-tuner) and edit the"
+  echo "   bundle id in ios/fastlane/Appfile and the package name in android/fastlane/Appfile."
+  exit 1
+fi
+
 PUB_CACHE_DIR="${PUB_CACHE:-$HOME/.pub-cache}"
 
 # Read the exact commit hash Flutter resolved for flutter_jhg_elements from pubspec.lock

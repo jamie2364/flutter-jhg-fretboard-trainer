@@ -134,8 +134,13 @@ IntervalPrompt? pickIntervalPrompt(
 
     switch (difficulty) {
       case IntervalDifficulty.easy:
-        if (root.string != target.string) continue;
-        if (gap <= 0) continue; // ascending, non-unison
+        // Genuinely easy: a small, ascending gap between two notes that sit
+        // close together — same or an adjacent string, no more than three frets
+        // apart — so the two positions are easy to eyeball side by side.
+        if (gap <= 0) continue; // ascending
+        if (gap > 5) continue; // small interval only (m2 … P4)
+        if (((root.string ?? 0) - (target.string ?? 0)).abs() > 1) continue;
+        if (((root.fret ?? 0) - (target.fret ?? 0)).abs() > 3) continue;
       case IntervalDifficulty.medium:
         if (((root.string ?? 0) - (target.string ?? 0)).abs() > 1) continue;
         if (gap <= 0) continue;

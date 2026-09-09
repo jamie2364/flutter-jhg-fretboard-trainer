@@ -4,10 +4,14 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/features/tour/tour_keys.dart';
 import 'package:fretboard/main.dart';
+import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/routes.dart';
+import 'package:fretboard/views/screens/mode_select_screen.dart';
+import 'package:fretboard/views/screens/saved/saved_sessions_screen.dart';
 import 'package:fretboard/views/screens/stats/stats_hub_screen.dart';
 import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
+import 'package:fretboard/utils/board_nav.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -16,19 +20,23 @@ import 'package:google_fonts/google_fonts.dart';
 const _kNavBg = Color(0xFF0F0F0F);
 const _kNavInactive = Color(0xFF9E9A98);
 
-enum AppTab { home, train, leaderboard, heatmap, settings }
+enum AppTab { home, train, saved, leaderboard, heatmap, settings }
 
 class AppNavBar extends StatelessWidget {
   const AppNavBar({
     super.key,
     required this.activeTab,
     this.controller,
-    this.safeBottom = 0,
+    this.safeBottom,
   });
 
   final AppTab activeTab;
   final HomeController? controller;
-  final double safeBottom;
+
+  /// Bottom safe-area inset. Omit it and the bar reads `viewPadding` itself —
+  /// the same value whether it sits in a Scaffold's bottomNavigationBar or at
+  /// the end of a Column, so the bar is exactly as tall on every screen.
+  final double? safeBottom;
 
   void _navigate(AppTab tab, BuildContext context) {
     if (tab == activeTab) return;
@@ -36,9 +44,17 @@ class AppNavBar extends StatelessWidget {
 
     // Leaving an in-progress session (anything except staying on Train) ends
     // the round — confirm first with a professional dialog so a good streak
-    // isn't lost by a stray tap.
+    // isn't lost by a stray tap. On confirm the session is auto-saved so it can
+    // be resumed later from the Saved Sessions screen.
     if (hc.sessionActive && tab != AppTab.train) {
-      _confirmLeaveSession(context, () => _go(tab, hc, endSession: true));
+      _confirmLeaveSession(
+        context,
+        onSaveAndLeave: () async {
+          await hc.saveCurrentSession();
+          _go(tab, hc, endSession: true);
+        },
+        onLeave: () => _go(tab, hc, endSession: true),
+      );
       return;
     }
     _go(tab, hc, endSession: false);
@@ -46,89 +62,157 @@ class AppNavBar extends StatelessWidget {
 
   void _go(AppTab tab, HomeController hc, {required bool endSession}) {
     if (endSession) hc.resetGame(false);
-    final fromBoard = activeTab == AppTab.train;
+
+    // Home and the training board are the two screens the landing screen sits
+    // under, so from either of them we PUSH and the landing screen survives.
+    // Between the secondary screens we replace, so the stack stays flat.
+    // Getting this wrong is what killed the Home tab once Home gained a nav
+    // bar: replacing from Home wiped the landing screen off the bottom of the
+    // stack, leaving Home with nothing to go back to.
+    final fromRoot = activeTab == AppTab.train || activeTab == AppTab.home;
+
+    void goTo(Widget Function() page, String routeName) {
+      fromRoot
+          ? Get.to(page,
+              routeName: routeName,
+              transition: Transition.noTransition,
+              duration: Duration.zero)
+          : Get.off(page,
+              routeName: routeName,
+              transition: Transition.noTransition,
+              duration: Duration.zero);
+    }
+
     switch (tab) {
       case AppTab.home:
-        // Home → the very first screen (StartScreen is the root route).
         hc.resetGame(false);
-        Get.until((r) => r.isFirst);
+        hc.quickStartSession = false;
+        // Pop back to the landing screen. The predicate runs on the route we
+        // stop at, so it also tells us what we landed on.
+        var landedOnStart = true;
+        Get.until((r) {
+          if (!r.isFirst) return false;
+          landedOnStart = !kPushedRoutes.contains(r.settings.name);
+          return true;
+        });
+        // If a pushed screen ended up at the bottom of the stack, the landing
+        // screen was replaced at some point and popping found nothing. Put it
+        // back rather than leaving the tab dead.
+        if (!landedOnStart) {
+          Get.off(() => const StartScreen(),
+              transition: Transition.noTransition, duration: Duration.zero);
+        }
         break;
+
       case AppTab.train:
-        // Practice → back to the training board (tagged with kBoardRoute when
-        // launched). Falls back to the first route if it isn't in the stack.
-        Get.until((r) => r.settings.name == kBoardRoute || r.isFirst);
+        // Pop back to the board if it is already open…
+        var foundBoard = false;
+        Get.until((r) {
+          if (r.settings.name == kBoardRoute) {
+            foundBoard = true;
+            return true;
+          }
+          return r.isFirst;
+        });
+        // …otherwise there is no session yet, so open the board on Find the
+        // Note, exactly as Quick start does. Tapping Practice should land you
+        // on the practice screen, never bounce you Home.
+        if (!foundBoard) {
+          hc.resetStrings();
+          hc.switchToFindMode();
+          hc.quickStartSession = true;
+          hc.applySessionTiming(useTimer: false);
+          openBoard();
+        }
         break;
+
+      case AppTab.saved:
+        SavedSessionsService.refreshCount();
+        goTo(() => const SavedSessionsScreen(), kSavedRoute);
+        break;
+
       case AppTab.leaderboard:
-        // From the board, push (so Practice can return to it); between the
-        // secondary screens, replace so the stack stays flat.
-        fromBoard
-            ? Get.to(() => const LeadershipScreen(),
-                transition: Transition.noTransition, duration: Duration.zero)
-            : Get.off(() => const LeadershipScreen(),
-                transition: Transition.noTransition, duration: Duration.zero);
+        goTo(() => const LeadershipScreen(), kLeaderboardRoute);
         if (isFreePlan) hc.interstitialAds?.showInterstitial();
         break;
+
       case AppTab.heatmap:
-        fromBoard
-            ? Get.to(() => const StatsHubScreen(),
-                transition: Transition.noTransition, duration: Duration.zero)
-            : Get.off(() => const StatsHubScreen(),
-                transition: Transition.noTransition, duration: Duration.zero);
+        goTo(() => const StatsHubScreen(), kStatsRoute);
         break;
+
       case AppTab.settings:
-        fromBoard
-            ? Get.to(() => const SettingScreen(),
-                transition: Transition.noTransition, duration: Duration.zero)
-            : Get.off(() => const SettingScreen(),
-                transition: Transition.noTransition, duration: Duration.zero);
+        goTo(() => const SettingScreen(), kSettingsRoute);
         if (isFreePlan) hc.interstitialAds?.showInterstitial();
         break;
     }
   }
 
-  void _confirmLeaveSession(BuildContext context, VoidCallback onConfirm) {
+  void _confirmLeaveSession(
+    BuildContext context, {
+    required VoidCallback onSaveAndLeave,
+    required VoidCallback onLeave,
+  }) {
     showJHGBlurDialog(
       context: context,
       builder: (ctx) => JHGFrostedDialog(
-        icon: Icons.logout_rounded,
-        title: 'End this session?',
-        description:
-            'Leaving this screen will end your current practice session. '
-            'Your score for this round won\'t be saved.',
-        content: Row(
+        icon: LucideIcons.save,
+        title: 'Leave this session?',
+        description: 'Save it and you can pick it up again from Saved '
+            'Sessions, or just leave it.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => Navigator.of(ctx).pop(),
-                child: Container(
-                  height: 54,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.14)),
-                  ),
-                  child: Text('Cancel',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      )),
-                ),
-              ),
+            JHGFrostedPrimaryButton(
+              label: 'Save & leave',
+              onTap: () {
+                Navigator.of(ctx).pop();
+                onSaveAndLeave();
+              },
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: JHGFrostedPrimaryButton(
-                label: 'Continue',
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  onConfirm();
-                },
-              ),
+            const SizedBox(height: 10),
+            _secondaryButton(
+              label: 'Leave without saving',
+              onTap: () {
+                Navigator.of(ctx).pop();
+                onLeave();
+              },
+            ),
+            const SizedBox(height: 10),
+            _secondaryButton(
+              label: 'Cancel',
+              muted: true,
+              onTap: () => Navigator.of(ctx).pop(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _secondaryButton({
+    required String label,
+    required VoidCallback onTap,
+    bool muted = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 52,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: muted ? 0.04 : 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: muted ? Colors.white54 : Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -139,6 +223,9 @@ class AppNavBar extends StatelessWidget {
     // Every tab stays enabled and uniformly coloured — only the active one is
     // white. Leaving mid-session is gated by a confirm dialog (see _navigate),
     // not by greying tabs out.
+    final safeBottom = this.safeBottom ??
+        MediaQuery.viewPaddingOf(context).bottom;
+
     final bar = Container(
       height: 56 + safeBottom,
       decoration: BoxDecoration(
@@ -151,28 +238,28 @@ class AppNavBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.center,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 568),
+          constraints: const BoxConstraints(maxWidth: 520),
           child: Padding(
-            padding: EdgeInsets.only(bottom: safeBottom),
+            padding: EdgeInsets.only(bottom: safeBottom * 0.4),
             child: Row(
               children: [
                 _NavItem(
-                  icon: LucideIcons.home300,
+                  icon: LucideIcons.home,
                   label: 'Home',
                   isActive: activeTab == AppTab.home,
                   onTap: () => _navigate(AppTab.home, context),
                 ),
                 _NavItem(
-                  icon: Icons.center_focus_strong_rounded,
+                  icon: LucideIcons.dumbbell,
                   label: 'Practice',
                   isActive: activeTab == AppTab.train,
                   onTap: () => _navigate(AppTab.train, context),
                 ),
                 _NavItem(
-                  icon: LucideIcons.trophy300,
-                  label: 'Leaders',
-                  isActive: activeTab == AppTab.leaderboard,
-                  onTap: () => _navigate(AppTab.leaderboard, context),
+                  icon: LucideIcons.save,
+                  label: 'Saved',
+                  isActive: activeTab == AppTab.saved,
+                  onTap: () => _navigate(AppTab.saved, context),
                 ),
                 _NavItem(
                   // Tour key only needed on the training board (where the tour
@@ -184,7 +271,7 @@ class AppNavBar extends StatelessWidget {
                   onTap: () => _navigate(AppTab.heatmap, context),
                 ),
                 _NavItem(
-                  icon: LucideIcons.settings300,
+                  icon: LucideIcons.settings,
                   label: 'Settings',
                   isActive: activeTab == AppTab.settings,
                   onTap: () => _navigate(AppTab.settings, context),

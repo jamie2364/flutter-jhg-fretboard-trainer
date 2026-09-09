@@ -5,8 +5,10 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:fretboard/models/freth_list.dart';
+import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/utils/app_colors.dart';
 import 'package:fretboard/utils/app_strings.dart';
+import 'package:fretboard/views/screens/heatmap/stats_breakdown_view.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,38 +24,85 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   late HeatmapController controller;
   bool _showIntro = false;
 
+  // Notes stats now open on the same breakdown layout as the other games
+  // (accuracy ring, progress, highlights, Find/Identify split, weakest-first
+  // list). The neck heatmap is kept but tucked behind a toggle — shown only
+  // when the user taps the map button.
+  bool _showNeck = false;
+  // Reveals the explanatory blurb on the breakdown view (top-bar ⓘ).
+  bool _showInfoBlurb = false;
+  List<DayStat> _history = const [];
+
   @override
   void initState() {
     super.initState();
     controller = Get.find<HeatmapController>();
     controller.loadStats();
     controller.loadBreakdowns();
+    _loadHistory();
     _checkTourIntro();
+  }
+
+  Future<void> _loadHistory() async {
+    final h = await PracticeStatsService.loadHistory(StatsModule.note);
+    if (mounted) setState(() => _history = h);
+  }
+
+  /// The Notes breakdown fed to [StatBreakdownView]. Its per-note "byQuality"
+  /// dimension is aggregated live from the per-fret heatmap store (every fret
+  /// that sounds the same note folded together), while the Find/Identify split
+  /// reuses the module's recorded byMode. This lets Notes share the exact same
+  /// charts as Intervals / Chords without a second on-disk store.
+  ModuleBreakdown _notesBreakdown() {
+    final perNote = <String, ({int attempts, int correct})>{};
+    controller.stats.forEach((index, stat) {
+      if (index < 0 || index >= fretList.length) return;
+      final note = fretList[index].note;
+      if (note == null || note.isEmpty) return;
+      final prev = perNote[note] ?? (attempts: 0, correct: 0);
+      perNote[note] = (
+        attempts: prev.attempts + stat.attempts,
+        correct: prev.correct + stat.correct,
+      );
+    });
+    final byQuality = <String, StatEntry>{
+      for (final e in perNote.entries)
+        if (e.value.attempts > 0)
+          e.key: StatEntry(attempts: e.value.attempts, correct: e.value.correct),
+    };
+    return ModuleBreakdown(
+      byQuality: byQuality,
+      byMode: controller.noteStats.value.byMode,
+      byRound: const {},
+    );
   }
 
   Future<void> _checkTourIntro() async {
     final pending = await TourService.shouldShowHeatmapIntro();
     if (pending && mounted) {
       await TourService.markHeatmapIntroSeen();
-      setState(() => _showIntro = true);
+      // The intro card explains the neck map, so surface the map behind it.
+      setState(() {
+        _showNeck = true;
+        _showIntro = true;
+      });
     }
   }
 
   void _dismissIntro() => setState(() => _showIntro = false);
 
-  Widget _topIcon({required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
+  Widget _topIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool active = false,
+  }) {
+    const coral = Color(0xFFFE5D43);
+    return JhgIconChipButton(
+      icon: icon,
       onTap: onTap,
-      child: Container(
-        height: 44,
-        width: 44,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-        ),
-        child: Icon(icon, color: Colors.white54, size: 20),
-      ),
+      iconColor: active ? coral : Colors.white54,
+      background: active ? coral.withValues(alpha: 0.16) : null,
+      borderColor: active ? coral.withValues(alpha: 0.5) : null,
     );
   }
 
@@ -89,6 +138,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             onPressed: () {
               Navigator.pop(context);
               controller.resetModule(0);
+              _loadHistory();
             },
             child: Text('Reset',
                 style: GoogleFonts.inter(
@@ -105,57 +155,78 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    const webMaxWidth = 568.0;
+    const webMaxWidth = 520.0;
     final width = kIsWeb ? webMaxWidth : screenWidth;
-    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     final content = SafeArea(
       bottom: false,
       child: Column(
               children: [
                 // ─── TOP BAR ──────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  child: Row(
-                    children: [
-                      _topIcon(
-                        icon: Icons.arrow_back_rounded,
-                        onTap: () => Get.back(),
-                      ),
-                      const Expanded(
-                        child: Center(
-                          child: Text(
-                            'MASTERY MAP',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _topIcon(
-                        icon: Icons.info_outline_rounded,
-                        onTap: () => _showLegendSheet(context),
-                      ),
-                      const SizedBox(width: 8),
-                      _topIcon(
-                        icon: Icons.restart_alt_rounded,
-                        onTap: _confirmReset,
-                      ),
-                    ],
-                  ),
+                JhgScreenHeader.detail(
+                  title: _showNeck ? 'Mastery Map' : 'Note Stats',
+                  onBack: () => Get.back(),
+                  actions: [
+                    // Toggle: breakdown ⇄ neck map. Grid icon jumps to the
+                    // fretboard map; bar-chart icon returns to the stats.
+                    _topIcon(
+                      icon: _showNeck
+                          ? Icons.insights_rounded
+                          : Icons.grid_view_rounded,
+                      active: _showNeck,
+                      onTap: () => setState(() => _showNeck = !_showNeck),
+                    ),
+                    // Info: on the map it's the colour-legend sheet; on the
+                    // stats it toggles the explanatory blurb.
+                    _topIcon(
+                      icon: _showNeck
+                          ? Icons.info_outline_rounded
+                          : (_showInfoBlurb
+                              ? Icons.info_rounded
+                              : Icons.info_outline_rounded),
+                      active: !_showNeck && _showInfoBlurb,
+                      onTap: () {
+                        if (_showNeck) {
+                          _showLegendSheet(context);
+                        } else {
+                          setState(() => _showInfoBlurb = !_showInfoBlurb);
+                        }
+                      },
+                    ),
+                    _topIcon(
+                      icon: Icons.restart_alt_rounded,
+                      onTap: _confirmReset,
+                    ),
+                  ],
                 ),
 
-                // ─── BODY: Notes heatmap ──────────────────────────────────
-                Expanded(child: _notesBody(height, width)),
+                // ─── BODY: stats breakdown (default) or the neck map ──────
+                Expanded(
+                  child: _showNeck
+                      ? _notesBody(height, width)
+                      : Obx(() {
+                          if (controller.isLoading.value ||
+                              controller.breakdownLoading.value) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                  color: Colors.white24, strokeWidth: 1.5),
+                            );
+                          }
+                          // Touch the reactive stores so the view rebuilds after
+                          // a load / reset.
+                          controller.stats.length;
+                          controller.noteStats.value;
+                          return StatBreakdownView(
+                            module: 0,
+                            data: _notesBreakdown(),
+                            history: _history,
+                            showIntro: _showInfoBlurb,
+                          );
+                        }),
+                ),
 
                 // ─── NAV BAR ──────────────────────────────────────────────
-                AppNavBar(
-                  activeTab: AppTab.heatmap,
-                  safeBottom: bottomInset,
-                ),
+                const AppNavBar(activeTab: AppTab.heatmap),
               ],
             ),
           );

@@ -17,14 +17,22 @@ class LeaderBoardController extends GetxController {
 
   RxList<LeaderboardData> scoreList = <LeaderboardData>[].obs;
 
+  /// The signed-in player's username (web reads from the home controller,
+  /// native from the reg_page session). Empty when nobody is signed in.
+  String get _currentUser => kIsWeb
+      ? Get.find<HomeController>().userNameWeb.value
+      : (SplashScreen.session.user?.userName ?? '');
+
   Future<void> getLeaderBoard() async {
-    username.value = kIsWeb
-        ? Get.find<HomeController>().userNameWeb.value
-        : SplashScreen.session.user?.userName ?? '';
+    username.value = _currentUser;
     try {
       scoreList([]);
       isLoading(true);
       var value = await getLeaderBoardApiRequest(gameType.value);
+      // Rank highest score first. Never trust the backend to pre-sort — the
+      // list is rendered by index, so an unsorted response would mis-rank
+      // everyone and hand the medals to the wrong players.
+      value.sort((a, b) => (b.score ?? 0).compareTo(a.score ?? 0));
       scoreList.value = value;
       isLoading(false);
       highestScorer();
@@ -43,11 +51,7 @@ class LeaderBoardController extends GetxController {
     int highestScore = 0;
     myCurrentScore = scoreList
             .firstWhere(
-              (p0) =>
-                  p0.username ==
-                  (kIsWeb
-                      ? Get.find<HomeController>().userNameWeb.value
-                      : username.value),
+              (p0) => p0.username == _currentUser,
               orElse: () => LeaderboardData(),
             )
             .score ??
@@ -64,21 +68,23 @@ class LeaderBoardController extends GetxController {
   }
 
   Future<dynamic> updateScore(int score) async {
-    final data = LeaderboardData(
-        score: score,
-        username: kIsWeb
-            ? Get.find<HomeController>().userNameWeb.value
-            : SplashScreen.session.user?.userName ?? 'jamieharrisontest');
-    print("object====score--$score  myCurrentScore===$myCurrentScore");
-    if (score < myCurrentScore) {
+    final currentUser = _currentUser;
+    // Never post to the global board as an anonymous/placeholder user — that
+    // leaks bogus rows (previously submitted as "jamieharrisontest").
+    if (currentUser.isEmpty) return null;
+
+    // Only push a genuine new personal best; don't overwrite a higher score.
+    if (score <= myCurrentScore) {
       JHGDialogHelper.showInfoDialog(
           context: navKey.currentState!.context,
           buttonLabel: 'OK',
-          title: 'Congratulations',
+          title: 'Nice try!',
           description:
-              'You achieved a new milestone. Your previous\'s highest score was $myCurrentScore and current score is $score');
-      return;
+              'Your best on the leaderboard is still $myCurrentScore. You scored $score this round, so keep at it.');
+      return null;
     }
+
+    final data = LeaderboardData(score: score, username: currentUser);
     var response = await updateScoreApiRequest(data);
     JHGDialogHelper.showInfoDialog(
         // ignore: use_build_context_synchronously

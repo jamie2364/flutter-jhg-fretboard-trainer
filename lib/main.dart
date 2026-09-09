@@ -10,6 +10,9 @@ import 'package:get/get.dart';
 import 'package:reg_page/reg_page.dart';
 
 import 'controllers/app_bindings.dart';
+import 'dart:async' show unawaited;
+import 'package:fretboard/services/app_flags.dart';
+import 'package:fretboard/services/saved_sessions_service.dart';
 
 bool isFreePlan = false;
 
@@ -21,6 +24,11 @@ Future<void> main() async {
   ]);
   JHGAdsHelper().init();
   StringsDownloadService();
+  // Read before the first frame so Home knows whether this is a fresh install.
+  await AppFlags.init();
+  // Prime the saved-session count so Home can render Continue / Saved Sessions
+  // without a blank flash.
+  unawaited(SavedSessionsService.refreshCount());
   runApp(const MyApp());
 }
 

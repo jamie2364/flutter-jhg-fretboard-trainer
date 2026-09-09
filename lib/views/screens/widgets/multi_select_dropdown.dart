@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 const _kPrimary = Color(0xFFFE5D43);
-const _kOnSurface = Color(0xFFE5E2E1);
-const _kMuted = Color(0xFF9A9694);
+const _kOnSurface = Color(0xFFF1F1F1);
+const _kMuted = Color(0xFF8A8A8A);
 const _kMenuBg = Color(0xFF1E1E1E);
 
 class MultiSelectOption {

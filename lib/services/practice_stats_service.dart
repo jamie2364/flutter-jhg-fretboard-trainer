@@ -11,7 +11,32 @@
 // (by Chord Lab round). Everything under a module is scanned back by prefix, so
 // new dimensions can be added later without touching this file.
 
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// One day's accuracy for a module, used by the "progress over time" chart.
+class DayStat {
+  const DayStat(
+      {required this.day, required this.attempts, required this.correct});
+
+  /// 'yyyy-MM-dd'.
+  final String day;
+  final int attempts;
+  final int correct;
+
+  double get accuracy => attempts == 0 ? 0.0 : correct / attempts;
+
+  Map<String, dynamic> toJson() => {'d': day, 'a': attempts, 'c': correct};
+
+  factory DayStat.fromJson(Map<String, dynamic> j) => DayStat(
+        day: j['d'] as String? ?? '',
+        attempts: (j['a'] as num?)?.toInt() ?? 0,
+        correct: (j['c'] as num?)?.toInt() ?? 0,
+      );
+
+  DateTime get date => DateTime.tryParse(day) ?? DateTime(2000);
+}
 
 /// Accuracy for a single tracked item (one interval, one chord quality, …).
 class StatEntry {
@@ -168,7 +193,68 @@ class PracticeStatsService {
   static Future<ModuleBreakdown> loadBreakdown(StatsModule module) async =>
       ModuleBreakdown.from(await load(module));
 
-  /// Wipes every stat for [module].
+  // ── Progress-over-time history ────────────────────────────────────────────
+  // One accuracy bucket per calendar day per module, so the Stats screen can
+  // chart how a player improves across days. Kept as a compact JSON list under
+  // one key; capped to the most recent [_histCap] days.
+  static const int _histCap = 60;
+  static String _histKey(String module) => '${_root}hist_$module';
+
+  static String _todayStamp() {
+    final n = DateTime.now();
+    return '${n.year.toString().padLeft(4, '0')}-'
+        '${n.month.toString().padLeft(2, '0')}-'
+        '${n.day.toString().padLeft(2, '0')}';
+  }
+
+  static List<DayStat> _decodeHist(String? raw) {
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final data = jsonDecode(raw);
+      if (data is! List) return [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(DayStat.fromJson)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Records one graded answer into today's history bucket for [module]. Call
+  /// exactly ONCE per answer (not once per dimension key).
+  static Future<void> recordHistory(StatsModule module, bool correct) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _histKey(module.key);
+    final list = _decodeHist(prefs.getString(key));
+    final day = _todayStamp();
+    final idx = list.indexWhere((d) => d.day == day);
+    if (idx >= 0) {
+      final cur = list[idx];
+      list[idx] = DayStat(
+        day: day,
+        attempts: cur.attempts + 1,
+        correct: cur.correct + (correct ? 1 : 0),
+      );
+    } else {
+      list.add(DayStat(day: day, attempts: 1, correct: correct ? 1 : 0));
+    }
+    if (list.length > _histCap) {
+      list.removeRange(0, list.length - _histCap);
+    }
+    await prefs.setString(
+        key, jsonEncode(list.map((d) => d.toJson()).toList()));
+  }
+
+  /// Daily history for [module], oldest → newest.
+  static Future<List<DayStat>> loadHistory(StatsModule module) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = _decodeHist(prefs.getString(_histKey(module.key)));
+    list.sort((a, b) => a.date.compareTo(b.date));
+    return list;
+  }
+
+  /// Wipes every stat for [module] (including its progress history).
   static Future<void> clear(StatsModule module) async {
     final prefs = await SharedPreferences.getInstance();
     final prefix = '$_root${module.key}_';
@@ -176,5 +262,6 @@ class PracticeStatsService {
     for (final k in doomed) {
       await prefs.remove(k);
     }
+    await prefs.remove(_histKey(module.key));
   }
 }

@@ -1,5 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Shortest countdown a session can be set to, in seconds. The board's ±
+/// buttons step by 10, so this keeps every reachable value a round one.
+const int kMinTimerIntervalSeconds = 10;
+
 class SharedPrefHelper {
   static final SharedPrefHelper instance = SharedPrefHelper._init();
   static SharedPreferences? _prefs;
@@ -59,8 +63,12 @@ class SharedPrefHelper {
 
   Future<int> getTimerInterval() async {
     final prefs = await preferences;
-    final value = prefs.getInt(defaultTimerIntervalKey) ?? 1;
-    return value;
+    // Seconds. The fallback has to be a usable round length — a 1-second
+    // default meant that anyone who switched to Countdown without first
+    // visiting Settings got a countdown that expired the instant they pressed
+    // play. 120s matches getDefaultTimerMinutes()'s 2.
+    final value = prefs.getInt(defaultTimerIntervalKey) ?? 120;
+    return value < kMinTimerIntervalSeconds ? kMinTimerIntervalSeconds : value;
   }
 
   Future<void> saveStrings(bool string1, bool string2, bool string3,

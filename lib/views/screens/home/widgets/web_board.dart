@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
@@ -12,9 +10,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // ── Palette (mirrors portrait_board.dart) ─────────────────────────────────────
-const _kNavBg = Color(0xFF1C1B1B);
+const _kNavBg = Color(0xFF0F0F0F);
 const _kPanelBg = Color(0xFF1E1D1D);
-const _kPanelCard = Color(0xFF1A1A1A);
 
 // ── Web-specific sizing ───────────────────────────────────────────────────────
 const double _webFretboardWidth = 191.0;
@@ -189,7 +186,10 @@ class _WebBoardState extends State<WebBoard> {
 
               // ── Nav bar ────────────────────────────────────────────────────
               AppNavBar(
-                activeTab: AppTab.home,
+                // The web board is the training screen, so Practice is the
+                // active tab — marking it Home made the Home tab a no-op
+                // (the bar ignores taps on the tab already showing).
+                activeTab: AppTab.train,
                 controller: c,
               ),
             ],
@@ -341,171 +341,146 @@ class _ExpandedPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: _kPanelCard.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.14),
-              width: 1.0,
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    return JhgGlassTile.open(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Header row: label + collapse arrow ────────────────────────
+          Row(
             children: [
-              // ── Header row: label + collapse arrow ────────────────────────
-              Row(
-                children: [
-                  Text(
-                    isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: onCollapse,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.07),
-                        borderRadius: BorderRadius.circular(9),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.10)),
-                      ),
-                      child: const Icon(Icons.chevron_left_rounded,
-                          color: Colors.white54, size: 14),
-                    ),
-                  ),
-                ],
+              Text(
+                isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.4,
+                ),
               ),
-
-              const SizedBox(height: 14),
-
-              // ── Content: depends on game state ─────────────────────────────
-
-              // Idle: mode chip + hint
-              if (!c.isStart && !c.isPaused) ...[
-                GestureDetector(
-                  onTap: onModeTap,
-                  child: Container(
-                    key: tourKeyModeChip,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: _kPanelBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          isReverse
-                              ? Icons.quiz_rounded
-                              : Icons.music_note_rounded,
-                          size: 15,
-                          color: JHGColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
-                          style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.keyboard_arrow_down_rounded,
-                            size: 18, color: Colors.white38),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  isReverse
-                      ? 'A fret lights up. Pick the correct note name.'
-                      : 'Find the note shown here on the fretboard.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                      color: Colors.white38,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4),
-                ),
-                const SizedBox(height: 14),
-              ]
-
-              // Identify mode playing: answer buttons
-              else if (isReverse) ...[
-                _ReverseChoicePanel(controller: c),
-                const SizedBox(height: 14),
-              ]
-
-              // Find note mode playing: note badge + score
-              else ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 28, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: JHGColors.primary.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                            color: JHGColors.primary.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(c.highlightNode ?? '',
-                          style: GoogleFonts.poppins(
-                              color: JHGColors.primary,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(width: 14),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text('SCORE',
-                            style: GoogleFonts.inter(
-                                color: Colors.white38,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.1)),
-                        const SizedBox(width: 8),
-                        Text(c.score.toString(),
-                            style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold)),
-                      ]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-              ],
-
-              // ── Control row ───────────────────────────────────────────────
-              _ControlRow(controller: c),
+              const Spacer(),
+              JhgIconChipButton.compact(
+                icon: Icons.chevron_left_rounded,
+                onTap: onCollapse,
+                iconColor: Colors.white54,
+              ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 14),
+
+          // ── Content: depends on game state ─────────────────────────────
+
+          // Idle: mode chip + hint
+          if (!c.isStart && !c.isPaused) ...[
+            GestureDetector(
+              onTap: onModeTap,
+              child: Container(
+                key: tourKeyModeChip,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _kPanelBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isReverse
+                          ? Icons.quiz_rounded
+                          : Icons.music_note_rounded,
+                      size: 15,
+                      color: JHGColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
+                      style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 18, color: Colors.white38),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isReverse
+                  ? 'A fret lights up. Pick the correct note name.'
+                  : 'Find the note shown here on the fretboard.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                  color: Colors.white38,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4),
+            ),
+            const SizedBox(height: 14),
+          ]
+
+          // Identify mode playing: answer buttons
+          else if (isReverse) ...[
+            _ReverseChoicePanel(controller: c),
+            const SizedBox(height: 14),
+          ]
+
+          // Find note mode playing: note badge + score
+          else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: JHGColors.primary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                        color: JHGColors.primary.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(c.highlightNode ?? '',
+                      style: GoogleFonts.poppins(
+                          color: JHGColors.primary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('SCORE',
+                        style: GoogleFonts.inter(
+                            color: Colors.white38,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1)),
+                    const SizedBox(width: 8),
+                    Text(c.score.toString(),
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                  ]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // ── Control row ───────────────────────────────────────────────
+          _ControlRow(controller: c),
+        ],
       ),
     );
   }
@@ -533,22 +508,11 @@ class _CollapsedTile extends StatelessWidget {
     final locked = c.reverseSelectedNote != null;
 
     // Expand arrow — shared
-    final expandBtn = GestureDetector(
-      onTap: onExpand,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-          ),
-          child: const Icon(Icons.chevron_right_rounded,
-              color: Colors.white, size: 14),
-        ),
+    final expandBtn = Padding(
+      padding: const EdgeInsets.all(4),
+      child: JhgIconChipButton.compact(
+        icon: Icons.chevron_right_rounded,
+        onTap: onExpand,
       ),
     );
 
@@ -584,138 +548,126 @@ class _CollapsedTile extends StatelessWidget {
       ),
     );
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: _kPanelCard.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-          ),
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── IDENTIFY MODE ──────────────────────────────────────────────
-              if (isReverse) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        isPlaying ? 'Which?' : 'Identify',
-                        maxLines: 1,
-                        style: const TextStyle(
-                          color: Color(0xFFFFB4A5),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.1,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                    expandBtn,
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (showAnswers) ...[
-                  ...c.reverseChoices.map((note) {
-                    final s = _answerStyle(note, c);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 7),
-                      child: GestureDetector(
-                        onTap:
-                            locked ? null : () => c.selectReverseAnswer(note),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: double.infinity,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: s.bg,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: s.border, width: 1.4),
-                          ),
-                          child: Center(
-                            child: Text(note,
-                                style: TextStyle(
-                                    color: s.text,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.2)),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 10),
-                ],
-                Center(child: playBtn),
-              ]
-
-              // ── FIND NOTE MODE ─────────────────────────────────────────────
-              else ...[
-                Align(
-                  alignment: Alignment.topRight,
-                  child: expandBtn,
-                ),
-                const SizedBox(height: 14),
-                Center(
-                  child: Container(
-                    padding: showNote
-                        ? const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 5)
-                        : EdgeInsets.zero,
-                    decoration: showNote
-                        ? BoxDecoration(
-                            color: JHGColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color:
-                                    JHGColors.primary.withValues(alpha: 0.30)),
-                          )
-                        : null,
-                    child: Text(
-                      showNote ? (c.highlightNode ?? '—') : 'Find Note',
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: showNote
-                            ? JHGColors.primary
-                            : const Color(0xFFFFB4A5),
-                        fontSize: showNote ? 26 : 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: showNote ? -0.5 : 0.1,
-                        height: 1.0,
-                      ),
+    return JhgGlassTile.closed(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── IDENTIFY MODE ──────────────────────────────────────────────
+          if (isReverse) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isPlaying ? 'Which?' : 'Identify',
+                    maxLines: 1,
+                    style: const TextStyle(
+                      color: Color(0xFFFE5D43),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                      height: 1.0,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Center(child: playBtn),
-                if (showNote) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('SCORE',
-                          style: GoogleFonts.inter(
-                              color: Colors.white38,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8)),
-                      const SizedBox(width: 5),
-                      Text(c.score.toString(),
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
+                expandBtn,
               ],
+            ),
+            const SizedBox(height: 12),
+            if (showAnswers) ...[
+              ...c.reverseChoices.map((note) {
+                final s = _answerStyle(note, c);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 7),
+                  child: GestureDetector(
+                    onTap:
+                        locked ? null : () => c.selectReverseAnswer(note),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: double.infinity,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: s.bg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: s.border, width: 1.4),
+                      ),
+                      child: Center(
+                        child: Text(note,
+                            style: TextStyle(
+                                color: s.text,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2)),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 10),
             ],
-          ),
-        ),
+            Center(child: playBtn),
+          ]
+
+          // ── FIND NOTE MODE ─────────────────────────────────────────────
+          else ...[
+            Align(
+              alignment: Alignment.topRight,
+              child: expandBtn,
+            ),
+            const SizedBox(height: 14),
+            Center(
+              child: Container(
+                padding: showNote
+                    ? const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 5)
+                    : EdgeInsets.zero,
+                decoration: showNote
+                    ? BoxDecoration(
+                        color: JHGColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color:
+                                JHGColors.primary.withValues(alpha: 0.30)),
+                      )
+                    : null,
+                child: Text(
+                  showNote ? (c.highlightNode ?? '—') : 'Find Note',
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: showNote
+                        ? JHGColors.primary
+                        : const Color(0xFFFE5D43),
+                    fontSize: showNote ? 26 : 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: showNote ? -0.5 : 0.1,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(child: playBtn),
+            if (showNote) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('SCORE',
+                      style: GoogleFonts.inter(
+                          color: Colors.white38,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8)),
+                  const SizedBox(width: 5),
+                  Text(c.score.toString(),
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ],
+        ],
       ),
     );
   }

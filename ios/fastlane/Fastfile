@@ -1,0 +1,67 @@
+default_platform(:ios)
+
+platform :ios do
+
+  # This 'before_all' block runs automatically before any other lane.
+  # This will authenticate using the API key for all fastlane commands.
+  before_all do
+    app_store_connect_api_key(
+      key_id: "F8YM6T4L3V",
+      issuer_id: "ca5f4edc-93a1-4df0-b445-d03b4905f203",
+      # --- FIX: Removed the redundant 'fastlane/' from the path ---
+      key_filepath: "fastlane/auth/AuthKey_F8YM6T4L3V.p8"
+    )
+  end
+
+  # --- NEW LANE ---
+  # This wraps the action in a lane so that 'before_all' is triggered.
+  desc "Gets the latest TestFlight build number for a specific version"
+  lane :get_latest_build do |options|
+    latest_testflight_build_number(version: options[:version])
+  end
+  # --- END NEW LANE --- 
+
+  desc "Sets the version and build number in the Xcode project"
+  lane :set_version_and_build do |options|
+    increment_version_number(
+      version_number: options[:version_number],
+      xcodeproj: "Runner.xcodeproj"
+    )
+    increment_build_number(
+      build_number: options[:build_number],
+      xcodeproj: "Runner.xcodeproj"
+    )
+  end
+
+  desc "Builds and uploads the app to App Store Connect and submits for review."
+  lane :app_store_release do |options|
+    
+    # The api_key block was removed from here; it's now in 'before_all'.
+    
+    changelog_text = options[:changelog]
+    if changelog_text.to_s.strip.empty?
+      UI.message("⚠️ Changelog was empty, using default.")
+      changelog_text = "Bug fixes and performance improvements."
+    else
+      UI.message("📝 Using provided changelog: #{changelog_text}")
+    end
+
+    upload_to_app_store(
+      # The 'api_key' will be picked up automatically from the 'before_all' context.
+      ipa: options[:ipa_path],
+      submit_for_review: true,
+      automatic_release: true,
+      # submit_for_review: false,
+      # automatic_release: false,
+      force: true,
+      release_notes: {
+        'en-US' => changelog_text
+      },
+      screenshots_path: '../../fastlane/metadata/ios/',
+      skip_screenshots: true,
+      skip_metadata: false, # must be false so whatsNew release notes are written for review submission
+      precheck_include_in_app_purchases: false,
+      submission_information: { export_compliance_uses_encryption: false }
+    )
+  end
+end
