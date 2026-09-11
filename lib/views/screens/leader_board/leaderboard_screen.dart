@@ -126,10 +126,9 @@ class LeaderLandscapeView extends StatelessWidget {
                 height: 8.w,
                 width: 8.w,
               ),
-              trailingWidget: JHGIconButton(
-                size: 24,
+              trailingWidget: JhgIconChipButton.header(
+                icon: LucideIcons.chevronRight,
                 onTap: () => Get.back(),
-                iconData: LucideIcons.chevronRight,
               ),
               bottom: leaderBoardTitleWidget(),
             ),
