@@ -1,3 +1,4 @@
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -192,16 +193,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: _kPrimary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _kPrimary.withValues(alpha: 0.22)),
-          ),
-          child: Icon(f.icon, color: _kPrimary, size: 20),
-        ),
+        JhgIconChipButton.badge(icon: f.icon),
         const SizedBox(width: 14),
         Expanded(
           child: Column(

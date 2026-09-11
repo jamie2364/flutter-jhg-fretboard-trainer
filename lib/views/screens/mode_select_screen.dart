@@ -1659,18 +1659,7 @@ class _ModeCardState extends State<_ModeCard> {
         child: Row(
           children: [
             if (widget.icon != null) ...[
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: _kPrimary.withValues(alpha: flash ? 0.22 : 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _kPrimary.withValues(alpha: 0.28),
-                  ),
-                ),
-                child: Icon(widget.icon, color: _kPrimary, size: 24),
-              ),
+              JhgIconChipButton.badge(icon: widget.icon!),
               const SizedBox(width: 14),
             ],
             Expanded(
