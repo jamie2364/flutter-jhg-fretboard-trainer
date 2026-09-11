@@ -918,10 +918,7 @@ class RandomModeScreen extends StatelessWidget {
             Positioned(
               top: 8,
               left: 8,
-              child: IconButton(
-                onPressed: Get.back,
-                icon: const Icon(Icons.arrow_back_rounded, color: _kOnSurface),
-              ),
+              child: JhgBackChip(onTap: Get.back),
             ),
           ],
         ),
@@ -1029,10 +1026,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
             Positioned(
               top: 8,
               left: 8,
-              child: IconButton(
-                onPressed: Get.back,
-                icon: const Icon(Icons.arrow_back_rounded, color: _kOnSurface),
-              ),
+              child: JhgBackChip(onTap: Get.back),
             ),
           ],
         ),
