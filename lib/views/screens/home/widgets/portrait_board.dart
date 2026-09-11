@@ -533,7 +533,10 @@ class _CollapsedTile extends StatelessWidget {
       );
     }
 
-    final playBtn = GestureDetector(
+    final playBtn = JhgTransportButton(
+      state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+      size: 44,
+      iconSize: 18,
       onTap: c.isStart
           ? c.pauseGame
           : c.isPaused
@@ -542,27 +545,6 @@ class _CollapsedTile extends StatelessWidget {
                   c.startTimer();
                   c.startTheGame();
                 },
-      child: Container(
-        width: 44,
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: JHGColors.primary,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: JHGColors.primary.withValues(alpha: 0.40),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          c.isStart ? JhgIcons.stop : JhgIcons.play,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
     );
 
     final expandBtn = JhgGlassChevron(onTap: onExpand, expanded: false);
@@ -1012,68 +994,38 @@ class _ControlRow extends StatelessWidget {
       children: [
 
         // Timer-mode cycle
-        GestureDetector(
-          onTap: disabled ? null : c.cycleGameMode,
-          child: Container(
-            height: 56, width: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.07),
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10)),
-            ),
-            child: Icon(
-              _resolveTimerIcon(isChoiceMode ? c.timerMode.value : mode),
-              color: disabled ? Colors.white24 : Colors.white60, size: 22,
-            ),
-          ),
+        JhgCircleIconButton(
+          icon: _resolveTimerIcon(isChoiceMode ? c.timerMode.value : mode),
+          size: 56,
+          iconSize: 22,
+          enabled: !disabled,
+          onTap: c.cycleGameMode,
         ),
 
         // Play / Stop / Resume
-        GestureDetector(
+        JhgTransportButton(
+          key: tourKeyPlayButton,
+          // Tapping while running pauses (Reset is the separate control), so
+          // show a pause glyph — a stop icon promised something else.
+          state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
+          size: 72,
+          iconSize: 36,
           onTap: c.isStart
               ? c.pauseGame
               : c.isPaused
                   ? c.resumeGame
-                  : () { c.startTimer(); c.startTheGame(); },
-          child: AnimatedContainer(
-            key: tourKeyPlayButton,
-            duration: const Duration(milliseconds: 200),
-            height: 72, width: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: JHGColors.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: JHGColors.primary.withValues(
-                      alpha: c.isStart ? 0.50 : 0.22),
-                  blurRadius: c.isStart ? 28 : 14,
-                ),
-              ],
-            ),
-            child: Icon(
-              // Tapping while running pauses (Reset is the separate control),
-              // so show a pause glyph — a stop icon promised something else.
-              c.isStart ? JhgIcons.pause : JhgIcons.play,
-              color: Colors.white, size: 36,
-            ),
-          ),
+                  : () {
+                      c.startTimer();
+                      c.startTheGame();
+                    },
         ),
 
         // Reset
-        GestureDetector(
+        JhgCircleIconButton(
+          icon: Icons.refresh_rounded,
+          size: 56,
+          iconSize: 22,
           onTap: () => c.resetGame(true),
-          child: Container(
-            height: 56, width: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.07),
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10)),
-            ),
-            child: const Icon(Icons.refresh_rounded,
-                color: Colors.white60, size: 22),
-          ),
         ),
       ],
     );

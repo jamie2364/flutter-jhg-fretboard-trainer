@@ -517,7 +517,10 @@ class _CollapsedTile extends StatelessWidget {
     );
 
     // Play / Stop circle
-    final playBtn = GestureDetector(
+    final playBtn = JhgTransportButton(
+      state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+      size: 52,
+      iconSize: 22,
       onTap: c.isStart
           ? c.pauseGame
           : c.isPaused
@@ -526,26 +529,6 @@ class _CollapsedTile extends StatelessWidget {
                   c.startTimer();
                   c.startTheGame();
                 },
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: JHGColors.primary,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: JHGColors.primary.withValues(alpha: 0.45),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Icon(
-          c.isStart ? JhgIcons.stop : JhgIcons.play,
-          color: Colors.white,
-          size: 26,
-        ),
-      ),
     );
 
     return JhgGlassTile.closed(
@@ -738,26 +721,20 @@ class _ControlRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         // Timer-mode cycle
-        GestureDetector(
-          onTap: disabled ? null : c.cycleGameMode,
-          child: Container(
-            height: 56,
-            width: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.07),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-            ),
-            child: Icon(
-              _resolveTimerIcon(isReverse ? c.timerMode.value : mode),
-              color: disabled ? Colors.white24 : Colors.white60,
-              size: 22,
-            ),
-          ),
+        JhgCircleIconButton(
+          icon: _resolveTimerIcon(isReverse ? c.timerMode.value : mode),
+          size: 56,
+          iconSize: 22,
+          enabled: !disabled,
+          onTap: c.cycleGameMode,
         ),
 
         // Play / Stop / Resume
-        GestureDetector(
+        JhgTransportButton(
+          key: tourKeyPlayButton,
+          state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+          size: 72,
+          iconSize: 36,
           onTap: c.isStart
               ? c.pauseGame
               : c.isPaused
@@ -766,44 +743,14 @@ class _ControlRow extends StatelessWidget {
                       c.startTimer();
                       c.startTheGame();
                     },
-          child: AnimatedContainer(
-            key: tourKeyPlayButton,
-            duration: const Duration(milliseconds: 200),
-            height: 72,
-            width: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: JHGColors.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: JHGColors.primary
-                      .withValues(alpha: c.isStart ? 0.50 : 0.22),
-                  blurRadius: c.isStart ? 28 : 14,
-                ),
-              ],
-            ),
-            child: Icon(
-              c.isStart ? JhgIcons.stop : JhgIcons.play,
-              color: Colors.white,
-              size: 36,
-            ),
-          ),
         ),
 
         // Reset
-        GestureDetector(
+        JhgCircleIconButton(
+          icon: Icons.refresh_rounded,
+          size: 56,
+          iconSize: 22,
           onTap: () => c.resetGame(true),
-          child: Container(
-            height: 56,
-            width: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.07),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-            ),
-            child: const Icon(Icons.refresh_rounded,
-                color: Colors.white60, size: 22),
-          ),
         ),
       ],
     );
@@ -869,23 +816,10 @@ class _ModeTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? JHGColors.primary.withValues(alpha: 0.16)
-                    : const Color(0xFF2E2E2E),
-                shape: BoxShape.circle,
-                border: isSelected
-                    ? Border.all(
-                        color: JHGColors.primary.withValues(alpha: 0.35))
-                    : null,
-              ),
-              child: Icon(icon,
-                  color: isSelected ? JHGColors.primary : Colors.white54,
-                  size: 18),
+            JhgIconChipButton.compact(
+              icon: icon,
+              onTap: null,
+              isActive: isSelected,
             ),
           ],
         ),

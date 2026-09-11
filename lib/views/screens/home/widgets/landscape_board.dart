@@ -159,31 +159,14 @@ class LandscapeBoard extends StatelessWidget {
                       ),
                     ] else ...[
                       // Play button — 48×48 fits inside 72 px panel
-                      GestureDetector(
+                      JhgTransportButton(
+                        state: JhgTransportState.play,
+                        size: 48,
+                        iconSize: 26,
                         onTap: () {
                           controller.startTimer();
                           controller.startTheGame();
                         },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: 48,
-                          width: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: JHGColors.primary,
-                            boxShadow: [
-                              BoxShadow(
-                                color: JHGColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            JhgIcons.play,
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
                       ),
                     ],
                   ],
@@ -294,25 +277,11 @@ class LandscapeBoard extends StatelessWidget {
   }
 
   Widget _iconBtn(IconData icon, {bool active = false, bool disabled = false}) {
-    return Container(
-      height: 44,
-      width: 44,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12),
-        border: active
-            ? Border.all(color: JHGColors.primary.withValues(alpha: 0.4))
-            : null,
-      ),
-      child: Icon(
-        icon,
-        color: disabled
-            ? Colors.white24
-            : active
-                ? JHGColors.primary
-                : Colors.white70,
-        size: 20,
-      ),
+    return JhgIconChipButton.header(
+      icon: icon,
+      onTap: null,
+      isActive: active,
+      enabled: !disabled,
     );
   }
 

@@ -1002,19 +1002,9 @@ class _MenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return JhgIconChipButton.compact(
+      icon: LucideIcons.moreVertical,
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(LucideIcons.moreVertical,
-            color: Colors.white54, size: 15),
-      ),
     );
   }
 }

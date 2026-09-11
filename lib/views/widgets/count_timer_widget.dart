@@ -152,25 +152,17 @@ class _TimerAdjustButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        enabled ? JHGColors.primary : JHGColors.white.withValues(alpha: 0.2);
-
     return GestureDetector(
+      // Hold-to-repeat lives here; the chip is a face only so its own tap
+      // handler cannot swallow the long press.
       onTap: enabled ? onTap : null,
       onLongPressStart: (_) => onLongPressStart(),
       onLongPressEnd: (_) => onLongPressEnd(),
-      child: Container(
-        height: 36,
-        width: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: enabled
-              ? JHGColors.primary.withValues(alpha: 0.14)
-              : Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 1),
-        ),
-        child: Icon(icon, color: color, size: 22),
+      child: JhgIconChipButton.compact(
+        icon: icon,
+        onTap: null,
+        isActive: enabled,
+        enabled: enabled,
       ),
     );
   }

@@ -7,7 +7,7 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_jhg_elements/jhg_elements.dart' show JhgScreenHeader;
+import 'package:flutter_jhg_elements/jhg_elements.dart' show JhgIconChipButton, JhgScreenHeader, LucideIcons;
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
@@ -402,15 +402,9 @@ class _LeaderboardTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _gold.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: const Icon(Icons.emoji_events_rounded, color: _gold, size: 26),
+            const JhgIconChipButton.badge(
+              icon: LucideIcons.trophy,
+              color: _gold,
             ),
             const SizedBox(width: 15),
             Expanded(

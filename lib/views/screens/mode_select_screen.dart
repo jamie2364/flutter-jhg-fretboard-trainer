@@ -1683,18 +1683,10 @@ class _ModeCardState extends State<_ModeCard> {
               ),
             ),
             const SizedBox(width: 12),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: _kPrimary.withValues(alpha: flash ? 0.20 : 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.chevron_right_rounded,
-                color: _kPrimary.withValues(alpha: flash ? 1.0 : 0.9),
-                size: 20,
-              ),
+            const JhgIconChipButton.compact(
+              icon: LucideIcons.chevronRight,
+              onTap: null,
+              isActive: true,
             ),
           ],
         ),
