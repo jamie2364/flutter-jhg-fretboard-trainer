@@ -558,7 +558,7 @@ class _CollapsedTile extends StatelessWidget {
           ],
         ),
         child: Icon(
-          c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
+          c.isStart ? JhgIcons.stop : JhgIcons.play,
           color: Colors.white,
           size: 18,
         ),
@@ -1054,7 +1054,7 @@ class _ControlRow extends StatelessWidget {
             child: Icon(
               // Tapping while running pauses (Reset is the separate control),
               // so show a pause glyph — a stop icon promised something else.
-              c.isStart ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              c.isStart ? JhgIcons.pause : JhgIcons.play,
               color: Colors.white, size: 36,
             ),
           ),

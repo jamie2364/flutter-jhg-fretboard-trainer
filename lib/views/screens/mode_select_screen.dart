@@ -38,23 +38,9 @@ Widget _wizardHeader({
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
     child: Row(
       children: [
-        GestureDetector(
+        JhgIconChipButton.header(
+          icon: step == 0 ? LucideIcons.x : LucideIcons.chevronLeft,
           onTap: onBack,
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Icon(
-              step == 0 ? Icons.close_rounded : Icons.chevron_left_rounded,
-              color: _kOnSurface,
-              size: 22,
-            ),
-          ),
         ),
         const Spacer(),
         if (stepCount > 1)
@@ -739,7 +725,7 @@ class _StartScreenState extends State<StartScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _ModeCard(
                         label: 'Continue',
-                        icon: Icons.play_arrow_rounded,
+                        icon: JhgIcons.play,
                         subtitle:
                             'Pick up "${latest.displayName}" where you left off.',
                         onTap: () => _resume(latest),

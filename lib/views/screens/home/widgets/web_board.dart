@@ -541,7 +541,7 @@ class _CollapsedTile extends StatelessWidget {
           ],
         ),
         child: Icon(
-          c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
+          c.isStart ? JhgIcons.stop : JhgIcons.play,
           color: Colors.white,
           size: 26,
         ),
@@ -783,7 +783,7 @@ class _ControlRow extends StatelessWidget {
               ],
             ),
             child: Icon(
-              c.isStart ? Icons.stop_rounded : Icons.play_arrow_rounded,
+              c.isStart ? JhgIcons.stop : JhgIcons.play,
               color: Colors.white,
               size: 36,
             ),

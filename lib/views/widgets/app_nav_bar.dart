@@ -223,64 +223,51 @@ class AppNavBar extends StatelessWidget {
     // Every tab stays enabled and uniformly coloured — only the active one is
     // white. Leaving mid-session is gated by a confirm dialog (see _navigate),
     // not by greying tabs out.
-    final safeBottom = this.safeBottom ??
-        MediaQuery.viewPaddingOf(context).bottom;
+    final safeBottom =
+        this.safeBottom ?? MediaQuery.viewPaddingOf(context).bottom;
 
-    final bar = Container(
-      height: 56 + safeBottom,
-      decoration: BoxDecoration(
-        color: _kNavBg,
-        border: Border(
-          top: BorderSide(
-              color: Colors.white.withValues(alpha: 0.12), width: 1.5),
+    // The bar itself is the shared suite component — height, hairline, colours
+    // and type live in flutter_jhg_elements, so a change there lands here. This
+    // widget only owns the tab list and the navigation rules.
+    final bar = JHGBottomNav(
+      background: _kNavBg,
+      safeBottom: safeBottom,
+      inactiveColor: _kNavInactive,
+      items: [
+        JHGNavItem(
+          icon: LucideIcons.home,
+          label: 'Home',
+          isActive: activeTab == AppTab.home,
+          onTap: () => _navigate(AppTab.home, context),
         ),
-      ),
-      child: Align(
-        alignment: Alignment.center,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Padding(
-            padding: EdgeInsets.only(bottom: safeBottom * 0.4),
-            child: Row(
-              children: [
-                _NavItem(
-                  icon: LucideIcons.home,
-                  label: 'Home',
-                  isActive: activeTab == AppTab.home,
-                  onTap: () => _navigate(AppTab.home, context),
-                ),
-                _NavItem(
-                  icon: LucideIcons.dumbbell,
-                  label: 'Practice',
-                  isActive: activeTab == AppTab.train,
-                  onTap: () => _navigate(AppTab.train, context),
-                ),
-                _NavItem(
-                  icon: LucideIcons.save,
-                  label: 'Saved',
-                  isActive: activeTab == AppTab.saved,
-                  onTap: () => _navigate(AppTab.saved, context),
-                ),
-                _NavItem(
-                  // Tour key only needed on the training board (where the tour
-                  // runs); other screens would duplicate the same GlobalKey.
-                  key: activeTab == AppTab.train ? tourKeyHeatmapNav : null,
-                  icon: Icons.insights_rounded,
-                  label: 'Stats',
-                  isActive: activeTab == AppTab.heatmap,
-                  onTap: () => _navigate(AppTab.heatmap, context),
-                ),
-                _NavItem(
-                  icon: LucideIcons.settings,
-                  label: 'Settings',
-                  isActive: activeTab == AppTab.settings,
-                  onTap: () => _navigate(AppTab.settings, context),
-                ),
-              ],
-            ),
-          ),
+        JHGNavItem(
+          icon: LucideIcons.dumbbell,
+          label: 'Practice',
+          isActive: activeTab == AppTab.train,
+          onTap: () => _navigate(AppTab.train, context),
         ),
-      ),
+        JHGNavItem(
+          icon: LucideIcons.save,
+          label: 'Saved',
+          isActive: activeTab == AppTab.saved,
+          onTap: () => _navigate(AppTab.saved, context),
+        ),
+        JHGNavItem(
+          // Tour key only needed on the training board (where the tour
+          // runs); other screens would duplicate the same GlobalKey.
+          itemKey: activeTab == AppTab.train ? tourKeyHeatmapNav : null,
+          icon: Icons.insights_rounded,
+          label: 'Stats',
+          isActive: activeTab == AppTab.heatmap,
+          onTap: () => _navigate(AppTab.heatmap, context),
+        ),
+        JHGNavItem(
+          icon: LucideIcons.settings,
+          label: 'Settings',
+          isActive: activeTab == AppTab.settings,
+          onTap: () => _navigate(AppTab.settings, context),
+        ),
+      ],
     );
 
     if (!kIsWeb) return bar;
@@ -300,49 +287,6 @@ class AppNavBar extends StatelessWidget {
         maxHeight: barHeight,
         alignment: Alignment.bottomCenter,
         child: bar,
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isActive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? Colors.white : _kNavInactive;
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontSize: 10,
-                height: 1.0,
-                decoration: TextDecoration.none,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

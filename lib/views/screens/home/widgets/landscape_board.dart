@@ -179,7 +179,7 @@ class LandscapeBoard extends StatelessWidget {
                             ],
                           ),
                           child: const Icon(
-                            Icons.play_arrow_rounded,
+                            JhgIcons.play,
                             color: Colors.white,
                             size: 26,
                           ),

@@ -90,16 +90,10 @@ class SavedSessionsScreen extends StatelessWidget {
           },
           builder: (context, candidate, __) {
             final hot = candidate.isNotEmpty;
-            return Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: hot ? _kPrimary.withValues(alpha: 0.25) : _kSurface,
-                borderRadius: BorderRadius.circular(11),
-                border: Border.all(color: hot ? _kPrimary : _kBorder),
-              ),
-              child: Icon(LucideIcons.chevronLeft,
-                  color: hot ? _kPrimary : _kOnSurface, size: 20),
+            return JhgIconChipButton.header(
+              icon: LucideIcons.chevronLeft,
+              onTap: null,
+              isActive: hot,
             );
           },
         ),
@@ -213,37 +207,10 @@ class SavedSessionsScreen extends StatelessWidget {
   }
 
   Widget _buildSearchBar(LibraryController ctrl) {
-    return Padding(
+    return JhgSearchBar(
+      hintText: 'Search sessions and folders',
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _kSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _kBorder),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        child: Row(
-          children: [
-            const Icon(LucideIcons.search, color: _kFaint, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                onChanged: (v) => ctrl.searchQuery.value = v,
-                style: GoogleFonts.poppins(color: _kOnSurface, fontSize: 13),
-                cursorColor: _kPrimary,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Search sessions and folders',
-                  hintStyle:
-                      GoogleFonts.poppins(color: _kFaint, fontSize: 13),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      onChanged: (v) => ctrl.searchQuery.value = v,
     );
   }
 
@@ -435,10 +402,10 @@ class SavedSessionsScreen extends StatelessWidget {
     _showActionDialog(
       context,
       title: s.displayName,
-      icon: LucideIcons.play,
+      icon: JhgIcons.play,
       actions: [
         _SheetActionData(
-          icon: LucideIcons.play,
+          icon: JhgIcons.play,
           label: 'Resume',
           onTap: () => _resume(s),
         ),
@@ -920,7 +887,7 @@ class _SessionTile extends StatelessWidget {
     return LongPressDraggable<_DragPayload>(
       data: _DragPayload(
           isFolder: false, id: session.id, name: session.displayName),
-      feedback: _DragChip(icon: LucideIcons.play, label: session.displayName),
+      feedback: _DragChip(icon: JhgIcons.play, label: session.displayName),
       child: GestureDetector(
         onTap: onOpen,
         child: Container(
@@ -932,7 +899,7 @@ class _SessionTile extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _IconBadge(icon: LucideIcons.play, tint: tint, iconSize: 18),
+                  _IconBadge(icon: JhgIcons.play, tint: tint, iconSize: 18),
                   const Spacer(),
                   _MenuButton(onTap: onMenu),
                 ],
@@ -979,7 +946,7 @@ class _SessionRow extends StatelessWidget {
     return LongPressDraggable<_DragPayload>(
       data: _DragPayload(
           isFolder: false, id: session.id, name: session.displayName),
-      feedback: _DragChip(icon: LucideIcons.play, label: session.displayName),
+      feedback: _DragChip(icon: JhgIcons.play, label: session.displayName),
       child: GestureDetector(
         onTap: onOpen,
         child: Container(
@@ -988,7 +955,7 @@ class _SessionRow extends StatelessWidget {
           child: Row(
             children: [
               _IconBadge(
-                  icon: LucideIcons.play, tint: tint, size: 40, iconSize: 19),
+                  icon: JhgIcons.play, tint: tint, size: 40, iconSize: 19),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
