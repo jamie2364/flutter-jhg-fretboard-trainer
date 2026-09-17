@@ -17,7 +17,7 @@ class SettingsDefaultTimer extends StatelessWidget {
           children: [
             Row(
               children: [
-                const SettingsIconChip(icon: LucideIcons.timer),
+                const SettingsIconChip(icon: JhgIcons.duration),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(

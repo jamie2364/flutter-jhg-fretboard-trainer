@@ -80,7 +80,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                   child: Row(
                                     children: [
                                       const SettingsIconChip(
-                                          icon: LucideIcons.save),
+                                          icon: JhgIcons.save),
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
@@ -117,7 +117,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                           ],
                                         ),
                                       ),
-                                      const Icon(LucideIcons.chevronRight,
+                                      const Icon(JhgIcons.chevronRight,
                                           color: Colors.white24, size: 18),
                                     ],
                                   ),
@@ -143,7 +143,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                   ),
                                   const SettingsDivider(),
                                   SettingsSwitchTile(
-                                    icon: LucideIcons.skipForward,
+                                    icon: JhgIcons.next,
                                     title: 'Auto-advance',
                                     subtitle:
                                         'Move to next note automatically after a correct answer',
@@ -156,7 +156,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                   ),
                                   const SettingsDivider(),
                                   SettingsSwitchTile(
-                                    icon: LucideIcons.volume2,
+                                    icon: JhgIcons.volume,
                                     title: 'Auto-play sound',
                                     subtitle:
                                         'Sound every note and chord as it comes up. Off by default, so use the Listen button when you want to hear one.',
@@ -184,7 +184,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                       child: Row(
                                         children: [
                                           const SettingsIconChip(
-                                              icon: LucideIcons.layers),
+                                              icon: JhgIcons.layers),
                                           const SizedBox(width: 14),
                                           Expanded(
                                             child: Text(
@@ -198,8 +198,8 @@ class _SettingScreenState extends State<SettingScreen> {
                                           ),
                                           Icon(
                                             _stringsExpanded
-                                                ? LucideIcons.chevronUp
-                                                : LucideIcons.chevronDown,
+                                                ? JhgIcons.chevronUp
+                                                : JhgIcons.chevronDown,
                                             color: Colors.white24,
                                             size: 18,
                                           ),
@@ -217,7 +217,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string6,
                                               subtitle: 'Low E string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string6,
                                               onChanged: (_) {
                                                 controller.setString6(0);
@@ -228,7 +228,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string5,
                                               subtitle: 'A string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string5,
                                               onChanged: (_) {
                                                 controller.setString5(1);
@@ -239,7 +239,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string4,
                                               subtitle: 'D string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string4,
                                               onChanged: (_) {
                                                 controller.setString4(2);
@@ -250,7 +250,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string3,
                                               subtitle: 'G string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string3,
                                               onChanged: (_) {
                                                 controller.setString3(3);
@@ -261,7 +261,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string2,
                                               subtitle: 'B string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string2,
                                               onChanged: (_) {
                                                 controller.setString2(4);
@@ -272,7 +272,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                             SettingsSwitchTile(
                                               title: AppStrings.string1,
                                               subtitle: 'High e string',
-                                              icon: LucideIcons.music,
+                                              icon: JhgIcons.note,
                                               value: controller.string1,
                                               onChanged: (_) {
                                                 controller.setString1(5);
@@ -377,7 +377,7 @@ class _SupportSection extends StatelessWidget {
         children: [
           SettingsActionTile(
             title: 'Share App',
-            icon: LucideIcons.share2,
+            icon: JhgIcons.share,
             onTap: c.onClickShareApp,
           ),
           const SettingsDivider(),
@@ -395,14 +395,14 @@ class _SupportSection extends StatelessWidget {
           const SettingsDivider(),
           SettingsActionTile(
             title: 'View More Apps',
-            icon: LucideIcons.layers,
+            icon: JhgIcons.layers,
             onTap: c.onClickViewMoreApps,
           ),
           if (showRemoveAds) ...[
             const SettingsDivider(),
             SettingsActionTile(
               title: 'Remove Ads',
-              icon: LucideIcons.zap,
+              icon: JhgIcons.quickStart,
               onTap: () => c.onRemoveAdsTap(context, null),
             ),
           ],

@@ -45,7 +45,7 @@ class LandscapeBoard extends StatelessWidget {
                     onTap: () => controller.resetGame(false),
                     child: RotatedBox(
                       quarterTurns: 1,
-                      child: _iconBtn(Icons.refresh_rounded),
+                      child: _iconBtn(JhgIcons.reset),
                     ),
                   );
                 }
@@ -71,7 +71,7 @@ class LandscapeBoard extends StatelessWidget {
                 },
                 child: RotatedBox(
                   quarterTurns: 1,
-                  child: _iconBtn(LucideIcons.trophy),
+                  child: _iconBtn(JhgIcons.trophy),
                 ),
               ),
             ],
@@ -234,7 +234,7 @@ class LandscapeBoard extends StatelessWidget {
                   child: RotatedBox(
                     quarterTurns: 1,
                     child: _iconBtn(
-                      LucideIcons.settings,
+                      JhgIcons.navSettings,
                       disabled: settingsLocked,
                     ),
                   ),
@@ -256,7 +256,7 @@ class LandscapeBoard extends StatelessWidget {
                           ),
                   child: RotatedBox(
                     quarterTurns: 1,
-                    child: _iconBtn(Icons.insights_rounded, disabled: locked),
+                    child: _iconBtn(JhgIcons.navStats, disabled: locked),
                   ),
                 );
               }),
@@ -266,7 +266,7 @@ class LandscapeBoard extends StatelessWidget {
                 onTap: () => controller.resetGame(true),
                 child: RotatedBox(
                   quarterTurns: 1,
-                  child: _iconBtn(Icons.refresh_rounded),
+                  child: _iconBtn(JhgIcons.reset),
                 ),
               ),
             ],
@@ -288,15 +288,15 @@ class LandscapeBoard extends StatelessWidget {
   IconData _modeIcon(String mode) {
     switch (mode) {
       case 'stopwatch':
-        return LucideIcons.timer;
+        return JhgIcons.duration;
       case 'countdown':
         return LucideIcons.clock;
       case 'leaderboard':
-        return LucideIcons.trophy;
+        return JhgIcons.trophy;
       case 'reverse':
-        return Icons.quiz_rounded;
+        return JhgIcons.help;
       default:
-        return LucideIcons.timer;
+        return JhgIcons.duration;
     }
   }
 }

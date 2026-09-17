@@ -351,7 +351,7 @@ class _RefreshButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.refreshCw,
+              const Icon(JhgIcons.reset,
                   color: Colors.white54, size: 15),
               const SizedBox(width: 8),
               Text(

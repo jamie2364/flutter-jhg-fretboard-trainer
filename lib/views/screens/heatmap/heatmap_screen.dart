@@ -171,8 +171,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                     // fretboard map; bar-chart icon returns to the stats.
                     _topIcon(
                       icon: _showNeck
-                          ? Icons.insights_rounded
-                          : Icons.grid_view_rounded,
+                          ? JhgIcons.navStats
+                          : JhgIcons.navModes,
                       active: _showNeck,
                       onTap: () => setState(() => _showNeck = !_showNeck),
                     ),
@@ -180,10 +180,10 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                     // stats it toggles the explanatory blurb.
                     _topIcon(
                       icon: _showNeck
-                          ? Icons.info_outline_rounded
+                          ? JhgIcons.info
                           : (_showInfoBlurb
-                              ? Icons.info_rounded
-                              : Icons.info_outline_rounded),
+                              ? JhgIcons.info
+                              : JhgIcons.info),
                       active: !_showNeck && _showInfoBlurb,
                       onTap: () {
                         if (_showNeck) {
@@ -194,7 +194,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                       },
                     ),
                     _topIcon(
-                      icon: Icons.restart_alt_rounded,
+                      icon: JhgIcons.reset,
                       onTap: _confirmReset,
                     ),
                   ],
@@ -1079,7 +1079,7 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
                           color: JHGColors.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.insights_rounded,
+                        child: const Icon(JhgIcons.navStats,
                             color: JHGColors.primary, size: 28),
                       ),
                       const SizedBox(height: 14),

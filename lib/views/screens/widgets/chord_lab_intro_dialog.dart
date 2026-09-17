@@ -246,7 +246,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
               ),
             ),
             child: _dontShowAgain
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 15)
+                ? const Icon(JhgIcons.check, color: Colors.white, size: 15)
                 : null,
           ),
           const SizedBox(width: 11),

@@ -233,7 +233,7 @@ class _WebBoardState extends State<WebBoard> {
                     letterSpacing: 1.4)),
             const SizedBox(height: 16),
             _ModeTile(
-              icon: Icons.music_note_rounded,
+              icon: JhgIcons.note,
               title: 'Find Note',
               subtitle: 'A note is shown. Tap it on the fretboard.',
               isSelected: !isReverse,
@@ -244,7 +244,7 @@ class _WebBoardState extends State<WebBoard> {
             ),
             const SizedBox(height: 12),
             _ModeTile(
-              icon: Icons.quiz_rounded,
+              icon: JhgIcons.help,
               title: 'Identify',
               subtitle: 'A fret lights up. Choose the correct note.',
               isSelected: isReverse,
@@ -359,7 +359,7 @@ class _ExpandedPanel extends StatelessWidget {
               ),
               const Spacer(),
               JhgIconChipButton.compact(
-                icon: Icons.chevron_left_rounded,
+                icon: JhgIcons.back,
                 onTap: onCollapse,
                 iconColor: Colors.white54,
               ),
@@ -388,8 +388,8 @@ class _ExpandedPanel extends StatelessWidget {
                   children: [
                     Icon(
                       isReverse
-                          ? Icons.quiz_rounded
-                          : Icons.music_note_rounded,
+                          ? JhgIcons.help
+                          : JhgIcons.note,
                       size: 15,
                       color: JHGColors.primary,
                     ),
@@ -403,7 +403,7 @@ class _ExpandedPanel extends StatelessWidget {
                           letterSpacing: 0.5),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
+                    const Icon(JhgIcons.chevronDown,
                         size: 18, color: Colors.white38),
                   ],
                 ),
@@ -511,14 +511,14 @@ class _CollapsedTile extends StatelessWidget {
     final expandBtn = Padding(
       padding: const EdgeInsets.all(4),
       child: JhgIconChipButton.compact(
-        icon: Icons.chevron_right_rounded,
+        icon: JhgIcons.chevronRight,
         onTap: onExpand,
       ),
     );
 
-    // Play / Stop circle
+    // Play / Pause circle
     final playBtn = JhgTransportButton(
-      state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+      state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
       size: 52,
       iconSize: 22,
       onTap: c.isStart
@@ -702,11 +702,12 @@ class _ControlRow extends StatelessWidget {
   IconData _resolveTimerIcon(String mode) {
     switch (mode) {
       case 'countdown':
-        return Icons.schedule_rounded;
+        return JhgIcons.duration;
       case 'leaderboard':
-        return Icons.emoji_events_rounded;
+        return JhgIcons.trophy;
       default:
-        return Icons.timer_outlined;
+        // Counting up, not down — a different glyph on purpose.
+        return JhgIcons.elapsed;
     }
   }
 
@@ -729,10 +730,10 @@ class _ControlRow extends StatelessWidget {
           onTap: c.cycleGameMode,
         ),
 
-        // Play / Stop / Resume
+        // Play / Pause / Resume
         JhgTransportButton(
           key: tourKeyPlayButton,
-          state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+          state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
           size: 72,
           iconSize: 36,
           onTap: c.isStart
@@ -747,7 +748,7 @@ class _ControlRow extends StatelessWidget {
 
         // Reset
         JhgCircleIconButton(
-          icon: Icons.refresh_rounded,
+          icon: JhgIcons.reset,
           size: 56,
           iconSize: 22,
           onTap: () => c.resetGame(true),

@@ -7,7 +7,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart'
-    show JhgIconChipButton, JhgScreenHeader;
+    show JhgIconChipButton, JhgIcons, JhgScreenHeader;
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/stats_breakdown_view.dart';
@@ -116,14 +116,13 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
             onBack: () => Get.back(),
             actions: [
               _iconButton(
-                icon: _showInfo
-                    ? Icons.info_rounded
-                    : Icons.info_outline_rounded,
+                // One glyph; `active` below carries the state.
+                icon: JhgIcons.info,
                 active: _showInfo,
                 onTap: () => setState(() => _showInfo = !_showInfo),
               ),
               _iconButton(
-                icon: Icons.restart_alt_rounded,
+                icon: JhgIcons.reset,
                 onTap: _confirmReset,
               ),
             ],

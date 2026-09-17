@@ -84,22 +84,28 @@ class _PortraitBoardState extends State<PortraitBoard> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
 
-              // Modes shifter — Quick start hands mode-picking to the board,
-              // so (and only so) the dictionaries-style top-left "MODES"
-              // eyebrow appears here. A Customized / Random / resumed session
-              // picked its mode deliberately, so nothing is shown.
-              if (c.quickStartSession) ...[
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: _BoardModeSwitcher(controller: c),
-                  ),
+              // Top row — the modes shifter on the left (Quick start hands
+              // mode-picking to the board, so and only so the dictionaries-style
+              // "MODES" eyebrow appears; a Customized / Random / resumed session
+              // picked its mode deliberately) and Save on the right. Save lives
+              // up here rather than inside the control tile so the tile stays a
+              // pure play surface.
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    if (c.quickStartSession)
+                      _BoardModeSwitcher(controller: c),
+                    const Spacer(),
+                    JhgIconChipButton.header(
+                      icon: JhgIcons.save,
+                      onTap: () => _saveSession(context, c),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-              ] else
-                const SizedBox(height: 6),
+              ),
+              const SizedBox(height: 6),
 
               // ── Fretboard fills full Expanded height at all times ────────
               // Both the expanded panel and the collapsed tile are Positioned
@@ -117,67 +123,33 @@ class _PortraitBoardState extends State<PortraitBoard> {
                       child: GuitarBoard(isPortrait: true),
                     ),
 
-                    // One bottom overlay that animates between the expanded card
-                    // and the collapsed tile. AnimatedSize grows/shrinks the
-                    // height from the bottom edge while the contents cross-fade,
-                    // so the swap reads as a smooth slide rather than a jump.
-                    //
-                    // The layoutBuilder pins the *outgoing* panel with a bottom
-                    // Positioned so it no longer drives the Stack's size. Only
-                    // the incoming child sets the height, which lets AnimatedSize
-                    // begin easing toward the new height on the very first frame
-                    // instead of holding at the tall height until the fade ends
-                    // and then snapping down. The height and the cross-fade run
-                    // over the same interval so they read as a single motion.
+                    // One bottom overlay that swaps between the expanded
+                    // card and the collapsed tile. The swap is instant (no
+                    // height morph, no cross-fade) — the same behaviour as the
+                    // Ear Training control tile. Only one state is built at a
+                    // time, so the tour's play-button GlobalKey is never
+                    // duplicated across a transition.
                     Positioned(
                       left: 0,
                       right: 0,
                       bottom: 0,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 320),
-                          curve: Curves.easeInOutCubic,
-                          alignment: Alignment.bottomCenter,
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            switchInCurve: Curves.easeInOutCubic,
-                            switchOutCurve: Curves.easeInOutCubic,
-                            layoutBuilder: (currentChild, previousChildren) =>
-                                Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                for (final prev in previousChildren)
-                                  Positioned(
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    child: prev,
-                                  ),
-                                if (currentChild != null) currentChild,
-                              ],
-                            ),
-                            transitionBuilder: (child, anim) =>
-                                FadeTransition(opacity: anim, child: child),
-                            child: _panelCollapsed
-                                ? _CollapsedTile(
-                                    key: const ValueKey('tile-collapsed'),
-                                    controller: c,
-                                    isReverse: isReverse,
-                                    isInterval: isInterval,
-                                    isChord: isChord,
-                                    onExpand: () => _setCollapsed(false),
-                                  )
-                                : _ExpandedPanel(
-                                    key: const ValueKey('tile-expanded'),
-                                    controller: c,
-                                    isReverse: isReverse,
-                                    isInterval: isInterval,
-                                    isChord: isChord,
-                                    onCollapse: () => _setCollapsed(true),
-                                  ),
-                          ),
-                        ),
+                        child: _panelCollapsed
+                            ? _CollapsedTile(
+                                controller: c,
+                                isReverse: isReverse,
+                                isInterval: isInterval,
+                                isChord: isChord,
+                                onExpand: () => _setCollapsed(false),
+                              )
+                            : _ExpandedPanel(
+                                controller: c,
+                                isReverse: isReverse,
+                                isInterval: isInterval,
+                                isChord: isChord,
+                                onCollapse: () => _setCollapsed(true),
+                              ),
                       ),
                     ),
                   ],
@@ -199,13 +171,43 @@ class _PortraitBoardState extends State<PortraitBoard> {
   }
 }
 
+// ─── Save ─────────────────────────────────────────────────────────────────────
+// Snapshot the session so it can be resumed later. Lives on the top-right of
+// the board, not in the control tile.
+Future<void> _saveSession(BuildContext context, HomeController c) async {
+  if (!c.sessionActive) {
+    showCustomToast(
+      context: context,
+      message: 'Start a round first, then you can save it.',
+      isError: true,
+    );
+    return;
+  }
+  final result = await showSaveSessionDialog(
+    context,
+    defaultName: c.defaultSessionName(),
+  );
+  if (result == null) return; // backed out
+  final saved = await c.saveCurrentSession(
+    customName: result.name,
+    folderId: result.folderId,
+  );
+  if (!context.mounted) return;
+  showCustomToast(
+    context: context,
+    message: saved
+        ? 'Saved. Find it under Saved in the bar below.'
+        : 'Could not save that one. Give it another go.',
+    isError: !saved,
+  );
+}
+
 // ─── Expanded floating card ────────────────────────────────────────────────────
 // Blurred glass card that overlays the bottom of the fretboard.
 // Uses dictionaries' ClipRRect → BackdropFilter → Container pattern.
 
 class _ExpandedPanel extends StatelessWidget {
   const _ExpandedPanel({
-    super.key,
     required this.controller,
     required this.isReverse,
     required this.isInterval,
@@ -262,7 +264,7 @@ class _ExpandedPanel extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: JhgIconChipButton.compact(
-                    icon: Icons.skip_next_rounded,
+                    icon: JhgIcons.next,
                     onTap: c.skipQuestion,
                     iconColor: Colors.white54,
                   ),
@@ -273,7 +275,7 @@ class _ExpandedPanel extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: JhgIconChipButton.compact(
-                  icon: Icons.volume_up_rounded,
+                  icon: JhgIcons.volume,
                   onTap: c.isStart ? c.playCurrentPrompt : () {},
                   iconColor: c.isStart ? Colors.white54 : Colors.white24,
                 ),
@@ -359,14 +361,15 @@ class _ExpandedPanel extends StatelessWidget {
             const SizedBox(height: 14),
           ],
 
-          // ── Score bar — score sits below the options, in every mode ──
-          if (c.isStart || c.isPaused) ...[
-            _ScoreBar(controller: c),
-            const SizedBox(height: 14),
-          ],
-
           // ── Control row ──────────────────────────────────────────────
           _ControlRow(controller: c),
+
+          // ── Score — a plain line directly under the play button, no
+          // tile or box behind it, in every mode ──────────────────────
+          if (c.isStart || c.isPaused) ...[
+            const SizedBox(height: 12),
+            _ScoreLine(score: c.score),
+          ],
         ],
       ),
     );
@@ -449,7 +452,6 @@ class _TilePrompt extends StatelessWidget {
 
 class _CollapsedTile extends StatelessWidget {
   const _CollapsedTile({
-    super.key,
     required this.controller,
     required this.isReverse,
     required this.isInterval,
@@ -534,7 +536,7 @@ class _CollapsedTile extends StatelessWidget {
     }
 
     final playBtn = JhgTransportButton(
-      state: c.isStart ? JhgTransportState.stop : JhgTransportState.play,
+      state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
       size: 44,
       iconSize: 18,
       onTap: c.isStart
@@ -551,7 +553,7 @@ class _CollapsedTile extends StatelessWidget {
 
     // Skip → draw a fresh question, no score change. Only while a round runs.
     final skipBtn = JhgIconChipButton(
-      icon: Icons.skip_next_rounded,
+      icon: JhgIcons.next,
       onTap: c.skipQuestion,
       size: 44,
       radius: 12,
@@ -626,12 +628,19 @@ class _CollapsedTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: _kTileAsk)
                     else
-                      _TilePrompt(lead: 'Find', hero: c.highlightNode ?? '—'),                  ],
+                      _TilePrompt(lead: 'Find', hero: c.highlightNode ?? '—'),
+                    // Score and running time on one plain line under the
+                    // prompt — no pill or box behind them.
+                    if (isPlaying) ...[
+                      const SizedBox(height: 3),
+                      _ScoreTimeLine(controller: c),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
-              // Score + time now live in the bottom score bar; the header
-              // stays a clean prompt + controls row.
+              // Save lives on the top-right of the screen, so the tile is
+              // just prompt + score/time + controls.
               if (c.isStart) ...[
                 skipBtn,
                 const SizedBox(width: 7),
@@ -701,7 +710,7 @@ class _CollapsedTile extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.backspace_outlined,
+                      const Icon(JhgIcons.backspace,
                           color: Colors.white60, size: 15),
                       const SizedBox(width: 8),
                       Text('Clear',
@@ -714,11 +723,6 @@ class _CollapsedTile extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-          // Score bar — below the options, same in every mode.
-          if (isPlaying) ...[
-            const SizedBox(height: 12),
-            _ScoreBar(controller: c, showTime: true),
           ],
         ],
       ),
@@ -776,7 +780,7 @@ class _BoardModeSwitcher extends StatelessWidget {
   final HomeController controller;
 
   static const _kModes = <(String, String, IconData)>[
-    ('Notes', 'Find and name notes on the neck', Icons.music_note_rounded),
+    ('Notes', 'Find and name notes on the neck', JhgIcons.note),
     ('Intervals', 'Name and build every interval', Icons.straighten_rounded),
     ('Chords', 'Name and build chord shapes', Icons.grid_goldenratio_rounded),
   ];
@@ -958,7 +962,7 @@ class _ModeOption extends StatelessWidget {
               ),
             ),
             if (isActive)
-              const Icon(Icons.check_rounded,
+              const Icon(JhgIcons.check,
                   color: JHGColors.primary, size: 18),
           ],
         ),
@@ -977,8 +981,8 @@ class _ControlRow extends StatelessWidget {
   IconData _resolveTimerIcon(String mode) {
     switch (mode) {
       case 'countdown':   return LucideIcons.clock;
-      case 'leaderboard': return LucideIcons.trophy;
-      default:            return LucideIcons.timer;
+      case 'leaderboard': return JhgIcons.trophy;
+      default:            return JhgIcons.duration;
     }
   }
 
@@ -1002,7 +1006,7 @@ class _ControlRow extends StatelessWidget {
           onTap: c.cycleGameMode,
         ),
 
-        // Play / Stop / Resume
+        // Play / Pause / Resume
         JhgTransportButton(
           key: tourKeyPlayButton,
           // Tapping while running pauses (Reset is the separate control), so
@@ -1022,7 +1026,7 @@ class _ControlRow extends StatelessWidget {
 
         // Reset
         JhgCircleIconButton(
-          icon: Icons.refresh_rounded,
+          icon: JhgIcons.reset,
           size: 56,
           iconSize: 22,
           onTap: () => c.resetGame(true),
@@ -1038,114 +1042,78 @@ class _ControlRow extends StatelessWidget {
 // answer options), so the score reads the same in every mode and never crowds
 // the prompt. "Score:" is white; the number is coral. On the collapsed tile it
 // also carries the running time on the right.
-class _ScoreBar extends StatelessWidget {
-  const _ScoreBar({required this.controller, this.showTime = false});
+/// Bare score readout — "Score: 12", centred, with nothing behind it. Used
+/// under the play button on the open panel.
+class _ScoreLine extends StatelessWidget {
+  const _ScoreLine({required this.score});
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          'Score:',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$score',
+          style: GoogleFonts.poppins(
+            color: JHGColors.primary,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The collapsed tile's status line — "Score 3 · 01:58" as plain text, with no
+/// pill or box behind it (the same line Ear Training uses). The time turns
+/// coral while the clock is running.
+class _ScoreTimeLine extends StatelessWidget {
+  const _ScoreTimeLine({required this.controller});
   final HomeController controller;
-  final bool showTime;
 
   @override
   Widget build(BuildContext context) {
     final c = controller;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: [
-          Text(
-            'Score:',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Score ${c.score}',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
           ),
-          const SizedBox(width: 8),
-          Text(
-            c.score.toString(),
-            style: GoogleFonts.poppins(
-              color: JHGColors.primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
+        ),
+        Text(
+          '  ·  ',
+          style: GoogleFonts.poppins(color: Colors.white30, fontSize: 15),
+        ),
+        Text(
+          c.formatTime(c.secondsRemaining.value),
+          style: GoogleFonts.poppins(
+            color: c.isStart ? JHGColors.primary : Colors.white54,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
           ),
-          const Spacer(),
-          if (showTime) ...[
-            Icon(LucideIcons.timer,
-                size: 14, color: Colors.white.withValues(alpha: 0.5)),
-            const SizedBox(width: 6),
-            Text(
-              c.formatTime(c.secondsRemaining.value),
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.85),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          // Manual save — snapshot the session so it can be resumed later.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              if (!c.sessionActive) {
-                showCustomToast(
-                  context: context,
-                  message: 'Start a round first, then you can save it.',
-                  isError: true,
-                );
-                return;
-              }
-              final result = await showSaveSessionDialog(
-                context,
-                defaultName: c.defaultSessionName(),
-              );
-              if (result == null) return; // backed out
-              final saved = await c.saveCurrentSession(
-                customName: result.name,
-                folderId: result.folderId,
-              );
-              if (!context.mounted) return;
-              showCustomToast(
-                context: context,
-                message: saved
-                    ? 'Saved. Find it under Saved in the bar below.'
-                    : 'Could not save that one. Give it another go.',
-                isError: !saved,
-              );
-            },
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: JHGColors.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(9),
-                border:
-                    Border.all(color: JHGColors.primary.withValues(alpha: 0.35)),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(LucideIcons.save,
-                    size: 14, color: JHGColors.primary),
-                const SizedBox(width: 5),
-                Text(
-                  'Save',
-                  style: GoogleFonts.inter(
-                    color: JHGColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ]),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1633,7 +1601,7 @@ class _ChordLabPanel extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.backspace_outlined,
+              const Icon(JhgIcons.backspace,
                   color: Colors.white60, size: 16),
               const SizedBox(width: 8),
               Text('Clear',
@@ -1863,7 +1831,7 @@ class _ChordBuildControls extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     )),
                 const SizedBox(width: 6),
-                const Icon(Icons.arrow_forward_rounded,
+                const Icon(JhgIcons.chevronRight,
                     color: Colors.white, size: 17),
               ]),
             ),
@@ -1892,13 +1860,13 @@ class _ChordBuildControls extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         pill(
-          icon: Icons.backspace_rounded,
+          icon: JhgIcons.backspace,
           label: 'Clear',
           onTap: (placed == 0 || done) ? null : c.clearChordBuild,
         ),
         const SizedBox(width: 8),
         pill(
-          icon: Icons.visibility_rounded,
+          icon: JhgIcons.visible,
           label: 'Reveal',
           tint: JHGColors.primary,
           onTap: done ? null : c.revealChordBuild,

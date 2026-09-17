@@ -39,7 +39,7 @@ Widget _wizardHeader({
     child: Row(
       children: [
         JhgIconChipButton.header(
-          icon: step == 0 ? LucideIcons.x : LucideIcons.chevronLeft,
+          icon: JhgIcons.back,
           onTap: onBack,
         ),
         const Spacer(),
@@ -359,7 +359,7 @@ class _RoundTypesSelector extends StatelessWidget {
                 ),
               ),
               child: on
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                  ? const Icon(JhgIcons.check, color: Colors.white, size: 16)
                   : null,
             ),
             const SizedBox(width: 14),
@@ -555,7 +555,7 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                  ? const Icon(JhgIcons.check, color: Colors.white, size: 14)
                   : null,
             ),
             const SizedBox(width: 14),
@@ -725,7 +725,6 @@ class _StartScreenState extends State<StartScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _ModeCard(
                         label: 'Continue',
-                        icon: JhgIcons.play,
                         subtitle:
                             'Pick up "${latest.displayName}" where you left off.',
                         onTap: () => _resume(latest),
@@ -736,7 +735,6 @@ class _StartScreenState extends State<StartScreen> {
 
               _ModeCard(
                 label: 'Quick start',
-                icon: Icons.bolt_rounded,
                 subtitle: 'Straight into Notes practice. You can swap modes '
                     'from the board whenever you like.',
                 onTap: _quickStart,
@@ -744,7 +742,6 @@ class _StartScreenState extends State<StartScreen> {
               const SizedBox(height: 12),
               _ModeCard(
                 label: 'Customized Practice',
-                icon: Icons.tune_rounded,
                 subtitle: 'Choose the mode, game and difficulty yourself.',
                 onTap: () => Get.to(() => const ModeSelectScreen(),
                     transition: Transition.noTransition,
@@ -784,7 +781,6 @@ class _SavedSessionsButton extends StatelessWidget {
           padding: const EdgeInsets.only(top: 12),
           child: _ModeCard(
             label: 'Saved Sessions',
-            icon: LucideIcons.save,
             subtitle: count == 0
                 ? 'Nothing in here yet. Hit Save while you practise.'
                 : count == 1
@@ -889,7 +885,7 @@ class RandomModeScreen extends StatelessWidget {
                       const SizedBox(height: 28),
                       _ModeCard(
                         label: 'Notes',
-                        icon: Icons.music_note_rounded,
+                        icon: JhgIcons.note,
                         subtitle:
                             'Learn where every note sits on the fretboard.',
                         onTap: _randomNotes,
@@ -905,7 +901,7 @@ class RandomModeScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       _ModeCard(
                         label: 'Chords',
-                        icon: Icons.grid_view_rounded,
+                        icon: JhgIcons.navModes,
                         subtitle:
                             'Spot and build common guitar chords.',
                         onTap: _randomChord,
@@ -997,7 +993,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                       const SizedBox(height: 28),
                       _ModeCard(
                         label: 'Notes',
-                        icon: Icons.music_note_rounded,
+                        icon: JhgIcons.note,
                         subtitle:
                             'Learn where every note sits on the fretboard.',
                         onTap: _selectNotes,
@@ -1013,7 +1009,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                       const SizedBox(height: 12),
                       _ModeCard(
                         label: 'Chords',
-                        icon: Icons.grid_view_rounded,
+                        icon: JhgIcons.navModes,
                         subtitle:
                             'Spot and build common guitar chords.',
                         onTap: _selectChord,
@@ -1684,7 +1680,7 @@ class _ModeCardState extends State<_ModeCard> {
             ),
             const SizedBox(width: 12),
             const JhgIconChipButton.compact(
-              icon: LucideIcons.chevronRight,
+              icon: JhgIcons.chevronRight,
               onTap: null,
               isActive: true,
             ),

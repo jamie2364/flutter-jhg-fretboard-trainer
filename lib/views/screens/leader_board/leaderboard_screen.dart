@@ -83,7 +83,7 @@ class _EmptyLeaderboard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.trophy,
+          Icon(JhgIcons.trophy,
               color: Colors.white.withValues(alpha: 0.25), size: 40),
           const SizedBox(height: 12),
           Text(
@@ -127,7 +127,7 @@ class LeaderLandscapeView extends StatelessWidget {
                 width: 8.w,
               ),
               trailingWidget: JhgIconChipButton.header(
-                icon: LucideIcons.chevronRight,
+                icon: JhgIcons.chevronRight,
                 onTap: () => Get.back(),
               ),
               bottom: leaderBoardTitleWidget(),

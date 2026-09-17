@@ -145,7 +145,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
   Widget build(BuildContext context) {
     final folders = _flatten();
     return JHGFrostedDialog(
-      icon: LucideIcons.save,
+      icon: JhgIcons.save,
       title: 'Save this session',
       description: 'Give it a name and pick where it should live.',
       content: Column(
@@ -199,7 +199,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
                   for (final (f, depth) in folders)
                     _FolderChoice(
                       label: f.name,
-                      icon: LucideIcons.folder,
+                      icon: JhgIcons.folder,
                       depth: depth + 1,
                       selected: _folderId == f.id,
                       onTap: () => setState(() => _folderId = f.id),
@@ -283,7 +283,7 @@ class _FolderChoice extends StatelessWidget {
                       fontWeight: FontWeight.w500)),
             ),
             if (selected)
-              const Icon(Icons.check_rounded, color: _kPrimary, size: 16),
+              const Icon(JhgIcons.check, color: _kPrimary, size: 16),
           ],
         ),
       ),

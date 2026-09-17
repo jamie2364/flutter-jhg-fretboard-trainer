@@ -13,6 +13,7 @@
 //
 // It reads nothing itself — the parent passes in the already-loaded breakdown.
 
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -130,7 +131,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
   IconData get _icon {
     switch (module) {
       case 0:
-        return Icons.music_note_rounded;
+        return JhgIcons.note;
       case 1:
         return Icons.straighten_rounded;
       case 2:
@@ -392,7 +393,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         : '${improved ? '+' : ''}$delta% since ${_dayLabel(first.day)}';
     return Row(
       children: [
-        Icon(improved ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+        Icon(improved ? JhgIcons.trendUp : JhgIcons.trendDown,
             color: color, size: 16),
         const SizedBox(width: 6),
         Text(
@@ -498,8 +499,8 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             children: [
               Icon(
                 positive
-                    ? Icons.emoji_events_rounded
-                    : Icons.trending_up_rounded,
+                    ? JhgIcons.trophy
+                    : JhgIcons.trendUp,
                 color: color,
                 size: 15,
               ),
@@ -652,8 +653,8 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
               children: [
                 Icon(
                   s == _sort
-                      ? Icons.radio_button_checked_rounded
-                      : Icons.radio_button_unchecked_rounded,
+                      ? JhgIcons.radioOn
+                      : JhgIcons.radioOff,
                   size: 16,
                   color: s == _sort ? _cCoral : Colors.white38,
                 ),
@@ -680,7 +681,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.swap_vert_rounded, size: 15, color: Colors.white54),
+            const Icon(JhgIcons.sort, size: 15, color: Colors.white54),
             const SizedBox(width: 5),
             Text(
               _sortLabel(_sort),
@@ -1471,7 +1472,7 @@ class _EmptyState extends StatelessWidget {
                 color: _cCoral.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.insights_rounded, color: _cCoral, size: 34),
+              child: const Icon(JhgIcons.navStats, color: _cCoral, size: 34),
             ),
             const SizedBox(height: 18),
             Text(

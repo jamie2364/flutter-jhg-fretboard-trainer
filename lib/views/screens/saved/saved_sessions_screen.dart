@@ -91,7 +91,7 @@ class SavedSessionsScreen extends StatelessWidget {
           builder: (context, candidate, __) {
             final hot = candidate.isNotEmpty;
             return JhgIconChipButton.header(
-              icon: LucideIcons.chevronLeft,
+              icon: JhgIcons.back,
               onTap: null,
               isActive: hot,
             );
@@ -159,7 +159,7 @@ class SavedSessionsScreen extends StatelessWidget {
                 _sortItem(LibrarySortMode.byDateAsc, 'Oldest first', sortMode),
                 _sortItem(LibrarySortMode.byName, 'A to Z', sortMode),
               ],
-              child: _squareBtn(const Icon(LucideIcons.arrowUpDown,
+              child: _squareBtn(const Icon(JhgIcons.sort,
                   color: Colors.white54, size: 16)),
             ),
             const SizedBox(width: 8),
@@ -233,7 +233,7 @@ class SavedSessionsScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.folderOpen, color: _kFaint, size: 52),
+                const Icon(JhgIcons.folderOpen, color: _kFaint, size: 52),
                 const SizedBox(height: 16),
                 Text(
                     searching
@@ -355,10 +355,10 @@ class SavedSessionsScreen extends StatelessWidget {
     _showActionDialog(
       context,
       title: f.name,
-      icon: LucideIcons.folder,
+      icon: JhgIcons.folder,
       actions: [
         _SheetActionData(
-          icon: LucideIcons.pencil,
+          icon: JhgIcons.edit,
           label: 'Rename',
           onTap: () => _showNameDialog(
             context,
@@ -383,7 +383,7 @@ class SavedSessionsScreen extends StatelessWidget {
               _DragPayload(isFolder: true, id: f.id, name: f.name)),
         ),
         _SheetActionData(
-          icon: LucideIcons.trash2,
+          icon: JhgIcons.delete,
           label: 'Delete',
           destructive: true,
           onTap: () => _confirmDelete(
@@ -410,7 +410,7 @@ class SavedSessionsScreen extends StatelessWidget {
           onTap: () => _resume(s),
         ),
         _SheetActionData(
-          icon: LucideIcons.pencil,
+          icon: JhgIcons.edit,
           label: 'Rename',
           onTap: () => _showNameDialog(
             context,
@@ -435,7 +435,7 @@ class SavedSessionsScreen extends StatelessWidget {
               _DragPayload(isFolder: false, id: s.id, name: s.displayName)),
         ),
         _SheetActionData(
-          icon: LucideIcons.trash2,
+          icon: JhgIcons.delete,
           label: 'Delete',
           destructive: true,
           onTap: () => _confirmDelete(
@@ -517,7 +517,7 @@ class SavedSessionsScreen extends StatelessWidget {
     showJHGBlurDialog(
       context: context,
       builder: (ctx) => JHGFrostedDialog(
-        icon: LucideIcons.trash2,
+        icon: JhgIcons.delete,
         title: title,
         description: message,
         content: Column(
@@ -739,7 +739,7 @@ class _FolderTile extends StatelessWidget {
         final tint = _libTint(folder.colorValue);
         return LongPressDraggable<_DragPayload>(
           data: _DragPayload(isFolder: true, id: folder.id, name: folder.name),
-          feedback: _DragChip(icon: LucideIcons.folder, label: folder.name),
+          feedback: _DragChip(icon: JhgIcons.folder, label: folder.name),
           child: GestureDetector(
             onTap: onTap,
             child: AnimatedContainer(
@@ -755,7 +755,7 @@ class _FolderTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _IconBadge(
-                            icon: LucideIcons.folder, tint: tint, iconSize: 24),
+                            icon: JhgIcons.folder, tint: tint, iconSize: 24),
                         const Spacer(),
                         _MenuButton(onTap: onMenu),
                       ],
@@ -816,7 +816,7 @@ class _FolderRow extends StatelessWidget {
         final tint = _libTint(folder.colorValue);
         return LongPressDraggable<_DragPayload>(
           data: _DragPayload(isFolder: true, id: folder.id, name: folder.name),
-          feedback: _DragChip(icon: LucideIcons.folder, label: folder.name),
+          feedback: _DragChip(icon: JhgIcons.folder, label: folder.name),
           child: GestureDetector(
             onTap: onTap,
             child: AnimatedContainer(
@@ -826,7 +826,7 @@ class _FolderRow extends StatelessWidget {
               child: Row(
                 children: [
                   _IconBadge(
-                      icon: LucideIcons.folder,
+                      icon: JhgIcons.folder,
                       tint: tint,
                       size: 40,
                       iconSize: 19),
@@ -1214,7 +1214,7 @@ class _MoveDialog extends StatelessWidget {
               ),
               for (final (f, depth) in rows)
                 _MoveRow(
-                  icon: LucideIcons.folder,
+                  icon: JhgIcons.folder,
                   label: f.name,
                   depth: depth + 1,
                   enabled: _enabledFor(f.id, currentParent),
@@ -1316,7 +1316,7 @@ class _LibNameDialogState extends State<_LibNameDialog> {
   @override
   Widget build(BuildContext context) {
     return JHGFrostedDialog(
-      icon: LucideIcons.pencil,
+      icon: JhgIcons.edit,
       title: widget.title,
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1474,7 +1474,7 @@ class _ColorDot extends StatelessWidget {
         child: isClear
             ? const Icon(LucideIcons.ban, color: _kFaint, size: 18)
             : (selected
-                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                ? const Icon(JhgIcons.check, color: Colors.white, size: 20)
                 : null),
       ),
     );

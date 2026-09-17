@@ -7,6 +7,7 @@
 // Select-all / Clear row, and a checkbox list. Reused by the customize-session
 // Intervals step (and, later, the Chord Lab key / tonality steps).
 
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -182,8 +183,8 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
             ),
             Icon(
               _open
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
+                  ? JhgIcons.chevronUp
+                  : JhgIcons.chevronDown,
               color: Colors.white54,
             ),
           ],
@@ -225,7 +226,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search_rounded,
+                    const Icon(JhgIcons.search,
                         color: Colors.white38, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
@@ -356,7 +357,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
           ),
         ),
         child: on
-            ? const Icon(Icons.check_rounded, color: Colors.white, size: 15)
+            ? const Icon(JhgIcons.check, color: Colors.white, size: 15)
             : null,
       );
 }

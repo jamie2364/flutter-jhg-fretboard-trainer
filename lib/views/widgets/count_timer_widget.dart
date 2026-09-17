@@ -75,7 +75,7 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _TimerAdjustButton(
-          icon: LucideIcons.minus,
+          icon: JhgIcons.remove,
           enabled: widget.isEnabled,
           onTap: _decrement,
           onLongPressStart: () => _startRepeating(_decrement),
@@ -90,7 +90,7 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
           ),
         ),
         _TimerAdjustButton(
-          icon: LucideIcons.plus,
+          icon: JhgIcons.add,
           enabled: widget.isEnabled,
           onTap: _increment,
           onLongPressStart: () => _startRepeating(_increment),

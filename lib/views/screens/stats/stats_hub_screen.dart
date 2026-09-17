@@ -7,7 +7,8 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_jhg_elements/jhg_elements.dart' show JhgIconChipButton, JhgScreenHeader, LucideIcons;
+import 'package:flutter_jhg_elements/jhg_elements.dart'
+    show JhgIconChipButton, JhgIcons, JhgScreenHeader;
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
@@ -47,7 +48,7 @@ class _GameSpec {
 
 const List<_GameSpec> _games = [
   _GameSpec(0, 'Notes', 'Find and name notes on the neck',
-      Icons.music_note_rounded, Color(0xFF34C6A5), [
+      JhgIcons.note, Color(0xFF34C6A5), [
     ('find', 'Find'),
     ('identify', 'Identify'),
   ]),
@@ -244,7 +245,7 @@ class _GameCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded,
+                const Icon(JhgIcons.chevronRight,
                     color: Colors.white30, size: 22),
               ],
             ),
@@ -403,7 +404,7 @@ class _LeaderboardTile extends StatelessWidget {
         child: Row(
           children: [
             const JhgIconChipButton.badge(
-              icon: LucideIcons.trophy,
+              icon: JhgIcons.trophy,
               color: _gold,
             ),
             const SizedBox(width: 15),
@@ -430,7 +431,7 @@ class _LeaderboardTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded,
+            Icon(JhgIcons.chevronRight,
                 color: _gold.withValues(alpha: 0.85), size: 24),
           ],
         ),

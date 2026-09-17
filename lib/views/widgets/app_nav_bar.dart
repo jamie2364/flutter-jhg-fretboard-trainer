@@ -155,7 +155,7 @@ class AppNavBar extends StatelessWidget {
     showJHGBlurDialog(
       context: context,
       builder: (ctx) => JHGFrostedDialog(
-        icon: LucideIcons.save,
+        icon: JhgIcons.save,
         title: 'Leave this session?',
         description: 'Save it and you can pick it up again from Saved '
             'Sessions, or just leave it.',
@@ -235,19 +235,19 @@ class AppNavBar extends StatelessWidget {
       inactiveColor: _kNavInactive,
       items: [
         JHGNavItem(
-          icon: LucideIcons.home,
+          icon: JhgIcons.navHome,
           label: 'Home',
           isActive: activeTab == AppTab.home,
           onTap: () => _navigate(AppTab.home, context),
         ),
         JHGNavItem(
-          icon: LucideIcons.dumbbell,
+          icon: JhgIcons.navPractice,
           label: 'Practice',
           isActive: activeTab == AppTab.train,
           onTap: () => _navigate(AppTab.train, context),
         ),
         JHGNavItem(
-          icon: LucideIcons.save,
+          icon: JhgIcons.navSaved,
           label: 'Saved',
           isActive: activeTab == AppTab.saved,
           onTap: () => _navigate(AppTab.saved, context),
@@ -256,13 +256,13 @@ class AppNavBar extends StatelessWidget {
           // Tour key only needed on the training board (where the tour
           // runs); other screens would duplicate the same GlobalKey.
           itemKey: activeTab == AppTab.train ? tourKeyHeatmapNav : null,
-          icon: Icons.insights_rounded,
+          icon: JhgIcons.navStats,
           label: 'Stats',
           isActive: activeTab == AppTab.heatmap,
           onTap: () => _navigate(AppTab.heatmap, context),
         ),
         JHGNavItem(
-          icon: LucideIcons.settings,
+          icon: JhgIcons.navSettings,
           label: 'Settings',
           isActive: activeTab == AppTab.settings,
           onTap: () => _navigate(AppTab.settings, context),

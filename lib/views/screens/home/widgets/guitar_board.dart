@@ -788,7 +788,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ],
         ),
         child: const Center(
-          child: Icon(Icons.question_mark_rounded,
+          child: Icon(JhgIcons.help,
               color: Colors.white, size: 15),
         ),
       ),
@@ -1311,7 +1311,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ],
                 ),
                 child: const Center(
-                  child: Icon(Icons.question_mark_rounded,
+                  child: Icon(JhgIcons.help,
                       color: Colors.white, size: 15),
                 ),
               )
