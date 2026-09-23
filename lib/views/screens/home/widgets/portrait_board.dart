@@ -6,7 +6,7 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
-import 'package:fretboard/features/tour/tour_keys.dart';
+import 'package:fretboard/features/tour/fretboard_tour.dart';
 import 'package:fretboard/views/screens/home/widgets/guitar_board.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/views/screens/saved/save_session_dialog.dart';
@@ -96,7 +96,10 @@ class _PortraitBoardState extends State<PortraitBoard> {
                 child: Row(
                   children: [
                     if (c.quickStartSession)
-                      _BoardModeSwitcher(controller: c),
+                      KeyedSubtree(
+                        key: fretboardTourKeys.modeSwitcher,
+                        child: _BoardModeSwitcher(controller: c),
+                      ),
                     const Spacer(),
                     JhgIconChipButton.header(
                       icon: JhgIcons.save,
@@ -107,59 +110,65 @@ class _PortraitBoardState extends State<PortraitBoard> {
               ),
               const SizedBox(height: 6),
 
+              // Neither a TourReserve nor a TourOpenSpace on this screen, and
+              // that is deliberate. The neck runs the full height, so any region
+              // offered to the tour is frets and any region reserved pushes the
+              // instruction down onto them. Left to plain geometry, a step whose
+              // target sits low (or has none) anchors at the very top of the
+              // screen, above the nut — the only placement that leaves the neck
+              // itself clear.
               // ── Fretboard fills full Expanded height at all times ────────
               // Both the expanded panel and the collapsed tile are Positioned
               // overlays so the GuitarBoard always gets the full space.
               Expanded(
-                key: tourKeyFretboard,
+                key: fretboardTourKeys.fretboard,
                 child: Stack(
-                  children: [
-                    // The fixed-pixel GuitarBoard fills the whole area and the
-                    // tile floats OVER its lower portion (matches drills /
-                    // dictionaries) — the neck runs behind the tile rather than
-                    // being clipped above it. Auto-scroll keeps the active notes
-                    // centred in the open area above the tile.
-                    const Positioned.fill(
-                      child: GuitarBoard(isPortrait: true),
-                    ),
-
-                    // One bottom overlay that swaps between the expanded
-                    // card and the collapsed tile. The swap is instant (no
-                    // height morph, no cross-fade) — the same behaviour as the
-                    // Ear Training control tile. Only one state is built at a
-                    // time, so the tour's play-button GlobalKey is never
-                    // duplicated across a transition.
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                        child: _panelCollapsed
-                            ? _CollapsedTile(
-                                controller: c,
-                                isReverse: isReverse,
-                                isInterval: isInterval,
-                                isChord: isChord,
-                                onExpand: () => _setCollapsed(false),
-                              )
-                            : _ExpandedPanel(
-                                controller: c,
-                                isReverse: isReverse,
-                                isInterval: isInterval,
-                                isChord: isChord,
-                                onCollapse: () => _setCollapsed(true),
-                              ),
+                    children: [
+                      // The fixed-pixel GuitarBoard fills the whole area and the
+                      // tile floats OVER its lower portion (matches drills /
+                      // dictionaries) — the neck runs behind the tile rather than
+                      // being clipped above it. Auto-scroll keeps the active notes
+                      // centred in the open area above the tile.
+                      const Positioned.fill(
+                        child: GuitarBoard(isPortrait: true),
                       ),
-                    ),
-                  ],
-                ),
+
+                      // One bottom overlay that swaps between the expanded
+                      // card and the collapsed tile. The swap is instant (no
+                      // height morph, no cross-fade) — the same behaviour as the
+                      // Ear Training control tile. Only one state is built at a
+                      // time, so the tour's play-button GlobalKey is never
+                      // duplicated across a transition.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          child: _panelCollapsed
+                              ? _CollapsedTile(
+                                  controller: c,
+                                  isReverse: isReverse,
+                                  isInterval: isInterval,
+                                  isChord: isChord,
+                                  onExpand: () => _setCollapsed(false),
+                                )
+                              : _ExpandedPanel(
+                                  controller: c,
+                                  isReverse: isReverse,
+                                  isInterval: isInterval,
+                                  isChord: isChord,
+                                  onCollapse: () => _setCollapsed(true),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
               ),
 
               // ── Nav bar (shared AppNavBar, so height/placement stay
               // identical across the board and every other screen) ──────────
               AppNavBar(
-                key: tourKeyNavBar,
                 activeTab: AppTab.train,
                 controller: c,
               ),
@@ -287,12 +296,7 @@ class _ExpandedPanel extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ── Timer — lives in the tile now (not the top) ──────────────
-          Center(
-            child: KeyedSubtree(
-              key: tourKeyTimer,
-              child: const CountTimerWidget(),
-            ),
-          ),
+          const Center(child: CountTimerWidget()),
           const SizedBox(height: 14),
 
           // ── Content: depends on game state ───────────────────────────
@@ -536,6 +540,10 @@ class _CollapsedTile extends StatelessWidget {
     }
 
     final playBtn = JhgTransportButton(
+      // Same key as the open panel's transport. Only one tile state is built at
+      // a time, and starting a round collapses the panel — so without this the
+      // spotlight loses its target at the exact moment the step completes.
+      key: fretboardTourKeys.playButton,
       state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
       size: 44,
       iconSize: 18,
@@ -553,6 +561,7 @@ class _CollapsedTile extends StatelessWidget {
 
     // Skip → draw a fresh question, no score change. Only while a round runs.
     final skipBtn = JhgIconChipButton(
+      key: fretboardTourKeys.skipButton,
       icon: JhgIcons.next,
       onTap: c.skipQuestion,
       size: 44,
@@ -807,9 +816,9 @@ class _BoardModeSwitcher extends StatelessWidget {
     }
   }
 
-  void _openPicker(BuildContext context) {
+  Future<void> _openPicker(BuildContext context) async {
     final active = _activeIndex;
-    showJHGBlurDialog(
+    await showJHGBlurDialog(
       context: context,
       builder: (ctx) => JHGFrostedDialog(
         icon: LucideIcons.layoutGrid,
@@ -836,6 +845,9 @@ class _BoardModeSwitcher extends StatelessWidget {
         ),
       ),
     );
+    // Fires whichever way it went, so the tour's last step ends when the picker
+    // does rather than forcing anyone to abandon the mode they chose.
+    controller.modeSwitcherRevision.value++;
   }
 
   @override
@@ -1008,7 +1020,7 @@ class _ControlRow extends StatelessWidget {
 
         // Play / Pause / Resume
         JhgTransportButton(
-          key: tourKeyPlayButton,
+          key: fretboardTourKeys.playButton,
           // Tapping while running pauses (Reset is the separate control), so
           // show a pause glyph — a stop icon promised something else.
           state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,

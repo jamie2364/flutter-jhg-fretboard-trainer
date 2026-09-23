@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
@@ -14,6 +15,11 @@ import 'package:fretboard/models/saved_session.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/utils/board_nav.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
+import 'package:fretboard/features/tour/fretboard_tour.dart';
+import 'package:fretboard/features/tour/tour_anchor.dart';
+import 'package:fretboard/features/tour/tour_controller.dart';
+import 'package:fretboard/features/tour/tour_overlay.dart';
+import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -647,6 +653,9 @@ class StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<StartScreen> {
+  late final TourController _tour;
+  final _keys = fretboardTourKeys;
+
   @override
   void initState() {
     super.initState();
@@ -655,6 +664,27 @@ class _StartScreenState extends State<StartScreen> {
     // mode it is already parsed, so the first play never stalls.
     Get.find<HomeController>();
     SavedSessionsService.refreshCount();
+
+    // The tour is registered and started HERE, not on the board. The old one
+    // lived in the board's own initState, so it never ran on the screen the
+    // user actually lands on, and its first instruction described a wizard they
+    // had not opened.
+    _tour = ensureFretboardTour();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Not on web. Its board is a different layout with different controls,
+      // and a tour aimed at controls that are not on screen is worse than none.
+      if (kIsWeb || !mounted) return;
+      if (await TourService.hasSeenTour() || !mounted) return;
+      _startTour();
+    });
+  }
+
+  void _startTour() {
+    // The heat map keeps its own first-visit intro. The tour no longer has a
+    // step for it — a first round is not the time to teach a stats screen — so
+    // arm it here instead, for whenever the player first opens Train.
+    TourService.scheduleHeatmapIntro();
+    _tour.start();
   }
 
   /// Quick start is the fastest way in: whole-neck Notes practice (Find mode),
@@ -690,7 +720,13 @@ class _StartScreenState extends State<StartScreen> {
         constraints: const BoxConstraints(maxWidth: 520),
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
+          // The whole block is this screen's content, so the tour sits in the
+          // band above it rather than on top of the cards it is asking the user
+          // to read. Scoped: Home stays mounted under the board and would
+          // otherwise fence off the board's placement too.
+          child: TourReserve(
+            screenId: TourScreens.start,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -733,11 +769,16 @@ class _StartScreenState extends State<StartScreen> {
                   },
                 ),
 
-              _ModeCard(
-                label: 'Quick start',
-                subtitle: 'Straight into Notes practice. You can swap modes '
-                    'from the board whenever you like.',
-                onTap: _quickStart,
+              // Keyed through a KeyedSubtree so _ModeCard stays a plain
+              // private widget.
+              KeyedSubtree(
+                key: _keys.quickStart,
+                child: _ModeCard(
+                  label: 'Quick start',
+                  subtitle: 'Straight into Notes practice. You can swap modes '
+                      'from the board whenever you like.',
+                  onTap: _quickStart,
+                ),
               ),
               const SizedBox(height: 12),
               _ModeCard(
@@ -749,17 +790,32 @@ class _StartScreenState extends State<StartScreen> {
               ),
               if (!firstRun) const _SavedSessionsButton(),
             ],
+            ),
           ),
         ),
       ),
     );
 
-    return Scaffold(
-      backgroundColor: _kBg,
-      // No nav bar on a first run: two ways in and nothing else to weigh up.
-      bottomNavigationBar:
-          firstRun ? null : const AppNavBar(activeTab: AppTab.home),
-      body: SafeArea(bottom: false, child: content),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Scaffold(
+          backgroundColor: _kBg,
+          // No nav bar on a first run: two ways in and nothing else to weigh up.
+          bottomNavigationBar:
+              firstRun ? null : const AppNavBar(activeTab: AppTab.home),
+          body: SafeArea(bottom: false, child: content),
+        ),
+        // Above the Scaffold rather than inside its body, so the fence reaches
+        // the nav bar slot too and nobody taps out of the tour into another tab.
+        Obx(() {
+          if (!_tour.isVisible.value) return const SizedBox.shrink();
+          return TourOverlay(
+            controller: _tour,
+            ownerScreenId: TourScreens.start,
+          );
+        }),
+      ],
     );
   }
 }

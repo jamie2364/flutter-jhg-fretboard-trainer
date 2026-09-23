@@ -150,6 +150,25 @@ class HomeController extends GetxController {
   VoidCallback? onFretTappedDuringTour;
   VoidCallback? onAnswerSelectedDuringTour;
 
+  /// Counters the guided tour waits on. [isStart] and [score] are plain fields
+  /// pushed through [update], so there is nothing to listen to otherwise, and a
+  /// tour step that waits on a real action needs a stream.
+  final RxInt roundsStarted = 0.obs;
+
+  /// Any answer, right or wrong. The tour waits on this rather than on the
+  /// score: a guided step that only lets you past on a correct answer is a test,
+  /// and it strands anyone who cannot find the note it asked for.
+  final RxInt answersGiven = 0.obs;
+
+  /// Skips taken, and string chips toggled. Both are plain board state pushed
+  /// through [update], so the tour has nothing to wait on without these.
+  final RxInt skipsUsed = 0.obs;
+  final RxInt stringToggles = 0.obs;
+
+  /// Bumped each time the board's Modes picker closes, whether the user
+  /// switched or backed out. The picker is a route, so nothing else observes it.
+  final RxInt modeSwitcherRevision = 0.obs;
+
   int? selectedFret;
   String? selectedNote;
   int? selectedString;
@@ -326,6 +345,7 @@ class HomeController extends GetxController {
 
   void incrementScore() {
     score = score + 1;
+    answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.green;
     // Answer feedback: cheerful cue + a light tick. Every answer path routes
@@ -337,6 +357,7 @@ class HomeController extends GetxController {
 
   void decrementScore() {
     score = score - 1;
+    answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.primary;
     // Answer feedback: buzzer + a firmer tap so a miss is felt as well as heard.
@@ -391,6 +412,7 @@ class HomeController extends GetxController {
   void startTheGame() {
     isStart = true;
     isPaused = false;
+    roundsStarted.value++;
     if (isIntervalMode) {
       if (isIntervalBuild) {
         newBuildIntervalPrompt();
@@ -1067,6 +1089,7 @@ class HomeController extends GetxController {
   /// in every mode.
   void skipQuestion() {
     if (!isStart) return;
+    skipsUsed.value++;
     if (isChordMode) {
       _startNextChordRound();
       return;
@@ -1562,6 +1585,7 @@ class HomeController extends GetxController {
   void setStringActive(int stringNumber, bool active) {
     final idx = 6 - stringNumber; // string6→0 (low E) … string1→5 (high e)
     if (idx < 0 || idx >= offString.length) return;
+    stringToggles.value++;
     switch (stringNumber) {
       case 1: string1 = active;
       case 2: string2 = active;

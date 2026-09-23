@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
-import 'package:fretboard/features/tour/tour_controller.dart';
+import 'package:fretboard/features/tour/fretboard_tour.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
@@ -414,9 +414,13 @@ class _SupportSection extends StatelessWidget {
 
 void _replayTour() async {
   await TourService.resetTour();
-  if (Get.isRegistered<TourController>()) {
-    Get.back();
-    await Future.delayed(const Duration(milliseconds: 350));
-    Get.find<TourController>().start();
-  }
+  final tour = fretboardTourOrNull;
+  if (tour == null) return;
+  // All the way back to Home, not one route back. The tour opens on Home's
+  // Quick start card, and Settings can be reached from the board — popping once
+  // would land on the board with the tour waiting on a screen buried under it.
+  Get.until((r) => r.isFirst);
+  await Future.delayed(const Duration(milliseconds: 350));
+  TourService.scheduleHeatmapIntro();
+  tour.start();
 }

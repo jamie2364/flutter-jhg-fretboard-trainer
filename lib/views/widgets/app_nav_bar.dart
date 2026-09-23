@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
-import 'package:fretboard/features/tour/tour_keys.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/routes.dart';
@@ -253,9 +252,6 @@ class AppNavBar extends StatelessWidget {
           onTap: () => _navigate(AppTab.saved, context),
         ),
         JHGNavItem(
-          // Tour key only needed on the training board (where the tour
-          // runs); other screens would duplicate the same GlobalKey.
-          itemKey: activeTab == AppTab.train ? tourKeyHeatmapNav : null,
           icon: JhgIcons.navStats,
           label: 'Stats',
           isActive: activeTab == AppTab.heatmap,

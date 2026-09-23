@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/features/tour/fretboard_tour.dart';
 import 'package:fretboard/models/freth_list.dart';
 import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/utils/app_colors.dart';
@@ -523,6 +524,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     const stringCenters = [15.0, 48.5, 82.0, 115.5, 149.0, 182.5];
 
     return SizedBox(
+      key: interactive ? fretboardTourKeys.stringChips : null,
       height: 30,
       width: _kBoardWidth,
       child: Stack(

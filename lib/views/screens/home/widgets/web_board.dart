@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
-import 'package:fretboard/features/tour/tour_keys.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
@@ -84,13 +83,12 @@ class _WebBoardState extends State<WebBoard> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // ── Timer — always at top ──────────────────────────────────────
-              KeyedSubtree(key: tourKeyTimer, child: const CountTimerWidget()),
+              const CountTimerWidget(),
 
               // ── Fretboard fills full Expanded height at all times ──────────
               // Both the expanded panel and the collapsed tile are Positioned
               // overlays so the guitar board always gets the full space.
               Expanded(
-                key: tourKeyFretboard,
                 child: Stack(
                   children: [
                     // Fretboard + collapsed tile in a centred Row so the
@@ -375,7 +373,6 @@ class _ExpandedPanel extends StatelessWidget {
             GestureDetector(
               onTap: onModeTap,
               child: Container(
-                key: tourKeyModeChip,
                 height: 44,
                 decoration: BoxDecoration(
                   color: _kPanelBg,
@@ -732,7 +729,6 @@ class _ControlRow extends StatelessWidget {
 
         // Play / Pause / Resume
         JhgTransportButton(
-          key: tourKeyPlayButton,
           state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
           size: 72,
           iconSize: 36,
