@@ -143,8 +143,12 @@ class _PortraitBoardState extends State<PortraitBoard> {
                         left: 0,
                         right: 0,
                         bottom: 0,
+                        // Flush to the bottom (the nav bar) — no gap. A gap here
+                        // let the ivory neck show through between the tile and
+                        // the bar; drills / dictionaries seat the tile hard
+                        // against the bottom so the fretboard ends at the tile.
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                           child: _panelCollapsed
                               ? _CollapsedTile(
                                   controller: c,

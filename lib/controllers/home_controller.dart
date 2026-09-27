@@ -306,7 +306,9 @@ class HomeController extends GetxController {
             }
             previousHighlightFret = highlightFret;
             previousHighlightNode = highlightNode;
-            incrementScore();
+            // The fret's note already sounded above, so skip the extra
+            // correct-answer cue — otherwise both play at once.
+            incrementScore(playFeedback: false);
             highLightTheGame();
             Future.delayed(const Duration(milliseconds: 300), () {
               selectedFret = null;
@@ -323,7 +325,9 @@ class HomeController extends GetxController {
               unawaited(
                   PracticeStatsService.recordHistory(StatsModule.note, false));
             }
-            decrementScore();
+            // The fret's note already sounded above, so skip the extra
+            // wrong-answer buzzer — otherwise both play at once.
+            decrementScore(playFeedback: false);
           }
           update();
           // Notify the interactive tour that the user tapped a fret.
@@ -343,25 +347,30 @@ class HomeController extends GetxController {
 
   int score = 0;
 
-  void incrementScore() {
+  void incrementScore({bool playFeedback = true}) {
     score = score + 1;
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.green;
-    // Answer feedback: cheerful cue + a light tick. Every answer path routes
-    // through here, so all modes get consistent feedback.
-    unawaited(FeedbackSounds.instance.playCorrect());
+    // Answer feedback: cheerful cue + a light tick. Callers that answer by
+    // tapping a fret (find, interval/chord build, chord lab) pass
+    // playFeedback:false, because the fret's own note has just sounded and a
+    // second cue on top of it just muddies the moment. Button-answer modes
+    // (identify, name interval/chord) keep the cue.
+    if (playFeedback) unawaited(FeedbackSounds.instance.playCorrect());
     unawaited(HapticFeedback.lightImpact());
     update();
   }
 
-  void decrementScore() {
+  void decrementScore({bool playFeedback = true}) {
     score = score - 1;
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.primary;
     // Answer feedback: buzzer + a firmer tap so a miss is felt as well as heard.
-    unawaited(FeedbackSounds.instance.playWrong());
+    // Board-tap answers pass playFeedback:false (the fret note already sounded);
+    // button-answer modes keep the buzzer. See incrementScore for the full list.
+    if (playFeedback) unawaited(FeedbackSounds.instance.playWrong());
     unawaited(HapticFeedback.mediumImpact());
     update();
   }
@@ -926,7 +935,8 @@ class HomeController extends GetxController {
 
     if (isCorrect) {
       selectedColor = JHGColors.green;
-      incrementScore();
+      // The tapped fret's note already sounded above, so skip the extra cue.
+      incrementScore(playFeedback: false);
       final delay = identifyAutoAdvance
           ? const Duration(milliseconds: 350)
           : const Duration(milliseconds: 700);
@@ -939,7 +949,8 @@ class HomeController extends GetxController {
       intervalBuildRevealIndex = intervalRootIndex == null
           ? null
           : fretList.indexOf(intervalPrompt!.target);
-      decrementScore();
+      // The tapped fret's note already sounded above, so skip the extra buzzer.
+      decrementScore(playFeedback: false);
       Future.delayed(const Duration(milliseconds: 1300), () {
         if (isStart) newBuildIntervalPrompt();
       });
@@ -1268,7 +1279,8 @@ class HomeController extends GetxController {
       chordBuildDone = true;
       selectedColor = JHGColors.green;
       _recordChordStat(true);
-      incrementScore();
+      // The tapped fret's note already sounded above, so skip the extra cue.
+      incrementScore(playFeedback: false);
       final delay = identifyAutoAdvance
           ? const Duration(milliseconds: 450)
           : const Duration(milliseconds: 850);
@@ -1422,7 +1434,8 @@ class HomeController extends GetxController {
           // Removing a real chord tone is wrong — dock a point, flash the note
           // red so the tap clearly registers, and keep it in place.
           _labHadWrong = true;
-          decrementScore();
+          // The tapped fret's note already sounded above, so skip the buzzer.
+          decrementScore(playFeedback: false);
           _flashLab(index);
         }
 
@@ -1448,7 +1461,8 @@ class HomeController extends GetxController {
           // A note that can't belong to any valid voicing — reject it with a
           // red flash so the tap is clearly acknowledged.
           _labHadWrong = true;
-          decrementScore();
+          // The tapped fret's note already sounded above, so skip the buzzer.
+          decrementScore(playFeedback: false);
           _flashLab(index);
         }
     }
@@ -1468,7 +1482,8 @@ class HomeController extends GetxController {
     selectedColor = JHGColors.green;
     // A board round counts as "known" only if solved with no wrong taps.
     _recordLabStat(!_labHadWrong);
-    incrementScore();
+    // The winning tap's fret note already sounded, so skip the extra cue.
+    incrementScore(playFeedback: false);
     _advanceChordLab(delay: const Duration(milliseconds: 850));
     update();
   }

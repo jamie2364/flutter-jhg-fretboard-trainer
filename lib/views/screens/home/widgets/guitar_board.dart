@@ -496,9 +496,15 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
+                        // Each number sits level with the note ball on its
+                        // line — i.e. centred in the MIDDLE of that fret's
+                        // playing area, not down on the fret wire. Sharing the
+                        // ball geometry keeps them locked to the notes at every
+                        // fret (fret 0 already read correctly).
                         for (int f = 0; f <= _kTotalFrets; f++)
                           Positioned(
-                            top: (f == 0 ? 16.0 : f * _kFretSpacing) - 10.0,
+                            top: _ballTopFor(f),
+                            height: 2 * _kBallRadius,
                             left: 0,
                             right: 0,
                             child: Center(child: _fretNumberLabel('$f')),
