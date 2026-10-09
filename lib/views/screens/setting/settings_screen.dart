@@ -47,8 +47,8 @@ class _SettingScreenState extends State<SettingScreen> {
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-                maxWidth: kIsWeb ? 568 : double.infinity),
+            constraints:
+                const BoxConstraints(maxWidth: kIsWeb ? 568 : double.infinity),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -71,8 +71,9 @@ class _SettingScreenState extends State<SettingScreen> {
                                   // push would drag the bar across.
                                   Get.off(() => const SavedSessionsScreen(),
                                       routeName: kSavedRoute,
-                                      transition: Transition.noTransition,
-                                      duration: Duration.zero);
+                                      transition: Transition.rightToLeft,
+                                      duration:
+                                          const Duration(milliseconds: 260));
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -176,8 +177,8 @@ class _SettingScreenState extends State<SettingScreen> {
                               child: Column(
                                 children: [
                                   InkWell(
-                                    onTap: () => setState(
-                                        () => _stringsExpanded = !_stringsExpanded),
+                                    onTap: () => setState(() =>
+                                        _stringsExpanded = !_stringsExpanded),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 14),
@@ -355,6 +356,7 @@ class _SettingsHeader extends StatelessWidget {
     );
   }
 }
+
 class _SupportSection extends StatelessWidget {
   const _SupportSection();
 

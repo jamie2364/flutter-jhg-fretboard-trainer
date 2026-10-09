@@ -1527,23 +1527,22 @@ class _StringNameChip extends StatelessWidget {
   }
 }
 
-// A clean note ball matching the dictionaries / drills apps: a soft top-left
-// sheen over the flat base colour and a thin light rim — no heavy glossy sphere
-// or drop shadow, so dots read crisp rather than cartoonish. When [ring] is set
-// the ball gets a bright white outline (used for the identify-mode target).
+// A clean note ball matching the Guitar Coach reveal fretboard: a soft radial
+// sheen from the top-left over the flat base colour and a very thin light rim —
+// no heavy glossy sphere or drop shadow, so dots read crisp rather than
+// cartoonish. When [ring] is set the ball gets a bright white outline (used for
+// the identify-mode target).
 BoxDecoration _cleanBall(Color base, {bool ring = false}) {
   final highlight = Color.lerp(base, Colors.white, 0.28)!;
   return BoxDecoration(
     shape: BoxShape.circle,
     gradient: RadialGradient(
-      center: const Alignment(-0.45, -0.5),
-      radius: 1.0,
+      center: const Alignment(-0.3, -0.4),
       colors: [highlight, base],
-      stops: const [0.0, 0.6],
     ),
     border: ring
         ? Border.all(color: Colors.white.withValues(alpha: 0.95), width: 2.4)
-        : Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.0),
+        : Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
   );
 }
 

@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:get/get.dart';
 
 import 'tour_service.dart';
-import 'tour_step.dart';
 
 /// Drives the guided tour.
 ///
@@ -12,17 +12,29 @@ import 'tour_step.dart';
 /// entry per sub-screen so it can nudge the spotlight along). What the user
 /// sees is the coarser **stage**: [railIndex] of [railTotal]. Several steps
 /// sharing a [TourStep.stage] read as one step on the rail.
-class TourController extends GetxController {
+class TourController extends GetxController implements JhgTourController {
   final List<TourStep> steps;
 
   TourController({required this.steps});
+
+  // ── JhgTourController surface ────────────────────────────────────────────
+  // The shared tour view (jhg_elements) reads these flat getters off `.obs`.
+  @override
+  int get stepIndex => currentStep.value;
+  @override
+  bool get visible => isVisible.value;
+  @override
+  bool get flashCompleted => stepCompleted.value;
+  @override
+  int get misTapTick => misTap.value;
 
   /// Bumped on every change. The overlay listens to this rather than to the
   /// individual observables, which is what keeps the painted layer free of any
   /// state-management library: the Provider-based apps in the suite (Rhythm
   /// Toolkit, Velocity) ship a [TourController] with the same surface built on
   /// [ValueNotifier], and the overlay cannot tell the difference.
-  final revision = ValueNotifier<int>(0);
+  @override
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   final currentStep = 0.obs;
   final isVisible = false.obs;
@@ -35,14 +47,19 @@ class TourController extends GetxController {
   /// it and shakes, which is a much better answer than silently eating the tap.
   final misTap = 0.obs;
 
+  @override
   int get totalSteps => steps.length;
+  @override
   TourStep get currentTourStep => steps[currentStep.value];
+  @override
   bool get isLastStep => currentStep.value == steps.length - 1;
 
   /// How many positions the progress rail has.
+  @override
   late final int railTotal = steps.map((s) => s.stage).toSet().length;
 
   /// Which rail position the current step sits at, 0-based.
+  @override
   int get railIndex => currentTourStep.stage;
 
   StreamSubscription<bool>? _completionSub;
@@ -50,6 +67,7 @@ class TourController extends GetxController {
 
   void _bump() => revision.value++;
 
+  @override
   void start() {
     currentStep.value = 0;
     isVisible.value = true;
@@ -57,6 +75,7 @@ class TourController extends GetxController {
     _bump();
   }
 
+  @override
   void next() {
     _clearPending();
     if (!isLastStep) {
@@ -70,6 +89,7 @@ class TourController extends GetxController {
 
   /// Jump straight to [index]. Used when a screen's own navigation drives the
   /// tour, such as the setup wizard auto-advancing when the user picks a song.
+  @override
   void goToStep(int index) {
     final target = index.clamp(0, steps.length - 1);
     if (currentStep.value == target && isVisible.value) return;
@@ -80,16 +100,19 @@ class TourController extends GetxController {
     _bump();
   }
 
+  @override
   void reportMisTap() {
     misTap.value++;
     _bump();
   }
 
+  @override
   void skip() {
     _clearPending();
     complete();
   }
 
+  @override
   void complete() {
     isVisible.value = false;
     TourService.markTourCompleted();

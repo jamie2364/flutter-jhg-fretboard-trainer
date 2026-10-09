@@ -63,8 +63,8 @@ class LandscapeBoard extends StatelessWidget {
                 onTap: () {
                   Get.to(() => const LeadershipScreen(),
                       routeName: kLeaderboardRoute,
-                      transition: Transition.noTransition,
-                      duration: Duration.zero);
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 260));
                   if (isFreePlan) {
                     controller.interstitialAds?.showInterstitial();
                   }
@@ -225,8 +225,8 @@ class LandscapeBoard extends StatelessWidget {
                           controller.resetGame(false);
                           Get.to(() => const SettingScreen(),
                               routeName: kSettingsRoute,
-                              transition: Transition.noTransition,
-                              duration: Duration.zero);
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 260));
                           if (isFreePlan) {
                             controller.interstitialAds?.showInterstitial();
                           }
@@ -251,8 +251,8 @@ class LandscapeBoard extends StatelessWidget {
                       : () => Get.to(
                             () => const HeatmapScreen(),
                             routeName: kStatsRoute,
-                            transition: Transition.noTransition,
-                            duration: Duration.zero,
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 260),
                           ),
                   child: RotatedBox(
                     quarterTurns: 1,

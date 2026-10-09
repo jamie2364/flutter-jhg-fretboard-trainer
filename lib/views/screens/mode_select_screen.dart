@@ -16,9 +16,7 @@ import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/utils/board_nav.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/features/tour/fretboard_tour.dart';
-import 'package:fretboard/features/tour/tour_anchor.dart';
 import 'package:fretboard/features/tour/tour_controller.dart';
-import 'package:fretboard/features/tour/tour_overlay.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -267,7 +265,8 @@ class _StringsSelector extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         height: 60,
         decoration: BoxDecoration(
-          color: on ? _kPrimary.withValues(alpha: 0.16) : const Color(0xFF1A1A1A),
+          color:
+              on ? _kPrimary.withValues(alpha: 0.16) : const Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: on
@@ -300,12 +299,21 @@ class _RoundTypesSelector extends StatelessWidget {
 
   static const List<(ChordLabRound, String, String)> _rows = [
     (ChordLabRound.name, 'Name it', 'A shape lights up. Pick its name.'),
-    (ChordLabRound.complete, 'Complete it',
-        'Tap the notes that finish the chord.'),
-    (ChordLabRound.remove, 'Remove the extra',
-        "Tap the note that doesn't belong."),
-    (ChordLabRound.build, 'Build it here',
-        'Build the chord in a set region of the neck.'),
+    (
+      ChordLabRound.complete,
+      'Complete it',
+      'Tap the notes that finish the chord.'
+    ),
+    (
+      ChordLabRound.remove,
+      'Remove the extra',
+      "Tap the note that doesn't belong."
+    ),
+    (
+      ChordLabRound.build,
+      'Build it here',
+      'Build the chord in a set region of the neck.'
+    ),
   ];
 
   void _toggle(ChordLabRound r) {
@@ -496,8 +504,8 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
   @override
   Widget build(BuildContext context) {
     return _focusCentredStep(
-      heading: _wizardHeading(
-          widget.eyebrow, 'Session length', 'Play open-ended, or beat the clock.'),
+      heading: _wizardHeading(widget.eyebrow, 'Session length',
+          'Play open-ended, or beat the clock.'),
       focus: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -556,7 +564,9 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
                 shape: BoxShape.circle,
                 color: selected ? _kPrimary : Colors.transparent,
                 border: Border.all(
-                  color: selected ? _kPrimary : Colors.white.withValues(alpha: 0.25),
+                  color: selected
+                      ? _kPrimary
+                      : Colors.white.withValues(alpha: 0.25),
                   width: 1.5,
                 ),
               ),
@@ -609,7 +619,8 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
               final on = _minutes == m;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: on
                       ? _kPrimary.withValues(alpha: 0.16)
@@ -718,7 +729,7 @@ class _StartScreenState extends State<StartScreen> {
     final content = Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           // The whole block is this screen's content, so the tour sits in the
           // band above it rather than on top of the cards it is asking the user
@@ -727,69 +738,71 @@ class _StartScreenState extends State<StartScreen> {
           child: TourReserve(
             screenId: TourScreens.start,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Fretboard Trainer',
-                style: GoogleFonts.poppins(
-                  color: _kOnSurface,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
-                  letterSpacing: -1.0,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Fretboard Trainer',
+                  style: GoogleFonts.poppins(
+                    color: _kOnSurface,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                    letterSpacing: -1.0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'How would you like to practice?',
-                style: GoogleFonts.inter(
-                  color: _kMuted,
-                  fontSize: 15,
-                  height: 1.4,
+                const SizedBox(height: 8),
+                Text(
+                  'How would you like to practice?',
+                  style: GoogleFonts.inter(
+                    color: _kMuted,
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 28),
+                const SizedBox(height: 28),
 
-              // Continue leads once there is a session waiting. Hidden on a
-              // first run, and hidden after that until something is saved.
-              if (!firstRun)
-                ValueListenableBuilder<SavedSession?>(
-                  valueListenable: SavedSessionsService.latest,
-                  builder: (_, latest, __) {
-                    if (latest == null) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _ModeCard(
-                        label: 'Continue',
-                        subtitle:
-                            'Pick up "${latest.displayName}" where you left off.',
-                        onTap: () => _resume(latest),
-                      ),
-                    );
-                  },
-                ),
+                // Continue leads once there is a session waiting. Hidden on a
+                // first run, and hidden after that until something is saved.
+                if (!firstRun)
+                  ValueListenableBuilder<SavedSession?>(
+                    valueListenable: SavedSessionsService.latest,
+                    builder: (_, latest, __) {
+                      if (latest == null) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ModeCard(
+                          label: 'Continue',
+                          subtitle:
+                              'Pick up "${latest.displayName}" where you left off.',
+                          onTap: () => _resume(latest),
+                        ),
+                      );
+                    },
+                  ),
 
-              // Keyed through a KeyedSubtree so _ModeCard stays a plain
-              // private widget.
-              KeyedSubtree(
-                key: _keys.quickStart,
-                child: _ModeCard(
-                  label: 'Quick start',
-                  subtitle: 'Straight into Notes practice. You can swap modes '
-                      'from the board whenever you like.',
-                  onTap: _quickStart,
+                // Keyed through a KeyedSubtree so _ModeCard stays a plain
+                // private widget.
+                KeyedSubtree(
+                  key: _keys.quickStart,
+                  child: _ModeCard(
+                    label: 'Quick start',
+                    subtitle:
+                        'Straight into Notes practice. You can swap modes '
+                        'from the board whenever you like.',
+                    onTap: _quickStart,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _ModeCard(
-                label: 'Customized Practice',
-                subtitle: 'Choose the mode, game and difficulty yourself.',
-                onTap: () => Get.to(() => const ModeSelectScreen(),
-                    transition: Transition.noTransition,
-                    duration: Duration.zero),
-              ),
-              if (!firstRun) const _SavedSessionsButton(),
-            ],
+                const SizedBox(height: 12),
+                _ModeCard(
+                  label: 'Customized Practice',
+                  subtitle: 'Choose the mode, game and difficulty yourself.',
+                  onTap: () => Get.to(() => const ModeSelectScreen(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 260)),
+                ),
+                if (!firstRun) const _SavedSessionsButton(),
+              ],
             ),
           ),
         ),
@@ -844,8 +857,8 @@ class _SavedSessionsButton extends StatelessWidget {
                     : 'Open any of your $count saved sessions.',
             onTap: () => Get.to(() => const SavedSessionsScreen(),
                 routeName: kSavedRoute,
-                transition: Transition.noTransition,
-                duration: Duration.zero),
+                transition: Transition.rightToLeft,
+                duration: const Duration(milliseconds: 260)),
           ),
         );
       },
@@ -884,8 +897,8 @@ class RandomModeScreen extends StatelessWidget {
     hc.resetIntervalFilter();
     hc.resetStrings();
     hc.switchToIntervalMode(
-      type: IntervalGameType
-          .values[_rng.nextInt(IntervalGameType.values.length)],
+      type:
+          IntervalGameType.values[_rng.nextInt(IntervalGameType.values.length)],
       difficulty: IntervalDifficulty
           .values[_rng.nextInt(IntervalDifficulty.values.length)],
     );
@@ -897,8 +910,8 @@ class RandomModeScreen extends StatelessWidget {
     const randomTypes = [ChordGameType.name, ChordGameType.build];
     Get.find<HomeController>().switchToChordMode(
       type: randomTypes[_rng.nextInt(randomTypes.length)],
-      difficulty: ChordDifficulty
-          .values[_rng.nextInt(ChordDifficulty.values.length)],
+      difficulty:
+          ChordDifficulty.values[_rng.nextInt(ChordDifficulty.values.length)],
     );
     _launch();
   }
@@ -950,16 +963,14 @@ class RandomModeScreen extends StatelessWidget {
                       _ModeCard(
                         label: 'Intervals',
                         icon: Icons.straighten_rounded,
-                        subtitle:
-                            'Practise the gap between two notes.',
+                        subtitle: 'Practise the gap between two notes.',
                         onTap: _randomInterval,
                       ),
                       const SizedBox(height: 12),
                       _ModeCard(
                         label: 'Chords',
                         icon: JhgIcons.navModes,
-                        subtitle:
-                            'Spot and build common guitar chords.',
+                        subtitle: 'Spot and build common guitar chords.',
                         onTap: _randomChord,
                       ),
                     ],
@@ -998,17 +1009,20 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   // and Chords wizards.
   void _selectNotes() {
     Get.to(() => NoteSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.noTransition, duration: Duration.zero);
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 260));
   }
 
   void _selectInterval() {
     Get.to(() => IntervalSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.noTransition, duration: Duration.zero);
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 260));
   }
 
   void _selectChord() {
     Get.to(() => ChordSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.noTransition, duration: Duration.zero);
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 260));
   }
 
   @override
@@ -1058,16 +1072,14 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                       _ModeCard(
                         label: 'Intervals',
                         icon: Icons.straighten_rounded,
-                        subtitle:
-                            'Practise the gap between two notes.',
+                        subtitle: 'Practise the gap between two notes.',
                         onTap: _selectInterval,
                       ),
                       const SizedBox(height: 12),
                       _ModeCard(
                         label: 'Chords',
                         icon: JhgIcons.navModes,
-                        subtitle:
-                            'Spot and build common guitar chords.',
+                        subtitle: 'Spot and build common guitar chords.',
                         onTap: _selectChord,
                       ),
                     ],
@@ -1103,6 +1115,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
   // Mode was picked on the previous screen and counts as the wizard's Step 1,
   // so the dots/eyebrows are offset by one (a leading "done" dot for Mode).
   int _step = 0;
+  bool _forward = true;
   IntervalGameType _type = IntervalGameType.name;
   IntervalDifficulty _difficulty = IntervalDifficulty.medium;
 
@@ -1121,6 +1134,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
   static const int _totalSteps = 6;
 
   void _pickType(IntervalGameType type) => setState(() {
+        _forward = true;
         _type = type;
         _step = 1;
       });
@@ -1128,6 +1142,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
   void _pickDifficulty(IntervalDifficulty difficulty) {
     // Difficulty → timing (the final step), which starts the session.
     setState(() {
+      _forward = true;
       _difficulty = difficulty;
       _step = 4;
     });
@@ -1151,7 +1166,10 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
 
   void _back() {
     if (_step > 0) {
-      setState(() => _step--);
+      setState(() {
+        _forward = false;
+        _step--;
+      });
     } else {
       Get.back();
     }
@@ -1170,7 +1188,16 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
                 step: _step + 1, stepCount: _totalSteps, onBack: _back),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  final slide = Tween<Offset>(
+                    begin: Offset(_forward ? 0.12 : -0.12, 0),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return SlideTransition(position: slide, child: child);
+                },
                 child: KeyedSubtree(
                   key: ValueKey(_step),
                   child: _stepChild(),
@@ -1240,7 +1267,12 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
         ),
         below: [
           const SizedBox(height: 20),
-          _wizardPrimaryButton('Continue', () => setState(() => _step = 2)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step = 2;
+            });
+          }),
         ],
       );
 
@@ -1250,13 +1282,18 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
         focus: _StringsSelector(controller: Get.find<HomeController>()),
         below: [
           const SizedBox(height: 20),
-          _wizardPrimaryButton('Continue', () => setState(() => _step = 3)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step = 3;
+            });
+          }),
         ],
       );
 
   Widget _difficultyStep() => _focusCentredStep(
-        heading: _wizardHeading(
-            'STEP 5 · DIFFICULTY', 'Difficulty', 'How challenging should it be?'),
+        heading: _wizardHeading('STEP 5 · DIFFICULTY', 'Difficulty',
+            'How challenging should it be?'),
         focus: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1294,6 +1331,7 @@ class ChordSetupScreen extends StatefulWidget {
 
 class _ChordSetupScreenState extends State<ChordSetupScreen> {
   int _step = 0;
+  bool _forward = true;
   ChordGameType _type = ChordGameType.name;
 
   // Chord Lab selections — all keys, tonalities and round types by default.
@@ -1314,6 +1352,7 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
 
   void _pickType(ChordGameType type) {
     setState(() {
+      _forward = true;
       _type = type;
       _step = 1;
     });
@@ -1353,6 +1392,7 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
   void _pickDifficulty(ChordDifficulty difficulty) {
     // Difficulty → timing (the final step), which starts the session.
     setState(() {
+      _forward = true;
       _difficulty = difficulty;
       _step++;
     });
@@ -1360,7 +1400,10 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
 
   void _back() {
     if (_step > 0) {
-      setState(() => _step--);
+      setState(() {
+        _forward = false;
+        _step--;
+      });
     } else {
       Get.back();
     }
@@ -1375,10 +1418,20 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // +1 so the first dot (Mode, chosen on the previous screen) is done.
-            _wizardHeader(step: _step + 1, stepCount: _totalDots, onBack: _back),
+            _wizardHeader(
+                step: _step + 1, stepCount: _totalDots, onBack: _back),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  final slide = Tween<Offset>(
+                    begin: Offset(_forward ? 0.12 : -0.12, 0),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return SlideTransition(position: slide, child: child);
+                },
                 child: KeyedSubtree(
                   key: ValueKey('${_type.name}-$_step'),
                   child: _stepChild(),
@@ -1416,7 +1469,8 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
   }
 
   Widget _typeStep() => _focusCentredStep(
-        heading: _wizardHeading(_eyebrow('GAME'), 'Chords', 'Which chord game?'),
+        heading:
+            _wizardHeading(_eyebrow('GAME'), 'Chords', 'Which chord game?'),
         focus: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1442,14 +1496,20 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
       );
 
   Widget _keysStep() => _focusCentredStep(
-        heading: _wizardHeading(_eyebrow('KEYS'), 'Keys', 'Which roots to drill?'),
+        heading:
+            _wizardHeading(_eyebrow('KEYS'), 'Keys', 'Which roots to drill?'),
         focus: _KeysSelector(
           selected: _keys,
           onChanged: (s) => setState(() => _keys = s),
         ),
         below: [
           const SizedBox(height: 24),
-          _wizardPrimaryButton('Continue', () => setState(() => _step++)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step++;
+            });
+          }),
         ],
       );
 
@@ -1469,22 +1529,32 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
         ),
         below: [
           const SizedBox(height: 20),
-          _wizardPrimaryButton('Continue', () => setState(() => _step++)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step++;
+            });
+          }),
         ],
       );
 
   // Four cards is tall, so this one scrolls rather than overflowing on a short
   // screen. It sits at the same height as every other step.
   Widget _roundsStep() => _focusCentredScrollStep(
-        heading: _wizardHeading(_eyebrow('ROUNDS'), 'Round types',
-            'How do you want to be tested?'),
+        heading: _wizardHeading(
+            _eyebrow('ROUNDS'), 'Round types', 'How do you want to be tested?'),
         focus: _RoundTypesSelector(
           selected: _rounds,
           onChanged: (s) => setState(() => _rounds = s),
         ),
         below: [
           const SizedBox(height: 20),
-          _wizardPrimaryButton('Continue', () => setState(() => _step++)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step++;
+            });
+          }),
         ],
       );
 
@@ -1503,8 +1573,8 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
             'Every chord type, all over the neck.',
           );
     return _focusCentredStep(
-      heading: _wizardHeading(
-          _eyebrow('DIFFICULTY'), 'Difficulty', 'How challenging should it be?'),
+      heading: _wizardHeading(_eyebrow('DIFFICULTY'), 'Difficulty',
+          'How challenging should it be?'),
       focus: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1543,9 +1613,11 @@ class NoteSetupScreen extends StatefulWidget {
 
 class _NoteSetupScreenState extends State<NoteSetupScreen> {
   int _step = 0; // 0 = game, 1 = strings, 2 = timing
+  bool _forward = true;
   bool _identify = false;
 
   void _pickGame(bool identify) => setState(() {
+        _forward = true;
         _identify = identify;
         _step = 1;
       });
@@ -1564,7 +1636,10 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
 
   void _back() {
     if (_step > 0) {
-      setState(() => _step--);
+      setState(() {
+        _forward = false;
+        _step--;
+      });
     } else {
       Get.back();
     }
@@ -1597,7 +1672,16 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
             _wizardHeader(step: _step + 1, stepCount: 4, onBack: _back),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  final slide = Tween<Offset>(
+                    begin: Offset(_forward ? 0.12 : -0.12, 0),
+                    end: Offset.zero,
+                  ).animate(animation);
+                  return SlideTransition(position: slide, child: child);
+                },
                 child: KeyedSubtree(
                   key: ValueKey(_step),
                   child: _stepChild(),
@@ -1636,7 +1720,12 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
         focus: _StringsSelector(controller: Get.find<HomeController>()),
         below: [
           const SizedBox(height: 20),
-          _wizardPrimaryButton('Continue', () => setState(() => _step = 2)),
+          _wizardPrimaryButton('Continue', () {
+            setState(() {
+              _forward = true;
+              _step = 2;
+            });
+          }),
         ],
       );
 }

@@ -646,39 +646,6 @@ class _LibNeckPainter extends CustomPainter {
       old.seed != seed || old.tint != tint;
 }
 
-/// The "contents" motif that fills a folder card: a few stacked tinted bars.
-class _FolderContentsPreview extends StatelessWidget {
-  const _FolderContentsPreview({required this.tint, required this.count});
-  final Color tint;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    if (count == 0) return const SizedBox.shrink();
-    final rows = count.clamp(1, 3);
-    const widths = [1.0, 0.72, 0.5];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < rows; i++) ...[
-          if (i > 0) const SizedBox(height: 7),
-          FractionallySizedBox(
-            widthFactor: widths[i],
-            child: Container(
-              height: 6,
-              decoration: BoxDecoration(
-                color: tint.withValues(alpha: 0.32 - i * 0.08),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 /// A rounded-square tinted icon badge shared by tiles and rows.
 class _IconBadge extends StatelessWidget {
   const _IconBadge({
@@ -729,66 +696,69 @@ class _FolderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<_DragPayload>(
-      onWillAcceptWithDetails: (d) =>
-          SavedSessionsScreen._canDrop(ctrl, d.data, folder.id),
-      onAcceptWithDetails: (d) =>
-          SavedSessionsScreen._applyDrop(ctrl, d.data, folder.id),
-      builder: (context, candidate, __) {
-        final hot = candidate.isNotEmpty;
-        final tint = _libTint(folder.colorValue);
-        return LongPressDraggable<_DragPayload>(
-          data: _DragPayload(isFolder: true, id: folder.id, name: folder.name),
-          feedback: _DragChip(icon: JhgIcons.folder, label: folder.name),
-          child: GestureDetector(
-            onTap: onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              decoration: _libCardDecoration(tint: tint, hot: hot),
-              padding: const EdgeInsets.all(14),
-              child: Obx(() {
-                final n = ctrl.folderItemCount(folder.id);
-                return Column(
+    final tint = _libTint(folder.colorValue);
+    Widget card(bool hot) => AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          decoration: _libCardDecoration(tint: tint, hot: hot),
+          padding: const EdgeInsets.all(14),
+          child: Obx(() {
+            final n = ctrl.folderItemCount(folder.id);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _IconBadge(
-                            icon: JhgIcons.folder, tint: tint, iconSize: 24),
-                        const Spacer(),
-                        _MenuButton(onTap: onMenu),
-                      ],
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: _FolderContentsPreview(tint: tint, count: n),
-                        ),
-                      ),
-                    ),
-                    Text(folder.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 3),
-                    Text(n == 1 ? '1 item' : '$n items',
-                        style: GoogleFonts.poppins(
-                            color: _kFaint,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500)),
+                    _IconBadge(
+                        icon: JhgIcons.folder, tint: tint, iconSize: 24),
+                    const Spacer(),
+                    _MenuButton(onTap: onMenu),
                   ],
-                );
-              }),
-            ),
-          ),
+                ),
+                // No contents motif: the icon, name and item count read the
+                // same for empty and filled folders.
+                const Spacer(),
+                Text(folder.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+                const SizedBox(height: 3),
+                Text(n == 1 ? '1 item' : '$n items',
+                    style: GoogleFonts.poppins(
+                        color: _kFaint,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500)),
+              ],
+            );
+          }),
         );
-      },
+    return LayoutBuilder(
+      builder: (context, c) => DragTarget<_DragPayload>(
+        onWillAcceptWithDetails: (d) =>
+            SavedSessionsScreen._canDrop(ctrl, d.data, folder.id),
+        onAcceptWithDetails: (d) =>
+            SavedSessionsScreen._applyDrop(ctrl, d.data, folder.id),
+        builder: (context, candidate, __) {
+          final hot = candidate.isNotEmpty;
+          return LongPressDraggable<_DragPayload>(
+            data:
+                _DragPayload(isFolder: true, id: folder.id, name: folder.name),
+            dragAnchorStrategy: pointerDragAnchorStrategy,
+            // Lift the real tile (sized to its grid footprint), not a chip.
+            feedback: _DragTileFeedback(
+              width: c.maxWidth,
+              height: c.maxHeight.isFinite ? c.maxHeight : null,
+              child: card(false),
+            ),
+            delay: const Duration(milliseconds: 220),
+            childWhenDragging: const _DragPlaceholder(),
+            child: GestureDetector(onTap: onTap, child: card(hot)),
+          );
+        },
+      ),
     );
   }
 }
@@ -806,60 +776,62 @@ class _FolderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<_DragPayload>(
-      onWillAcceptWithDetails: (d) =>
-          SavedSessionsScreen._canDrop(ctrl, d.data, folder.id),
-      onAcceptWithDetails: (d) =>
-          SavedSessionsScreen._applyDrop(ctrl, d.data, folder.id),
-      builder: (context, candidate, __) {
-        final hot = candidate.isNotEmpty;
-        final tint = _libTint(folder.colorValue);
-        return LongPressDraggable<_DragPayload>(
-          data: _DragPayload(isFolder: true, id: folder.id, name: folder.name),
-          feedback: _DragChip(icon: JhgIcons.folder, label: folder.name),
-          child: GestureDetector(
-            onTap: onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: _libCardDecoration(tint: tint, hot: hot, radius: 16),
-              child: Row(
-                children: [
-                  _IconBadge(
-                      icon: JhgIcons.folder,
-                      tint: tint,
-                      size: 40,
-                      iconSize: 19),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(folder.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 2),
-                        Obx(() {
-                          final n = ctrl.folderItemCount(folder.id);
-                          return Text(n == 1 ? '1 item' : '$n items',
-                              style: GoogleFonts.poppins(
-                                  color: _kFaint, fontSize: 11));
-                        }),
-                      ],
-                    ),
-                  ),
-                  _RowMenu(onTap: onMenu),
-                ],
+    final tint = _libTint(folder.colorValue);
+    Widget card(bool hot) => AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: _libCardDecoration(tint: tint, hot: hot, radius: 16),
+          child: Row(
+            children: [
+              _IconBadge(
+                  icon: JhgIcons.folder, tint: tint, size: 40, iconSize: 19),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(folder.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Obx(() {
+                      final n = ctrl.folderItemCount(folder.id);
+                      return Text(n == 1 ? '1 item' : '$n items',
+                          style: GoogleFonts.poppins(
+                              color: _kFaint, fontSize: 11));
+                    }),
+                  ],
+                ),
               ),
-            ),
+              _RowMenu(onTap: onMenu),
+            ],
           ),
         );
-      },
+    return LayoutBuilder(
+      builder: (context, c) => DragTarget<_DragPayload>(
+        onWillAcceptWithDetails: (d) =>
+            SavedSessionsScreen._canDrop(ctrl, d.data, folder.id),
+        onAcceptWithDetails: (d) =>
+            SavedSessionsScreen._applyDrop(ctrl, d.data, folder.id),
+        builder: (context, candidate, __) {
+          final hot = candidate.isNotEmpty;
+          return LongPressDraggable<_DragPayload>(
+            data:
+                _DragPayload(isFolder: true, id: folder.id, name: folder.name),
+            dragAnchorStrategy: pointerDragAnchorStrategy,
+            // Lift the real row (full width), not a chip.
+            feedback: _DragTileFeedback(width: c.maxWidth, child: card(false)),
+            delay: const Duration(milliseconds: 220),
+            childWhenDragging: const _DragPlaceholder(),
+            child: GestureDetector(onTap: onTap, child: card(hot)),
+          );
+        },
+      ),
     );
   }
 }
@@ -884,13 +856,7 @@ class _SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tint =
         _libTint(session.colorValue, fallback: const Color(0xFF8E8E93));
-    return LongPressDraggable<_DragPayload>(
-      data: _DragPayload(
-          isFolder: false, id: session.id, name: session.displayName),
-      feedback: _DragChip(icon: JhgIcons.play, label: session.displayName),
-      child: GestureDetector(
-        onTap: onOpen,
-        child: Container(
+    Widget card() => Container(
           decoration: _libCardDecoration(tint: tint, hot: false),
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -926,7 +892,21 @@ class _SessionTile extends StatelessWidget {
                       fontWeight: FontWeight.w500)),
             ],
           ),
+        );
+    return LayoutBuilder(
+      builder: (context, c) => LongPressDraggable<_DragPayload>(
+        data: _DragPayload(
+            isFolder: false, id: session.id, name: session.displayName),
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        // Lift the real tile (sized to its grid footprint), not a chip.
+        feedback: _DragTileFeedback(
+          width: c.maxWidth,
+          height: c.maxHeight.isFinite ? c.maxHeight : null,
+          child: card(),
         ),
+        delay: const Duration(milliseconds: 220),
+        childWhenDragging: const _DragPlaceholder(),
+        child: GestureDetector(onTap: onOpen, child: card()),
       ),
     );
   }
@@ -943,13 +923,7 @@ class _SessionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tint =
         _libTint(session.colorValue, fallback: const Color(0xFF8E8E93));
-    return LongPressDraggable<_DragPayload>(
-      data: _DragPayload(
-          isFolder: false, id: session.id, name: session.displayName),
-      feedback: _DragChip(icon: JhgIcons.play, label: session.displayName),
-      child: GestureDetector(
-        onTap: onOpen,
-        child: Container(
+    Widget card() => Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: _libCardDecoration(tint: tint, hot: false, radius: 16),
           child: Row(
@@ -989,7 +963,17 @@ class _SessionRow extends StatelessWidget {
               _RowMenu(onTap: onMenu),
             ],
           ),
-        ),
+        );
+    return LayoutBuilder(
+      builder: (context, c) => LongPressDraggable<_DragPayload>(
+        data: _DragPayload(
+            isFolder: false, id: session.id, name: session.displayName),
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        // Lift the real row (full width), not a chip.
+        feedback: _DragTileFeedback(width: c.maxWidth, child: card()),
+        delay: const Duration(milliseconds: 220),
+        childWhenDragging: const _DragPlaceholder(),
+        child: GestureDetector(onTap: onOpen, child: card()),
       ),
     );
   }
@@ -1027,46 +1011,56 @@ class _RowMenu extends StatelessWidget {
   }
 }
 
+/// The gap a card leaves behind while it is being dragged, so it is obvious the
+/// item has been picked up and where it came from.
+class _DragPlaceholder extends StatelessWidget {
+  const _DragPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.10),
+          strokeAlign: BorderSide.strokeAlignInside,
+        ),
+      ),
+    );
+  }
+}
+
 /// A floating chip shown under the finger while dragging a library item.
-class _DragChip extends StatelessWidget {
-  const _DragChip({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
+/// Drag feedback that lifts the real tile (sized to its grid/list footprint)
+/// with a soft shadow, instead of a small chip — so the dragged image matches
+/// the tile exactly.
+class _DragTileFeedback extends StatelessWidget {
+  const _DragTileFeedback(
+      {required this.width, required this.child, this.height});
+  final double width;
+  final double? height;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: _kSurface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kPrimary.withValues(alpha: 0.6)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: _kPrimary, size: 16),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600)),
-            ),
-          ],
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.45),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: child,
         ),
       ),
     );

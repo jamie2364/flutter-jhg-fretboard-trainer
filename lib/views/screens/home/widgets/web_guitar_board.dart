@@ -388,34 +388,17 @@ class _SelectedNoteDot extends StatelessWidget {
   }
 }
 
-// Glossy-sphere depth for a note ball: a bright top-left specular highlight
-// fades through the base colour into a deep shaded edge, with a soft rim and
-// layered drop shadows so it lifts off the fretboard.
+// A clean note ball matching the Guitar Coach reveal fretboard: a soft radial
+// sheen from the top-left over the flat base colour and a very thin light rim,
+// so the dots read crisp rather than as heavy glossy spheres.
 BoxDecoration _glossyBall(Color base) {
-  final specular = Color.lerp(base, Colors.white, 0.68)!;
-  final highlight = Color.lerp(base, Colors.white, 0.22)!;
-  final shade = Color.lerp(base, Colors.black, 0.34)!;
-  final deepShade = Color.lerp(base, Colors.black, 0.52)!;
+  final highlight = Color.lerp(base, Colors.white, 0.28)!;
   return BoxDecoration(
     shape: BoxShape.circle,
     gradient: RadialGradient(
-      center: const Alignment(-0.42, -0.5),
-      radius: 1.1,
-      colors: [specular, highlight, base, shade, deepShade],
-      stops: const [0.0, 0.18, 0.5, 0.82, 1.0],
+      center: const Alignment(-0.3, -0.4),
+      colors: [highlight, base],
     ),
-    border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 0.6),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.45),
-        blurRadius: 6,
-        offset: const Offset(0, 3),
-      ),
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.22),
-        blurRadius: 2,
-        offset: const Offset(0, 1),
-      ),
-    ],
+    border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
   );
 }

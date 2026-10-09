@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-     Nav.key = navKey;
+    Nav.key = navKey;
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // Transparent status bar
       statusBarBrightness: Brightness.dark, // Dark text for status bar
@@ -65,10 +65,13 @@ class _MyAppState extends State<MyApp> {
           title: 'JHG Fretboard',
           // Additively attach the design-system tokens; existing theme unchanged.
           theme: JHGTheme.themeData.copyWith(
+            pageTransitionsTheme: jhgPageTransitionsTheme,
             extensions: <ThemeExtension<dynamic>>[JhgTokens.dark()],
           ),
           initialBinding: AppBindings(),
           navigatorKey: navKey,
+          defaultTransition: Transition.rightToLeft,
+          transitionDuration: kJhgTransitionDuration,
           home: kIsWeb
               ? const StartScreen()
               : SplashScreen(

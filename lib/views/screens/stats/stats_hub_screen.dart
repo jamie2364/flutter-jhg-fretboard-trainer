@@ -47,8 +47,8 @@ class _GameSpec {
 }
 
 const List<_GameSpec> _games = [
-  _GameSpec(0, 'Notes', 'Find and name notes on the neck',
-      JhgIcons.note, Color(0xFF34C6A5), [
+  _GameSpec(0, 'Notes', 'Find and name notes on the neck', JhgIcons.note,
+      Color(0xFF34C6A5), [
     ('find', 'Find'),
     ('identify', 'Identify'),
   ]),
@@ -91,10 +91,12 @@ class _StatsHubScreenState extends State<StatsHubScreen> {
   void _open(int module) {
     if (module == 0) {
       Get.to(() => const HeatmapScreen(),
-          transition: Transition.noTransition, duration: Duration.zero);
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 260));
     } else {
       Get.to(() => ModuleStatsScreen(module: module),
-          transition: Transition.noTransition, duration: Duration.zero);
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 260));
     }
   }
 
@@ -117,8 +119,8 @@ class _StatsHubScreenState extends State<StatsHubScreen> {
             child: _LeaderboardTile(
               onTap: () => Get.to(() => const LeadershipScreen(),
                   routeName: kLeaderboardRoute,
-                  transition: Transition.noTransition,
-                  duration: Duration.zero),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 260)),
             ),
           ),
           Expanded(
@@ -352,9 +354,7 @@ class _GameCard extends StatelessWidget {
                     height: 6, color: Colors.white.withValues(alpha: 0.07)),
                 Container(
                   height: 6,
-                  width: has
-                      ? (c.maxWidth * acc).clamp(4.0, c.maxWidth)
-                      : 0,
+                  width: has ? (c.maxWidth * acc).clamp(4.0, c.maxWidth) : 0,
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(3),

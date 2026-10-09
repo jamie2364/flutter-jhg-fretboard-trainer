@@ -6,7 +6,6 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/controllers/leaderboard_controller.dart';
 import 'package:fretboard/features/tour/fretboard_tour.dart';
 import 'package:fretboard/features/tour/tour_controller.dart';
-import 'package:fretboard/features/tour/tour_overlay.dart';
 import 'package:fretboard/main.dart';
 import 'package:fretboard/utils/app_subscription.dart';
 import 'package:fretboard/views/screens/home/widgets/landscape_board.dart';

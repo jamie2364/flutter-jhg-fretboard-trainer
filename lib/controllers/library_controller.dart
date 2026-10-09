@@ -82,12 +82,25 @@ class LibraryController extends GetxController {
 
   List<LibraryFolder> get visibleFolders {
     final q = searchQuery.value.toLowerCase();
-    return folders
+    final list = folders
         .where((f) =>
             f.parentId == currentFolderId.value &&
             (q.isEmpty || f.name.toLowerCase().contains(q)))
-        .toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        .toList();
+    switch (sortMode.value) {
+      case LibrarySortMode.byDateDesc:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case LibrarySortMode.byDateAsc:
+        list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        break;
+      case LibrarySortMode.byName:
+        list.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+        break;
+    }
+    return list;
   }
 
   List<SavedSession> get visibleSessions {

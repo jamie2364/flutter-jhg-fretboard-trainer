@@ -3,7 +3,7 @@ import 'package:fretboard/controllers/home_controller.dart';
 import 'package:get/get.dart';
 
 import 'tour_controller.dart';
-import 'tour_step.dart';
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 
 /// Screen identifiers. Home and the board are separate routes and Home stays
 /// mounted underneath, so each hosts its own `TourOverlay(ownerScreenId: …)`

@@ -99,7 +99,8 @@ class AppNavBar extends StatelessWidget {
         // back rather than leaving the tab dead.
         if (!landedOnStart) {
           Get.off(() => const StartScreen(),
-              transition: Transition.noTransition, duration: Duration.zero);
+              transition: Transition.noTransition,
+              duration: Duration.zero);
         }
         break;
 
