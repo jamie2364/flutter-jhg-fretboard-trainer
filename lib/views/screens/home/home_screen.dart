@@ -51,7 +51,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _tour = ensureFretboardTour();
     super.initState();
     if (!kIsWeb) {
-      StringsDownloadService().isStringsDownloaded("jhg-fretboard-trainer");
+      // Bump packVersion whenever this app's server audio pack changes, so
+      // existing users re-download once; a plain app update never re-downloads.
+      StringsDownloadService()
+          .isStringsDownloaded("jhg-fretboard-trainer", packVersion: 1);
 
       isFreePlan = SplashScreen.session.isFreePlan;
       if (isFreePlan) {

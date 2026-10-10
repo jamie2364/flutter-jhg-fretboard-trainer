@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:reg_page/reg_page.dart';
@@ -14,7 +16,18 @@ class FretSoundPlayer {
 
   Future<void> _load() async {
     await _player.setVolume(1);
-    await _player.setFilePath(Utils.getAsset(assetPath).path);
+
+    final downloadBase = StringsDownloadService().dir?.path;
+    if (downloadBase != null) {
+      final downloaded = File('$downloadBase/$assetPath');
+      if (await downloaded.exists() && await downloaded.length() > 0) {
+        await _player.setFilePath(downloaded.path);
+        return;
+      }
+    }
+
+    // Keep the bundled source as a fallback for builds that still include it.
+    await _player.setAsset('web/$assetPath');
   }
 
   Future<void> play() async {

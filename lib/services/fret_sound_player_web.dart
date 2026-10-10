@@ -72,8 +72,11 @@ class FretSoundPlayer {
 
   static Future<web.AudioBuffer> _loadBuffer(String assetPath) async {
     final context = _audioContext;
+    final clean = assetPath.startsWith('assets/')
+        ? assetPath.substring(7)
+        : assetPath;
     final response = await web.window
-        .fetch(Uri.encodeFull('assets/web/$assetPath').toJS)
+        .fetch(Uri.encodeFull('assets/assets/$clean').toJS)
         .toDart;
 
     if (!response.ok) {
