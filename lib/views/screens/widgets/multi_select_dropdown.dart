@@ -9,7 +9,6 @@
 
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const _kPrimary = Color(0xFFFE5D43);
 const _kOnSurface = Color(0xFFF1F1F1);
@@ -174,7 +173,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
             Expanded(
               child: Text(
                 _summary,
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: _kOnSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -182,9 +181,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
               ),
             ),
             Icon(
-              _open
-                  ? JhgIcons.chevronUp
-                  : JhgIcons.chevronDown,
+              _open ? JhgIcons.chevronUp : JhgIcons.chevronDown,
               color: Colors.white54,
             ),
           ],
@@ -234,14 +231,13 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                         controller: _searchCtrl,
                         focusNode: _searchFocus,
                         onChanged: (v) => setState(() => _query = v),
-                        style: GoogleFonts.inter(
-                            color: _kOnSurface, fontSize: 14),
+                        style: JhgFonts.inter(color: _kOnSurface, fontSize: 14),
                         cursorColor: _kPrimary,
                         decoration: InputDecoration(
                           isDense: true,
                           border: InputBorder.none,
                           hintText: widget.searchHint,
-                          hintStyle: GoogleFonts.inter(
+                          hintStyle: JhgFonts.inter(
                               color: Colors.white30, fontSize: 14),
                         ),
                       ),
@@ -261,8 +257,10 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                   const Spacer(),
                   Text(
                     _summary,
-                    style: GoogleFonts.inter(
-                        color: _kMuted, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: JhgFonts.inter(
+                        color: _kMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -277,7 +275,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                     ? Padding(
                         padding: const EdgeInsets.all(20),
                         child: Text('No matches',
-                            style: GoogleFonts.inter(
+                            style: JhgFonts.inter(
                                 color: Colors.white38, fontSize: 13)),
                       )
                     : ListView.builder(
@@ -299,8 +297,9 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                                   Expanded(
                                     child: Text(
                                       o.label,
-                                      style: GoogleFonts.poppins(
-                                        color: on ? _kOnSurface : Colors.white70,
+                                      style: JhgFonts.poppins(
+                                        color:
+                                            on ? _kOnSurface : Colors.white70,
                                         fontSize: 15,
                                         fontWeight: on
                                             ? FontWeight.w600
@@ -311,7 +310,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
                                   if (o.subtitle != null)
                                     Text(
                                       o.subtitle!,
-                                      style: GoogleFonts.inter(
+                                      style: JhgFonts.inter(
                                           color: Colors.white38, fontSize: 12),
                                     ),
                                 ],
@@ -338,7 +337,7 @@ class _MultiSelectDropdownState extends State<MultiSelectDropdown> {
           ),
           child: Text(
             label,
-            style: GoogleFonts.inter(
+            style: JhgFonts.inter(
                 color: _kOnSurface, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ),

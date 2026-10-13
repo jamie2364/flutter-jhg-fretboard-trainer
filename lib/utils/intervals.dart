@@ -25,8 +25,7 @@ int absSemitone(BoardModel pos) =>
     (kOpenStringMidi[pos.string] ?? 0) + (pos.fret ?? 0);
 
 /// Signed semitone gap from [a] to [b] (positive = [b] is higher).
-int semitoneGap(BoardModel a, BoardModel b) =>
-    absSemitone(b) - absSemitone(a);
+int semitoneGap(BoardModel a, BoardModel b) => absSemitone(b) - absSemitone(a);
 
 /// One of the 13 intervals from unison to octave.
 ///
@@ -116,8 +115,7 @@ IntervalPrompt? pickIntervalPrompt(
   Random? rng,
 }) {
   final r = rng ?? Random();
-  final active =
-      board.where((b) => isStringActive(b.string ?? 0)).toList();
+  final active = board.where((b) => isStringActive(b.string ?? 0)).toList();
   if (active.length < 2) return null;
 
   for (var attempt = 0; attempt < 600; attempt++) {

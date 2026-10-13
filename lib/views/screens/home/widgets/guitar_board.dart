@@ -226,7 +226,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           } else if (farAbove && !farBelow) {
             offset = anchorCenter - viewport * 0.82; // anchor near the bottom
           } else {
-            offset = anchorCenter - viewport / 2; // notes both sides — centre it
+            offset =
+                anchorCenter - viewport / 2; // notes both sides — centre it
           }
         }
 
@@ -307,8 +308,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     // Interval mode: the root ball always shows; the second (target) ball only
     // in NAME mode (in build mode the user has to find it). Same clean coral
     // ball as the rest of the app (dictionaries / drills style).
-    final bool showIntervalRoot =
-        isInterval && controller.isStart && controller.intervalRootIndex != null;
+    final bool showIntervalRoot = isInterval &&
+        controller.isStart &&
+        controller.intervalRootIndex != null;
     final bool showIntervalTarget = isInterval &&
         !isIntervalBuild &&
         controller.isStart &&
@@ -393,7 +395,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                         Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            for (int i = 0; i <= _kTotalFrets; i++) _fretWire(i),
+                            for (int i = 0; i <= _kTotalFrets; i++)
+                              _fretWire(i),
                             for (int i = 0; i < _kTotalFrets; i++) ..._inlay(i),
                             for (int col = 0; col < 6; col++)
                               _string(col, highlightString,
@@ -411,8 +414,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                               ),
 
                             // Identify-mode target glow
-                            if (showReverseTarget)
-                              _reverseTargetBall(target),
+                            if (showReverseTarget) _reverseTargetBall(target),
 
                             // Interval-mode notes — clean coral balls (same as
                             // the rest of the suite). Root + target in name
@@ -796,8 +798,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           ],
         ),
         child: const Center(
-          child: Icon(JhgIcons.help,
-              color: Colors.white, size: 15),
+          child: Icon(JhgIcons.help, color: Colors.white, size: 15),
         ),
       ),
     );
@@ -942,7 +943,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     return Text(
       label,
       textAlign: TextAlign.center,
-      style: JHGTextStyles.labelStyle.copyWith(
+      style: JhgFonts.inter(
         fontWeight: FontWeight.bold,
         fontSize: 14,
         height: 1.2,
@@ -1052,7 +1053,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                           return Padding(
                             padding: EdgeInsets.only(bottom: height * 0.002),
                             child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 11),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 11),
                               height: height * 0.077,
                               child: Row(
                                 children: [
@@ -1151,7 +1153,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                             crossAxisCount: 6,
                             mainAxisSpacing: 0,
                             crossAxisSpacing: 7,
-                            itemBuilder: (context, index) => reverseTargetCircle(
+                            itemBuilder: (context, index) =>
+                                reverseTargetCircle(
                               isTarget: controller.highlightFret == index,
                               index: index,
                               height: height,
@@ -1219,7 +1222,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                           quarterTurns: 1,
                           child: Text(
                             index.toString(),
-                            style: JHGTextStyles.lrlabelStyle.copyWith(
+                            style: JhgFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
                               fontSize: 14,
                               height: 2,
                             ),
@@ -1319,8 +1324,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ],
                 ),
                 child: const Center(
-                  child: Icon(JhgIcons.help,
-                      color: Colors.white, size: 15),
+                  child: Icon(JhgIcons.help, color: Colors.white, size: 15),
                 ),
               )
             : null,
@@ -1333,9 +1337,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           width: 9,
           height: 9,
           decoration: BoxDecoration(
-            color: isColor == true
-                ? const Color(0xFF888888)
-                : Colors.transparent,
+            color:
+                isColor == true ? const Color(0xFF888888) : Colors.transparent,
             shape: BoxShape.circle,
           ),
         ),
@@ -1348,7 +1351,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     required double height,
   }) =>
       Padding(
-        padding: EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
+        padding:
+            EdgeInsets.only(bottom: getHighLightBasedOnIndex(index, height)),
         child: Container(
           width: height * 0.030,
           height: height * 0.030,
@@ -1517,7 +1521,7 @@ class _StringNameChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: JHGTextStyles.labelStyle.copyWith(
+        style: JhgFonts.inter(
           color: JHGColors.white,
           fontSize: 14,
           fontWeight: FontWeight.w700,

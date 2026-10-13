@@ -10,8 +10,7 @@ class TourService {
   }
 
   static void markTourCompleted() {
-    SharedPreferences.getInstance()
-        .then((prefs) => prefs.setBool(_key, true));
+    SharedPreferences.getInstance().then((prefs) => prefs.setBool(_key, true));
   }
 
   static Future<void> resetTour() async {

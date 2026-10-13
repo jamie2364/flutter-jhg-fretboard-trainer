@@ -16,9 +16,7 @@ import 'package:fretboard/models/saved_session.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/utils/board_nav.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-const _kBg = Color(0xFF0F0F0F);
 const _kSurface = Color(0xFF1A1A1A);
 const _kPrimary = Color(0xFFFE5D43);
 const _kOnSurface = Color(0xFFF1F1F1);
@@ -37,8 +35,7 @@ class SavedSessionsScreen extends StatelessWidget {
     // Pick up anything saved elsewhere since this controller was created.
     ctrl.reloadSessions();
 
-    return Scaffold(
-      backgroundColor: _kBg,
+    return JhgScaffold(
       bottomNavigationBar: const AppNavBar(activeTab: AppTab.saved),
       body: SafeArea(
         bottom: false,
@@ -108,7 +105,7 @@ class SavedSessionsScreen extends StatelessWidget {
               child: crumb.isEmpty
                   ? Text(
                       'Saved Sessions',
-                      style: GoogleFonts.poppins(
+                      style: JhgFonts.poppins(
                         color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -123,7 +120,7 @@ class SavedSessionsScreen extends StatelessWidget {
                             .entries
                             .map((e) => Text(
                                   e.key == 0 ? e.value : ' › ${e.value}',
-                                  style: GoogleFonts.poppins(
+                                  style: JhgFonts.poppins(
                                       color: e.key == crumb.length - 1
                                           ? _kOnSurface
                                           : _kFaint,
@@ -159,8 +156,8 @@ class SavedSessionsScreen extends StatelessWidget {
                 _sortItem(LibrarySortMode.byDateAsc, 'Oldest first', sortMode),
                 _sortItem(LibrarySortMode.byName, 'A to Z', sortMode),
               ],
-              child: _squareBtn(const Icon(JhgIcons.sort,
-                  color: Colors.white54, size: 16)),
+              child: _squareBtn(
+                  const Icon(JhgIcons.sort, color: Colors.white54, size: 16)),
             ),
             const SizedBox(width: 8),
             GestureDetector(
@@ -199,7 +196,7 @@ class SavedSessionsScreen extends StatelessWidget {
     return PopupMenuItem(
       value: mode,
       child: Text(label,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
               color: active ? _kPrimary : Colors.white70,
               fontWeight: active ? FontWeight.w600 : FontWeight.w400,
               fontSize: 14)),
@@ -219,8 +216,7 @@ class SavedSessionsScreen extends StatelessWidget {
   Widget _buildBody(BuildContext context, LibraryController ctrl) {
     return Obx(() {
       if (ctrl.loading.value) {
-        return const Center(
-            child: CircularProgressIndicator(color: _kPrimary));
+        return const Center(child: CircularProgressIndicator(color: _kPrimary));
       }
       final folders = ctrl.visibleFolders;
       final sessions = ctrl.visibleSessions;
@@ -239,7 +235,7 @@ class SavedSessionsScreen extends StatelessWidget {
                     searching
                         ? 'Nothing matched that'
                         : 'Nothing saved in here yet',
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                         color: Colors.white70,
                         fontSize: 16,
                         fontWeight: FontWeight.w600)),
@@ -250,8 +246,8 @@ class SavedSessionsScreen extends StatelessWidget {
                         : 'Hit Save while you practise and the session lands '
                             'here, ready to pick up later.',
                     textAlign: TextAlign.center,
-                    style:
-                        GoogleFonts.inter(color: _kFaint, fontSize: 13, height: 1.5)),
+                    style: JhgFonts.inter(
+                        color: _kFaint, fontSize: 13, height: 1.5)),
               ],
             ),
           ),
@@ -709,8 +705,7 @@ class _FolderTile extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _IconBadge(
-                        icon: JhgIcons.folder, tint: tint, iconSize: 24),
+                    _IconBadge(icon: JhgIcons.folder, tint: tint, iconSize: 24),
                     const Spacer(),
                     _MenuButton(onTap: onMenu),
                   ],
@@ -721,13 +716,13 @@ class _FolderTile extends StatelessWidget {
                 Text(folder.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600)),
                 const SizedBox(height: 3),
                 Text(n == 1 ? '1 item' : '$n items',
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                         color: _kFaint,
                         fontSize: 11,
                         fontWeight: FontWeight.w500)),
@@ -794,7 +789,7 @@ class _FolderRow extends StatelessWidget {
                     Text(folder.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w600)),
@@ -802,8 +797,8 @@ class _FolderRow extends StatelessWidget {
                     Obx(() {
                       final n = ctrl.folderItemCount(folder.id);
                       return Text(n == 1 ? '1 item' : '$n items',
-                          style: GoogleFonts.poppins(
-                              color: _kFaint, fontSize: 11));
+                          style:
+                              JhgFonts.poppins(color: _kFaint, fontSize: 11));
                     }),
                   ],
                 ),
@@ -839,8 +834,18 @@ class _FolderRow extends StatelessWidget {
 // ── Session widgets ──────────────────────────────────────────────────────────
 
 const List<String> _kMonths = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 String _fmtDate(DateTime d) => '${_kMonths[d.month - 1]} ${d.day}, ${d.year}';
@@ -878,7 +883,7 @@ class _SessionTile extends StatelessWidget {
               Text(session.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w600)),
@@ -886,7 +891,7 @@ class _SessionTile extends StatelessWidget {
               Text('${session.modeGroup} · Score ${session.score}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: _kFaint,
                       fontSize: 11,
                       fontWeight: FontWeight.w500)),
@@ -939,7 +944,7 @@ class _SessionRow extends StatelessWidget {
                     Text(session.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w600)),
@@ -948,16 +953,14 @@ class _SessionRow extends StatelessWidget {
                         '${session.modeGroup} · Score ${session.score} · ${_fmtDate(session.createdAt)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                            color: _kFaint, fontSize: 11)),
+                        style: JhgFonts.poppins(color: _kFaint, fontSize: 11)),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
               SizedBox(
                 width: 64,
-                child:
-                    _LibNeckMotif(seed: session.id, tint: tint, height: 26),
+                child: _LibNeckMotif(seed: session.id, tint: tint, height: 26),
               ),
               const SizedBox(width: 6),
               _RowMenu(onTap: onMenu),
@@ -1107,7 +1110,7 @@ class _SheetAction extends StatelessWidget {
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 16),
               Text(label,
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: color, fontSize: 15, fontWeight: FontWeight.w500)),
             ],
           ),
@@ -1138,7 +1141,7 @@ class _SubtleButton extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
         ),
         child: Text(label,
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
                 color: Colors.white70,
                 fontSize: 15,
                 fontWeight: FontWeight.w600)),
@@ -1160,7 +1163,9 @@ class _MoveDialog extends StatelessWidget {
   List<(LibraryFolder, int)> _flatten() {
     final out = <(LibraryFolder, int)>[];
     void walk(String? parentId, int depth) {
-      final children = ctrl.folders.where((f) => f.parentId == parentId).toList()
+      final children = ctrl.folders
+          .where((f) => f.parentId == parentId)
+          .toList()
         ..sort((a, b) => a.name.compareTo(b.name));
       for (final f in children) {
         out.add((f, depth));
@@ -1257,7 +1262,7 @@ class _MoveRow extends StatelessWidget {
                   child: Text(label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
+                      style: JhgFonts.poppins(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w500)),
@@ -1328,13 +1333,12 @@ class _LibNameDialogState extends State<_LibNameDialog> {
               autofocus: true,
               textCapitalization: TextCapitalization.words,
               onSubmitted: (_) => _submit(),
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
+              style: JhgFonts.poppins(color: Colors.white, fontSize: 15),
               cursorColor: _kPrimary,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: widget.hint,
-                hintStyle:
-                    GoogleFonts.poppins(color: _kFaint, fontSize: 15),
+                hintStyle: JhgFonts.poppins(color: _kFaint, fontSize: 15),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -1397,7 +1401,7 @@ class _ColorPickerSheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
             child: Text('Colour',
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600)),

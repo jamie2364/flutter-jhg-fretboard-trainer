@@ -6,10 +6,8 @@ import 'package:fretboard/views/screens/home/widgets/web_guitar_board.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/views/widgets/count_timer_widget.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // ── Palette (mirrors portrait_board.dart) ─────────────────────────────────────
-const _kNavBg = Color(0xFF0F0F0F);
 const _kPanelBg = Color(0xFF1E1D1D);
 
 // ── Web-specific sizing ───────────────────────────────────────────────────────
@@ -201,14 +199,13 @@ class _WebBoardState extends State<WebBoard> {
 
   void _showModeSwitcher(BuildContext context, HomeController controller) {
     final isReverse = controller.currentGameMode.value == 'reverse';
-    showModalBottomSheet(
+    showJhgModalSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      constraints: const BoxConstraints(maxWidth: 480),
+      maxWidth: 480,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: _kNavBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: ctx.jhg.page,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: EdgeInsets.fromLTRB(
             20, 16, 20, MediaQuery.of(ctx).padding.bottom + 24),
@@ -224,7 +221,7 @@ class _WebBoardState extends State<WebBoard> {
             ),
             const SizedBox(height: 20),
             Text('SELECT MODE',
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                     color: Colors.white38,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -377,23 +374,21 @@ class _ExpandedPanel extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _kPanelBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isReverse
-                          ? JhgIcons.help
-                          : JhgIcons.note,
+                      isReverse ? JhgIcons.help : JhgIcons.note,
                       size: 15,
                       color: JHGColors.primary,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       isReverse ? 'IDENTIFY THE NOTE' : 'FIND THE NOTE',
-                      style: GoogleFonts.inter(
+                      style: JhgFonts.inter(
                           color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -412,7 +407,7 @@ class _ExpandedPanel extends StatelessWidget {
                   ? 'A fret lights up. Pick the correct note name.'
                   : 'Find the note shown here on the fretboard.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                   color: Colors.white38,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -433,8 +428,8 @@ class _ExpandedPanel extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                   decoration: BoxDecoration(
                     color: JHGColors.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(24),
@@ -442,29 +437,29 @@ class _ExpandedPanel extends StatelessWidget {
                         color: JHGColors.primary.withValues(alpha: 0.4)),
                   ),
                   child: Text(c.highlightNode ?? '',
-                      style: GoogleFonts.poppins(
+                      style: JhgFonts.poppins(
                           color: JHGColors.primary,
                           fontSize: 28,
                           fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('SCORE',
-                        style: GoogleFonts.inter(
+                        style: JhgFonts.inter(
                             color: Colors.white38,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.1)),
                     const SizedBox(width: 8),
                     Text(c.score.toString(),
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold)),
@@ -559,8 +554,7 @@ class _CollapsedTile extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 7),
                   child: GestureDetector(
-                    onTap:
-                        locked ? null : () => c.selectReverseAnswer(note),
+                    onTap: locked ? null : () => c.selectReverseAnswer(note),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       width: double.infinity,
@@ -597,25 +591,22 @@ class _CollapsedTile extends StatelessWidget {
             Center(
               child: Container(
                 padding: showNote
-                    ? const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 5)
+                    ? const EdgeInsets.symmetric(horizontal: 14, vertical: 5)
                     : EdgeInsets.zero,
                 decoration: showNote
                     ? BoxDecoration(
                         color: JHGColors.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color:
-                                JHGColors.primary.withValues(alpha: 0.30)),
+                            color: JHGColors.primary.withValues(alpha: 0.30)),
                       )
                     : null,
                 child: Text(
                   showNote ? (c.highlightNode ?? '—') : 'Find Note',
                   maxLines: 1,
                   style: TextStyle(
-                    color: showNote
-                        ? JHGColors.primary
-                        : const Color(0xFFFE5D43),
+                    color:
+                        showNote ? JHGColors.primary : const Color(0xFFFE5D43),
                     fontSize: showNote ? 26 : 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: showNote ? -0.5 : 0.1,
@@ -632,14 +623,14 @@ class _CollapsedTile extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text('SCORE',
-                      style: GoogleFonts.inter(
+                      style: JhgFonts.inter(
                           color: Colors.white38,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8)),
                   const SizedBox(width: 5),
                   Text(c.score.toString(),
-                      style: GoogleFonts.poppins(
+                      style: JhgFonts.poppins(
                           color: Colors.white,
                           fontSize: 17,
                           fontWeight: FontWeight.bold)),
@@ -797,7 +788,7 @@ class _ModeTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: GoogleFonts.poppins(
+                      style: JhgFonts.poppins(
                           color: isSelected ? JHGColors.primary : Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -805,7 +796,7 @@ class _ModeTile extends StatelessWidget {
                           height: 1.1)),
                   const SizedBox(height: 3),
                   Text(subtitle,
-                      style: GoogleFonts.inter(
+                      style: JhgFonts.inter(
                           color: Colors.white.withValues(alpha: 0.45),
                           fontSize: 12,
                           height: 1.3)),
@@ -850,14 +841,14 @@ class _ReverseChoicePanel extends StatelessWidget {
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('SCORE',
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                         color: Colors.white38,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1)),
                 const SizedBox(width: 6),
                 Text(controller.score.toString(),
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                         color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.bold)),
@@ -865,7 +856,7 @@ class _ReverseChoicePanel extends StatelessWidget {
             ),
             if (controller.identifyShowPositionHint)
               Text(controller.reversePositionHint,
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                       color: Colors.white38,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -893,7 +884,7 @@ class _ReverseChoicePanel extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(note,
-                          style: GoogleFonts.poppins(
+                          style: JhgFonts.poppins(
                               color: s.text,
                               fontSize: 16,
                               fontWeight: FontWeight.w700)),

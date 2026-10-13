@@ -2,7 +2,6 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kPrimary = Color(0xFFFE5D43);
@@ -90,69 +89,69 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
     return Material(
       type: MaterialType.transparency,
       child: Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _kCard.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _kCard.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
                   ),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(26, 30, 26, 22),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _eyebrow(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Chord Lab',
-                        style: GoogleFonts.poppins(
-                          color: _kOnSurface,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          height: 1.1,
-                          letterSpacing: -0.6,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(26, 30, 26, 22),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _eyebrow(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Chord Lab',
+                          style: JhgFonts.poppins(
+                            color: _kOnSurface,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1,
+                            letterSpacing: -0.6,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Pick the chords you want to work on and the Lab '
-                        'drills them four ways, mixing up the rounds so it '
-                        'never gets stale. Great for locking shapes into '
-                        'muscle memory.',
-                        style: GoogleFonts.inter(
-                          color: _kMuted,
-                          fontSize: 14.5,
-                          height: 1.55,
+                        const SizedBox(height: 10),
+                        Text(
+                          'Pick the chords you want to work on and the Lab '
+                          'drills them four ways, mixing up the rounds so it '
+                          'never gets stale. Great for locking shapes into '
+                          'muscle memory.',
+                          style: JhgFonts.inter(
+                            color: _kMuted,
+                            fontSize: 14.5,
+                            height: 1.55,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 22),
-                      for (var i = 0; i < _kFacets.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 12),
-                        _facetRow(_kFacets[i]),
+                        const SizedBox(height: 22),
+                        for (var i = 0; i < _kFacets.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 12),
+                          _facetRow(_kFacets[i]),
+                        ],
+                        const SizedBox(height: 22),
+                        _dontShowRow(),
+                        const SizedBox(height: 18),
+                        _continueButton(),
                       ],
-                      const SizedBox(height: 22),
-                      _dontShowRow(),
-                      const SizedBox(height: 18),
-                      _continueButton(),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -175,7 +174,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
               const SizedBox(width: 7),
               Text(
                 'ADVANCED PRACTICE',
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: _kPrimary,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
@@ -201,7 +200,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
             children: [
               Text(
                 f.title,
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: _kOnSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -212,7 +211,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
               const SizedBox(height: 2),
               Text(
                 f.body,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: _kMuted.withValues(alpha: 0.9),
                   fontSize: 12.5,
                   height: 1.35,
@@ -252,7 +251,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
           const SizedBox(width: 11),
           Text(
             'Don’t show this again',
-            style: GoogleFonts.inter(
+            style: JhgFonts.inter(
               color: _kMuted,
               fontSize: 13.5,
               fontWeight: FontWeight.w500,
@@ -282,7 +281,7 @@ class _ChordLabIntroDialogState extends State<ChordLabIntroDialog> {
         ),
         child: Text(
           'Continue',
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w700,

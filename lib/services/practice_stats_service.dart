@@ -92,10 +92,8 @@ class ModuleBreakdown {
       ? byQuality
       : (byRound.isNotEmpty ? byRound : byMode);
 
-  int get totalAttempts =>
-      _canonical.values.fold(0, (s, e) => s + e.attempts);
-  int get totalCorrect =>
-      _canonical.values.fold(0, (s, e) => s + e.correct);
+  int get totalAttempts => _canonical.values.fold(0, (s, e) => s + e.attempts);
+  int get totalCorrect => _canonical.values.fold(0, (s, e) => s + e.correct);
   double get accuracy =>
       totalAttempts == 0 ? 0.0 : totalCorrect / totalAttempts;
   bool get hasData => totalAttempts > 0;
@@ -148,8 +146,10 @@ extension StatsModuleKey on StatsModule {
 class PracticeStatsService {
   static const String _root = 'ps_'; // ps_<module>_<key>_a / _c
 
-  static String _attKey(String module, String key) => '$_root${module}_${key}_a';
-  static String _corKey(String module, String key) => '$_root${module}_${key}_c';
+  static String _attKey(String module, String key) =>
+      '$_root${module}_${key}_a';
+  static String _corKey(String module, String key) =>
+      '$_root${module}_${key}_c';
 
   /// Records one graded attempt for [key] within [module]. Fire-and-forget.
   static Future<void> record(

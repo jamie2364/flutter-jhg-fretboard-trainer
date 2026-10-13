@@ -11,7 +11,6 @@ import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/heatmap/stats_breakdown_view.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class HeatmapScreen extends StatefulWidget {
   const HeatmapScreen({super.key});
@@ -68,7 +67,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     final byQuality = <String, StatEntry>{
       for (final e in perNote.entries)
         if (e.value.attempts > 0)
-          e.key: StatEntry(attempts: e.value.attempts, correct: e.value.correct),
+          e.key:
+              StatEntry(attempts: e.value.attempts, correct: e.value.correct),
     };
     return ModuleBreakdown(
       byQuality: byQuality,
@@ -96,7 +96,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     required VoidCallback onTap,
     bool active = false,
   }) {
-    const coral = Color(0xFFFE5D43);
+    final coral = context.jhg.accent;
     return JhgIconChipButton(
       icon: icon,
       onTap: onTap,
@@ -106,49 +106,21 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     );
   }
 
-  void _confirmReset() {
-    showDialog(
+  void _confirmReset() async {
+    final confirmed = await showJhgConfirm(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C2C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Reset Notes stats?',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
+      title: 'Reset Notes stats?',
+      message:
           'This permanently clears your per-note accuracy (and the Find/Identify '
           'split). Your score history and other games are unaffected.',
-          style: GoogleFonts.inter(
-            color: Colors.white54,
-            fontSize: 13,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              controller.resetModule(0);
-              _loadHistory();
-            },
-            child: Text('Reset',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFFE05252),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
+      confirmLabel: 'Reset',
+      cancelLabel: 'Cancel',
+      accent: context.jhg.danger,
     );
+    if (confirmed && mounted) {
+      controller.resetModule(0);
+      _loadHistory();
+    }
   }
 
   @override
@@ -161,80 +133,75 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     final content = SafeArea(
       bottom: false,
       child: Column(
-              children: [
-                // ─── TOP BAR ──────────────────────────────────────────────
-                JhgScreenHeader.detail(
-                  title: _showNeck ? 'Mastery Map' : 'Note Stats',
-                  onBack: () => Get.back(),
-                  actions: [
-                    // Toggle: breakdown ⇄ neck map. Grid icon jumps to the
-                    // fretboard map; bar-chart icon returns to the stats.
-                    _topIcon(
-                      icon: _showNeck
-                          ? JhgIcons.navStats
-                          : JhgIcons.navModes,
-                      active: _showNeck,
-                      onTap: () => setState(() => _showNeck = !_showNeck),
-                    ),
-                    // Info: on the map it's the colour-legend sheet; on the
-                    // stats it toggles the explanatory blurb.
-                    _topIcon(
-                      icon: _showNeck
-                          ? JhgIcons.info
-                          : (_showInfoBlurb
-                              ? JhgIcons.info
-                              : JhgIcons.info),
-                      active: !_showNeck && _showInfoBlurb,
-                      onTap: () {
-                        if (_showNeck) {
-                          _showLegendSheet(context);
-                        } else {
-                          setState(() => _showInfoBlurb = !_showInfoBlurb);
-                        }
-                      },
-                    ),
-                    _topIcon(
-                      icon: JhgIcons.reset,
-                      onTap: _confirmReset,
-                    ),
-                  ],
-                ),
+        children: [
+          // ─── TOP BAR ──────────────────────────────────────────────
+          JhgScreenHeader.detail(
+            title: _showNeck ? 'Mastery Map' : 'Note Stats',
+            onBack: () => Get.back(),
+            actions: [
+              // Toggle: breakdown ⇄ neck map. Grid icon jumps to the
+              // fretboard map; bar-chart icon returns to the stats.
+              _topIcon(
+                icon: _showNeck ? JhgIcons.navStats : JhgIcons.navModes,
+                active: _showNeck,
+                onTap: () => setState(() => _showNeck = !_showNeck),
+              ),
+              // Info: on the map it's the colour-legend sheet; on the
+              // stats it toggles the explanatory blurb.
+              _topIcon(
+                icon: _showNeck
+                    ? JhgIcons.info
+                    : (_showInfoBlurb ? JhgIcons.info : JhgIcons.info),
+                active: !_showNeck && _showInfoBlurb,
+                onTap: () {
+                  if (_showNeck) {
+                    _showLegendSheet(context);
+                  } else {
+                    setState(() => _showInfoBlurb = !_showInfoBlurb);
+                  }
+                },
+              ),
+              _topIcon(
+                icon: JhgIcons.reset,
+                onTap: _confirmReset,
+              ),
+            ],
+          ),
 
-                // ─── BODY: stats breakdown (default) or the neck map ──────
-                Expanded(
-                  child: _showNeck
-                      ? _notesBody(height, width)
-                      : Obx(() {
-                          if (controller.isLoading.value ||
-                              controller.breakdownLoading.value) {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                  color: Colors.white24, strokeWidth: 1.5),
-                            );
-                          }
-                          // Touch the reactive stores so the view rebuilds after
-                          // a load / reset.
-                          controller.stats.length;
-                          controller.noteStats.value;
-                          return StatBreakdownView(
-                            module: 0,
-                            data: _notesBreakdown(),
-                            history: _history,
-                            showIntro: _showInfoBlurb,
-                          );
-                        }),
-                ),
+          // ─── BODY: stats breakdown (default) or the neck map ──────
+          Expanded(
+            child: _showNeck
+                ? _notesBody(height, width)
+                : Obx(() {
+                    if (controller.isLoading.value ||
+                        controller.breakdownLoading.value) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                            color: Colors.white24, strokeWidth: 1.5),
+                      );
+                    }
+                    // Touch the reactive stores so the view rebuilds after
+                    // a load / reset.
+                    controller.stats.length;
+                    controller.noteStats.value;
+                    return StatBreakdownView(
+                      module: 0,
+                      data: _notesBreakdown(),
+                      history: _history,
+                      showIntro: _showInfoBlurb,
+                    );
+                  }),
+          ),
 
-                // ─── NAV BAR ──────────────────────────────────────────────
-                const AppNavBar(activeTab: AppTab.heatmap),
-              ],
-            ),
-          );
+          // ─── NAV BAR ──────────────────────────────────────────────
+          const AppNavBar(activeTab: AppTab.heatmap),
+        ],
+      ),
+    );
 
     return Stack(
       children: [
-        Scaffold(
-          backgroundColor: const Color(0xFF0F0F0F),
+        JhgScaffold(
           body: kIsWeb
               ? Center(
                   child: ConstrainedBox(
@@ -325,7 +292,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             children: [
               Text(
                 'Tap any fret to see details',
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: Colors.white70,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -340,15 +307,14 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   }
 
   void _showLegendSheet(BuildContext context) {
-    showModalBottomSheet(
+    showJhgModalSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF0F0F0F),
-      // Keep it a tidy card instead of a full-width slab on web.
-      constraints: const BoxConstraints(maxWidth: 440),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
+      maxWidth: 440,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: ctx.jhg.page,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         padding: EdgeInsets.fromLTRB(
             20, 10, 20, MediaQuery.of(ctx).padding.bottom + 16),
         child: Column(
@@ -365,8 +331,11 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                     borderRadius: BorderRadius.circular(2)),
               ),
             ),
-            Text('Color Guide', style: GoogleFonts.poppins(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            Text('Color Guide',
+                style: JhgFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ...{
               const Color(0xFFE05252): ('Struggling', 'Under 50% correct'),
@@ -375,23 +344,29 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
               const Color(0xFF2ECC71): ('Mastered', '90%+ correct'),
               const Color(0x66FFFFFF): ('No data', 'Not practiced yet'),
             }.entries.map((e) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              // Label + description on ONE line so each row is half as tall.
-              child: Row(
-                children: [
-                  Container(
-                    width: 11, height: 11,
-                    decoration: BoxDecoration(color: e.key, shape: BoxShape.circle),
+                  padding: const EdgeInsets.only(bottom: 10),
+                  // Label + description on ONE line so each row is half as tall.
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 11,
+                        height: 11,
+                        decoration:
+                            BoxDecoration(color: e.key, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(e.value.$1,
+                          style: JhgFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      Text(e.value.$2,
+                          style: JhgFonts.inter(
+                              color: Colors.white38, fontSize: 11)),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Text(e.value.$1, style: GoogleFonts.inter(
-                    color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  const Spacer(),
-                  Text(e.value.$2, style: GoogleFonts.inter(
-                    color: Colors.white38, fontSize: 11)),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
       ),
@@ -407,13 +382,17 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       (Color(0x66FFFFFF), '–'),
     ];
     return Row(
-      children: items.map((item) => Padding(
-        padding: const EdgeInsets.only(left: 6),
-        child: Container(
-          width: 10, height: 10,
-          decoration: BoxDecoration(color: item.$1, shape: BoxShape.circle),
-        ),
-      )).toList(),
+      children: items
+          .map((item) => Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration:
+                      BoxDecoration(color: item.$1, shape: BoxShape.circle),
+                ),
+              ))
+          .toList(),
     );
   }
 
@@ -434,7 +413,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
           children: [
             Text(
               value,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: color,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -444,7 +423,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             const SizedBox(height: 3),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                 color: Colors.white38,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
@@ -456,14 +435,12 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       ),
     );
   }
-
 }
 
 // ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
 
 class _DetailPanel extends StatelessWidget {
-  const _DetailPanel(
-      {required this.index, required this.controller});
+  const _DetailPanel({required this.index, required this.controller});
 
   final int index;
   final HeatmapController controller;
@@ -497,7 +474,7 @@ class _DetailPanel extends StatelessWidget {
             child: Center(
               child: Text(
                 fret.note ?? '',
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: color,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -513,7 +490,7 @@ class _DetailPanel extends StatelessWidget {
               children: [
                 Text(
                   'String ${fret.string}  •  Fret ${fret.fret}',
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: Colors.white70,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -523,8 +500,7 @@ class _DetailPanel extends StatelessWidget {
                 if (!hasData)
                   Text(
                     'Not practiced yet',
-                    style: GoogleFonts.inter(
-                        color: Colors.white24, fontSize: 11),
+                    style: JhgFonts.inter(color: Colors.white24, fontSize: 11),
                   )
                 else ...[
                   Row(
@@ -536,15 +512,14 @@ class _DetailPanel extends StatelessWidget {
                             value: acc,
                             minHeight: 4,
                             backgroundColor: Colors.white12,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(color),
+                            valueColor: AlwaysStoppedAnimation<Color>(color),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${(acc * 100).round()}%',
-                        style: GoogleFonts.inter(
+                        style: JhgFonts.inter(
                           color: color,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -564,7 +539,7 @@ class _DetailPanel extends StatelessWidget {
               children: [
                 Text(
                   '${stat.correct}/${stat.attempts}',
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                     color: Colors.white54,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -572,8 +547,7 @@ class _DetailPanel extends StatelessWidget {
                 ),
                 Text(
                   'correct',
-                  style: GoogleFonts.inter(
-                      color: Colors.white24, fontSize: 9),
+                  style: JhgFonts.inter(color: Colors.white24, fontSize: 9),
                 ),
               ],
             ),
@@ -616,208 +590,209 @@ class _HeatmapFretboard extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.only(left: 45.8),
         child: Column(
-        children: [
-          // String name chips.
-          // Right padding must equal the board Row's right-side gutter
-          // (SizedBox 20 + fret-number column width*0.06) so the centred chip
-          // block lines up exactly over the board columns below it.
-          Center(
-            child: Container(
-              padding: EdgeInsets.only(right: 20 + width * 0.06),
-              child: _StringNameRow(width: boardWidth),
+          children: [
+            // String name chips.
+            // Right padding must equal the board Row's right-side gutter
+            // (SizedBox 20 + fret-number column width*0.06) so the centred chip
+            // block lines up exactly over the board columns below it.
+            Center(
+              child: Container(
+                padding: EdgeInsets.only(right: 20 + width * 0.06),
+                child: _StringNameRow(width: boardWidth),
+              ),
             ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Fretboard
-              Container(
-                width: boardWidth,
-                height: vh * 1.212,
-                clipBehavior: Clip.hardEdge,
-                decoration: const BoxDecoration(),
-                child: Stack(
-                  alignment: Alignment.topCenter,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Fretboard
+                Container(
+                  width: boardWidth,
+                  height: vh * 1.212,
                   clipBehavior: Clip.hardEdge,
-                  children: [
-                    // Cream board — nut + exactly 15 fret rows
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: vh * 0.015),
-                        Container(
-                          width: width * 0.8,
-                          height: vh * 1.197,
-                          color: AppColors.creamColor,
-                        ),
-                      ],
-                    ),
-                    // Nut
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: RotatedBox(
-                        quarterTurns: 2,
-                        child: Container(
-                          width: double.infinity,
-                          height: vh * 0.015,
-                          decoration: const BoxDecoration(
-                            color: JHGColors.black,
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(10),
-                              bottomRight: Radius.circular(10),
+                  decoration: const BoxDecoration(),
+                  child: Stack(
+                    alignment: Alignment.topCenter,
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      // Cream board — nut + exactly 15 fret rows
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: vh * 0.015),
+                          Container(
+                            width: width * 0.8,
+                            height: vh * 1.197,
+                            color: AppColors.creamColor,
+                          ),
+                        ],
+                      ),
+                      // Nut
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: RotatedBox(
+                          quarterTurns: 2,
+                          child: Container(
+                            width: double.infinity,
+                            height: vh * 0.015,
+                            decoration: const BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(10),
+                                bottomRight: Radius.circular(10),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // Inlay dots
-                    ListView.builder(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 15,
-                      itemBuilder: (_, i) => Padding(
-                        padding: EdgeInsets.only(bottom: vh * 0.002),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 11),
-                          height: vh * 0.077,
-                          child: Row(
-                            children: [
-                              Expanded(child: _inlayDot(vh, i == 11)),
-                              const Expanded(child: SizedBox.shrink()),
-                              Expanded(
-                                  child: _inlayDot(
-                                      vh,
-                                      i == 2 ||
-                                          i == 4 ||
-                                          i == 6 ||
-                                          i == 8 ||
-                                          i == 14)),
-                              const Expanded(child: SizedBox.shrink()),
-                              Expanded(child: _inlayDot(vh, i == 11)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Row dividers (frets)
-                    ListView.builder(
-                      itemCount: 15,
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (_, pos) => Padding(
-                        padding: EdgeInsets.only(top: vh * 0.076),
-                        child: Container(
-                          height: vh * 0.0038,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                AppColors.whiteLight,
-                                AppColors.whiteLight,
-                                JHGColors.charcolGray,
-                                JHGColors.secondryBlack,
+                      // Inlay dots
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 15,
+                        itemBuilder: (_, i) => Padding(
+                          padding: EdgeInsets.only(bottom: vh * 0.002),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 11),
+                            height: vh * 0.077,
+                            child: Row(
+                              children: [
+                                Expanded(child: _inlayDot(vh, i == 11)),
+                                const Expanded(child: SizedBox.shrink()),
+                                Expanded(
+                                    child: _inlayDot(
+                                        vh,
+                                        i == 2 ||
+                                            i == 4 ||
+                                            i == 6 ||
+                                            i == 8 ||
+                                            i == 14)),
+                                const Expanded(child: SizedBox.shrink()),
+                                Expanded(child: _inlayDot(vh, i == 11)),
                               ],
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // Column dividers (strings)
-                    RotatedBox(
-                      quarterTurns: 2,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (i) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              left: i == 0 ? 12 : 0,
-                              right: i == 5 ? 12 : 0,
-                            ),
-                            child: Container(
-                              width: i == 5
-                                  ? width * 0.010
-                                  : i == 4
-                                      ? width * 0.009
-                                      : i == 3
-                                          ? width * 0.008
-                                          : i == 2
-                                              ? width * 0.007
-                                              : i == 1
-                                                  ? width * 0.006
-                                                  : width * 0.006,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                  colors: [
-                                    AppColors.whiteLight,
-                                    AppColors.whiteLight,
-                                    JHGColors.charcolGray,
-                                    JHGColors.secondryBlack,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    // Heatmap circles
-                    // Top padding = nut height so fret-0 circles
-                    // appear below the nut instead of behind it.
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: AlignedGridView.count(
-                        itemCount: 96,
+                      // Row dividers (frets)
+                      ListView.builder(
+                        itemCount: 15,
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
                         physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 6,
-                        mainAxisSpacing: 0,
-                        crossAxisSpacing: 7,
-                        itemBuilder: (_, i) =>
-                            _HeatmapCell(
-                          index: i,
-                          height: vh,
-                          // Width of a single string column, minus the 5 gaps
-                          // (crossAxisSpacing 7) between the 6 columns. Circles
-                          // scale to this so they fit any board width.
-                          cellWidth: (boardWidth - 7 * 5) / 6,
-                          controller: controller,
+                        itemBuilder: (_, pos) => Padding(
+                          padding: EdgeInsets.only(top: vh * 0.076),
+                          child: Container(
+                            height: vh * 0.0038,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  AppColors.whiteLight,
+                                  AppColors.whiteLight,
+                                  const Color(0xFF1E1E1E),
+                                  const Color(0xFF161616),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      // Column dividers (strings)
+                      RotatedBox(
+                        quarterTurns: 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(6, (i) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                left: i == 0 ? 12 : 0,
+                                right: i == 5 ? 12 : 0,
+                              ),
+                              child: Container(
+                                width: i == 5
+                                    ? width * 0.010
+                                    : i == 4
+                                        ? width * 0.009
+                                        : i == 3
+                                            ? width * 0.008
+                                            : i == 2
+                                                ? width * 0.007
+                                                : i == 1
+                                                    ? width * 0.006
+                                                    : width * 0.006,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                    colors: [
+                                      AppColors.whiteLight,
+                                      AppColors.whiteLight,
+                                      const Color(0xFF1E1E1E),
+                                      const Color(0xFF161616),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      // Heatmap circles
+                      // Top padding = nut height so fret-0 circles
+                      // appear below the nut instead of behind it.
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: AlignedGridView.count(
+                          itemCount: 96,
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 6,
+                          mainAxisSpacing: 0,
+                          crossAxisSpacing: 7,
+                          itemBuilder: (_, i) => _HeatmapCell(
+                            index: i,
+                            height: vh,
+                            // Width of a single string column, minus the 5 gaps
+                            // (crossAxisSpacing 7) between the 6 columns. Circles
+                            // scale to this so they fit any board width.
+                            cellWidth: (boardWidth - 7 * 5) / 6,
+                            controller: controller,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 20),
-              // Fret numbers
-              SizedBox(
-                width: width * 0.06,
-                child: ListView.builder(
-                  itemCount: 16,
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (_, i) => Padding(
-                    padding: EdgeInsets.only(
-                        bottom: _fretNumPadding(i, vh)),
-                    child: Text(
-                      i.toString(),
-                      style: JHGTextStyles.lrlabelStyle.copyWith(
-                          fontSize: 14, height: 1.2),
+                const SizedBox(width: 20),
+                // Fret numbers
+                SizedBox(
+                  width: width * 0.06,
+                  child: ListView.builder(
+                    itemCount: 16,
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (_, i) => Padding(
+                      padding: EdgeInsets.only(bottom: _fretNumPadding(i, vh)),
+                      child: Text(
+                        i.toString(),
+                        style: JhgFonts.inter(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -827,7 +802,7 @@ class _HeatmapFretboard extends StatelessWidget {
           width: height * 0.024,
           height: height * 0.024,
           decoration: BoxDecoration(
-            color: show ? JHGColors.secondryBlack : Colors.transparent,
+            color: show ? const Color(0xFF161616) : Colors.transparent,
             shape: BoxShape.circle,
           ),
         ),
@@ -890,8 +865,8 @@ class _HeatmapCell extends StatelessWidget {
         child: Padding(
           // Keep each cell's total height at the fret-row pitch (height*0.077)
           // so circles stay centered in their fret regardless of circleSize.
-          padding: EdgeInsets.symmetric(
-              vertical: (height * 0.077 - circleSize) / 2),
+          padding:
+              EdgeInsets.symmetric(vertical: (height * 0.077 - circleSize) / 2),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             width: circleSize,
@@ -920,7 +895,9 @@ class _HeatmapCell extends StatelessWidget {
                   // Web: fill the smaller circle so labels stay legible.
                   // Mobile: keep the original height-based sizes, unchanged.
                   fontSize: kIsWeb
-                      ? (note.length > 1 ? circleSize * 0.44 : circleSize * 0.56)
+                      ? (note.length > 1
+                          ? circleSize * 0.44
+                          : circleSize * 0.56)
                       : (note.length > 1 ? height * 0.0085 : height * 0.010),
                   fontWeight: FontWeight.w700,
                   height: 1,
@@ -971,17 +948,18 @@ class _StringNameRow extends StatelessWidget {
                       width: chipSize,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: JHGColors.charcolGray,
+                        color: const Color(0xFF1E1E1E),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: JHGColors.primary.withValues(alpha: 0.75),
+                          color:
+                              JhgTokens.dark().accent.withValues(alpha: 0.75),
                           width: 1,
                         ),
                       ),
                       child: Text(
                         AppStrings.guitarStrings[i],
-                        style: JHGTextStyles.labelStyle.copyWith(
-                          color: JHGColors.white,
+                        style: JhgFonts.poppins(
+                          color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1046,8 +1024,7 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
               // Dark backdrop
               const IgnorePointer(
                 child: DecoratedBox(
-                  decoration:
-                      BoxDecoration(color: Color(0xCC000000)),
+                  decoration: BoxDecoration(color: Color(0xCC000000)),
                   child: SizedBox.expand(),
                 ),
               ),
@@ -1061,8 +1038,8 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
                   decoration: BoxDecoration(
                     color: const Color(0xE8111111),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.10)),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.10)),
                     boxShadow: [
                       BoxShadow(
                           color: Colors.black.withValues(alpha: 0.45),
@@ -1076,11 +1053,11 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: JHGColors.primary.withValues(alpha: 0.12),
+                          color: context.jhg.accent.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(JhgIcons.navStats,
-                            color: JHGColors.primary, size: 28),
+                        child: Icon(JhgIcons.navStats,
+                            color: context.jhg.accent, size: 28),
                       ),
                       const SizedBox(height: 14),
                       const Text(
@@ -1113,12 +1090,12 @@ class _HeatmapIntroOverlayState extends State<_HeatmapIntroOverlay>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 32, vertical: 12),
                           decoration: BoxDecoration(
-                            color: JHGColors.primary,
+                            color: context.jhg.accent,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: JHGColors.primary
-                                    .withValues(alpha: 0.40),
+                                color:
+                                    context.jhg.accent.withValues(alpha: 0.40),
                                 blurRadius: 16,
                                 offset: const Offset(0, 5),
                               )

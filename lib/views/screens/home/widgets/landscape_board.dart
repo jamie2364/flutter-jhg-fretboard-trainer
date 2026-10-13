@@ -9,7 +9,6 @@ import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:fretboard/views/widgets/count_timer_widget.dart';
 import 'package:fretboard/utils/routes.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class LandscapeBoard extends StatelessWidget {
   const LandscapeBoard({super.key, required this.controller});
@@ -113,7 +112,7 @@ class LandscapeBoard extends StatelessWidget {
                             children: [
                               Text(
                                 'SCORE',
-                                style: GoogleFonts.inter(
+                                style: JhgFonts.inter(
                                   color: Colors.white38,
                                   fontSize: 8,
                                   fontWeight: FontWeight.w800,
@@ -123,7 +122,7 @@ class LandscapeBoard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 controller.score.toString(),
-                                style: GoogleFonts.poppins(
+                                style: JhgFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -149,7 +148,7 @@ class LandscapeBoard extends StatelessWidget {
                           ),
                           child: Text(
                             controller.highlightNode ?? '',
-                            style: GoogleFonts.poppins(
+                            style: JhgFonts.poppins(
                               color: JHGColors.primary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,

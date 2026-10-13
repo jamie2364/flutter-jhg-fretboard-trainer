@@ -12,7 +12,6 @@ import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/views/screens/saved/save_session_dialog.dart';
 import 'package:fretboard/views/widgets/show_toast.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widgets/count_timer_widget.dart';
 
@@ -83,7 +82,6 @@ class _PortraitBoardState extends State<PortraitBoard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
               // Top row — the modes shifter on the left (Quick start hands
               // mode-picking to the board, so and only so the dictionaries-style
               // "MODES" eyebrow appears; a Customized / Random / resumed session
@@ -123,51 +121,51 @@ class _PortraitBoardState extends State<PortraitBoard> {
               Expanded(
                 key: fretboardTourKeys.fretboard,
                 child: Stack(
-                    children: [
-                      // The fixed-pixel GuitarBoard fills the whole area and the
-                      // tile floats OVER its lower portion (matches drills /
-                      // dictionaries) — the neck runs behind the tile rather than
-                      // being clipped above it. Auto-scroll keeps the active notes
-                      // centred in the open area above the tile.
-                      const Positioned.fill(
-                        child: GuitarBoard(isPortrait: true),
-                      ),
+                  children: [
+                    // The fixed-pixel GuitarBoard fills the whole area and the
+                    // tile floats OVER its lower portion (matches drills /
+                    // dictionaries) — the neck runs behind the tile rather than
+                    // being clipped above it. Auto-scroll keeps the active notes
+                    // centred in the open area above the tile.
+                    const Positioned.fill(
+                      child: GuitarBoard(isPortrait: true),
+                    ),
 
-                      // One bottom overlay that swaps between the expanded
-                      // card and the collapsed tile. The swap is instant (no
-                      // height morph, no cross-fade) — the same behaviour as the
-                      // Ear Training control tile. Only one state is built at a
-                      // time, so the tour's play-button GlobalKey is never
-                      // duplicated across a transition.
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        // Flush to the bottom (the nav bar) — no gap. A gap here
-                        // let the ivory neck show through between the tile and
-                        // the bar; drills / dictionaries seat the tile hard
-                        // against the bottom so the fretboard ends at the tile.
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                          child: _panelCollapsed
-                              ? _CollapsedTile(
-                                  controller: c,
-                                  isReverse: isReverse,
-                                  isInterval: isInterval,
-                                  isChord: isChord,
-                                  onExpand: () => _setCollapsed(false),
-                                )
-                              : _ExpandedPanel(
-                                  controller: c,
-                                  isReverse: isReverse,
-                                  isInterval: isInterval,
-                                  isChord: isChord,
-                                  onCollapse: () => _setCollapsed(true),
-                                ),
-                        ),
+                    // One bottom overlay that swaps between the expanded
+                    // card and the collapsed tile. The swap is instant (no
+                    // height morph, no cross-fade) — the same behaviour as the
+                    // Ear Training control tile. Only one state is built at a
+                    // time, so the tour's play-button GlobalKey is never
+                    // duplicated across a transition.
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      // Flush to the bottom (the nav bar) — no gap. A gap here
+                      // let the ivory neck show through between the tile and
+                      // the bar; drills / dictionaries seat the tile hard
+                      // against the bottom so the fretboard ends at the tile.
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                        child: _panelCollapsed
+                            ? _CollapsedTile(
+                                controller: c,
+                                isReverse: isReverse,
+                                isInterval: isInterval,
+                                isChord: isChord,
+                                onExpand: () => _setCollapsed(false),
+                              )
+                            : _ExpandedPanel(
+                                controller: c,
+                                isReverse: isReverse,
+                                isInterval: isInterval,
+                                isChord: isChord,
+                                onCollapse: () => _setCollapsed(true),
+                              ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ),
 
               // ── Nav bar (shared AppNavBar, so height/placement stay
@@ -242,7 +240,6 @@ class _ExpandedPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           // ── Header row: label + collapse arrow ──────────────────────
           Row(
             children: [
@@ -352,8 +349,8 @@ class _ExpandedPanel extends StatelessWidget {
           else ...[
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 decoration: BoxDecoration(
                   color: JHGColors.primary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(24),
@@ -361,9 +358,10 @@ class _ExpandedPanel extends StatelessWidget {
                       color: JHGColors.primary.withValues(alpha: 0.4)),
                 ),
                 child: Text(c.highlightNode ?? '',
-                    style: GoogleFonts.poppins(
-                      color: JHGColors.primary, fontSize: 28,
-                      fontWeight: FontWeight.bold)),
+                    style: JhgFonts.poppins(
+                        color: JHGColors.primary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 14),
@@ -489,8 +487,7 @@ class _CollapsedTile extends StatelessWidget {
             : isReverse
                 ? 'IDENTIFY THE NOTE'
                 : 'FIND THE NOTE';
-    final showAnswers =
-        isReverse && isPlaying && c.reverseChoices.isNotEmpty;
+    final showAnswers = isReverse && isPlaying && c.reverseChoices.isNotEmpty;
     final showIntervalAnswers =
         c.isIntervalName && isPlaying && c.intervalChoicesList.isNotEmpty;
     final showChordAnswers =
@@ -712,8 +709,8 @@ class _CollapsedTile extends StatelessWidget {
               child: GestureDetector(
                 onTap: c.clearChordLab,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 9),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
@@ -727,7 +724,7 @@ class _CollapsedTile extends StatelessWidget {
                           color: Colors.white60, size: 15),
                       const SizedBox(width: 8),
                       Text('Clear',
-                          style: GoogleFonts.poppins(
+                          style: JhgFonts.poppins(
                               color: Colors.white70,
                               fontSize: 13,
                               fontWeight: FontWeight.w600)),
@@ -951,8 +948,7 @@ class _ModeOption extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon,
-                size: 18,
-                color: isActive ? JHGColors.primary : Colors.white54),
+                size: 18, color: isActive ? JHGColors.primary : Colors.white54),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -960,7 +956,7 @@ class _ModeOption extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: isActive ? JHGColors.primary : Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -969,7 +965,7 @@ class _ModeOption extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: Colors.white38,
                       fontSize: 11.5,
                     ),
@@ -978,15 +974,13 @@ class _ModeOption extends StatelessWidget {
               ),
             ),
             if (isActive)
-              const Icon(JhgIcons.check,
-                  color: JHGColors.primary, size: 18),
+              const Icon(JhgIcons.check, color: JHGColors.primary, size: 18),
           ],
         ),
       ),
     );
   }
 }
-
 
 // ─── Shared control row ───────────────────────────────────────────────────────
 
@@ -996,9 +990,12 @@ class _ControlRow extends StatelessWidget {
 
   IconData _resolveTimerIcon(String mode) {
     switch (mode) {
-      case 'countdown':   return LucideIcons.clock;
-      case 'leaderboard': return JhgIcons.trophy;
-      default:            return JhgIcons.duration;
+      case 'countdown':
+        return LucideIcons.clock;
+      case 'leaderboard':
+        return JhgIcons.trophy;
+      default:
+        return JhgIcons.duration;
     }
   }
 
@@ -1012,7 +1009,6 @@ class _ControlRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-
         // Timer-mode cycle
         JhgCircleIconButton(
           icon: _resolveTimerIcon(isChoiceMode ? c.timerMode.value : mode),
@@ -1052,7 +1048,6 @@ class _ControlRow extends StatelessWidget {
   }
 }
 
-
 // ─── Shared bottom score bar ──────────────────────────────────────────────────
 // One clean, full-width strip that lives at the BOTTOM of the tile (below the
 // answer options), so the score reads the same in every mode and never crowds
@@ -1074,7 +1069,7 @@ class _ScoreLine extends StatelessWidget {
       children: [
         Text(
           'Score:',
-          style: GoogleFonts.inter(
+          style: JhgFonts.inter(
             color: Colors.white,
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -1083,7 +1078,7 @@ class _ScoreLine extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '$score',
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: JHGColors.primary,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -1109,7 +1104,7 @@ class _ScoreTimeLine extends StatelessWidget {
       children: [
         Text(
           'Score ${c.score}',
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: Colors.white,
             fontSize: 15,
             fontWeight: FontWeight.w700,
@@ -1118,11 +1113,11 @@ class _ScoreTimeLine extends StatelessWidget {
         ),
         Text(
           '  ·  ',
-          style: GoogleFonts.poppins(color: Colors.white30, fontSize: 15),
+          style: JhgFonts.poppins(color: Colors.white30, fontSize: 15),
         ),
         Text(
           c.formatTime(c.secondsRemaining.value),
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: c.isStart ? JHGColors.primary : Colors.white54,
             fontSize: 15,
             fontWeight: FontWeight.w700,
@@ -1140,7 +1135,6 @@ class _ReverseChoicePanel extends StatelessWidget {
   const _ReverseChoicePanel({required this.controller});
   final HomeController controller;
 
-
   @override
   Widget build(BuildContext context) {
     if (controller.reverseChoices.isEmpty) return const SizedBox.shrink();
@@ -1153,7 +1147,7 @@ class _ReverseChoicePanel extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Text(controller.reversePositionHint,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                     color: Colors.white38,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -1185,9 +1179,11 @@ class _ReverseChoicePanel extends StatelessWidget {
                         border: Border.all(color: s.border, width: 1.5),
                       ),
                       child: Center(
-                        child: Text(note, style: GoogleFonts.poppins(
-                          color: s.text, fontSize: 16,
-                          fontWeight: FontWeight.w700)),
+                        child: Text(note,
+                            style: JhgFonts.poppins(
+                                color: s.text,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ),
@@ -1267,7 +1263,8 @@ class _IntervalChoicePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
     if (c.intervalChoicesList.isEmpty) return const SizedBox.shrink();
-    return _IntervalChoiceGrid(controller: c, locked: c.intervalSelected != null);
+    return _IntervalChoiceGrid(
+        controller: c, locked: c.intervalSelected != null);
   }
 }
 
@@ -1307,7 +1304,7 @@ class _IntervalChoiceGrid extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: s.text,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -1364,17 +1361,16 @@ class _IntervalBuildPrompt extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               decoration: BoxDecoration(
                 color: JHGColors.primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: JHGColors.primary.withValues(alpha: 0.4)),
+                border:
+                    Border.all(color: JHGColors.primary.withValues(alpha: 0.4)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('PLAY A',
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: JHGColors.primary.withValues(alpha: 0.7),
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -1382,7 +1378,7 @@ class _IntervalBuildPrompt extends StatelessWidget {
                     )),
                 const SizedBox(width: 10),
                 Text(name,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: JHGColors.primary,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -1396,7 +1392,7 @@ class _IntervalBuildPrompt extends StatelessWidget {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: GoogleFonts.inter(
+            style: JhgFonts.inter(
                 color: Colors.white54, fontSize: 12.5, height: 1.35),
             children: [
               const TextSpan(text: 'Tap the note '),
@@ -1559,8 +1555,8 @@ class _ChordLabPanel extends StatelessWidget {
     final p = c.chordLabPrompt;
     if (p == null) return _chordLoadingHint(c);
     final isName = p.round == ChordLabRound.name;
-    final showClear = p.round == ChordLabRound.complete ||
-        p.round == ChordLabRound.build;
+    final showClear =
+        p.round == ChordLabRound.complete || p.round == ChordLabRound.build;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1572,7 +1568,7 @@ class _ChordLabPanel extends StatelessWidget {
         Text(
           _chordLabHint(p.round),
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
+          style: JhgFonts.inter(
               color: Colors.white38, fontSize: 13, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
@@ -1597,7 +1593,7 @@ class _ChordLabPanel extends StatelessWidget {
         ),
         child: Text(
           symbol,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: JHGColors.primary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1617,11 +1613,10 @@ class _ChordLabPanel extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(JhgIcons.backspace,
-                  color: Colors.white60, size: 16),
+              const Icon(JhgIcons.backspace, color: Colors.white60, size: 16),
               const SizedBox(width: 8),
               Text('Clear',
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: Colors.white70,
                       fontSize: 14,
                       fontWeight: FontWeight.w600)),
@@ -1675,7 +1670,7 @@ class _ChordChoiceGrid extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: s.text,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -1729,17 +1724,16 @@ class _ChordBuildPrompt extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               decoration: BoxDecoration(
                 color: JHGColors.primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                    color: JHGColors.primary.withValues(alpha: 0.4)),
+                border:
+                    Border.all(color: JHGColors.primary.withValues(alpha: 0.4)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('PLAY',
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: JHGColors.primary.withValues(alpha: 0.7),
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -1747,7 +1741,7 @@ class _ChordBuildPrompt extends StatelessWidget {
                     )),
                 const SizedBox(width: 10),
                 Text(shape.symbol,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: JHGColors.primary,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -1760,7 +1754,7 @@ class _ChordBuildPrompt extends StatelessWidget {
         Text(
           shape.qualityName,
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
+          style: JhgFonts.inter(
               color: Colors.white54, fontSize: 12.5, height: 1.35),
         ),
         const SizedBox(height: 12),
@@ -1801,12 +1795,10 @@ class _ChordBuildControls extends StatelessWidget {
             border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon,
-                size: 15,
-                color: onTap == null ? Colors.white24 : color),
+            Icon(icon, size: 15, color: onTap == null ? Colors.white24 : color),
             const SizedBox(width: 6),
             Text(label,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: onTap == null ? Colors.white24 : color,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1841,7 +1833,7 @@ class _ChordBuildControls extends StatelessWidget {
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('Next',
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -1867,7 +1859,7 @@ class _ChordBuildControls extends StatelessWidget {
           ),
           child: Text(
             '$placed placed',
-            style: GoogleFonts.inter(
+            style: JhgFonts.inter(
               color: Colors.white54,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -1908,7 +1900,7 @@ Widget _chordLoadingHint(HomeController c) {
     child: Text(
       hint,
       textAlign: TextAlign.center,
-      style: GoogleFonts.inter(
+      style: JhgFonts.inter(
         color: Colors.white38,
         fontSize: 13,
         fontWeight: FontWeight.w500,

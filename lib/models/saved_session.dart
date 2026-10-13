@@ -37,7 +37,8 @@ class SavedSession {
   final DateTime createdAt;
 
   // ── Restore payload ──────────────────────────────────────────────────────
-  final String gameMode; // currentGameMode: reverse|interval|chord|stopwatch|countdown
+  final String
+      gameMode; // currentGameMode: reverse|interval|chord|stopwatch|countdown
   final int intervalGameType; // IntervalGameType index
   final int chordGameType; // ChordGameType index
   final int intervalDifficulty; // IntervalDifficulty index

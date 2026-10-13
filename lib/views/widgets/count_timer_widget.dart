@@ -37,7 +37,11 @@ class CountTimerWidget extends StatelessWidget {
             )
           : Text(
               controller.formatTime(controller.secondsRemaining.value),
-              style: JHGTextStyles.bigNumberStyle,
+              style: JhgFonts.poppins(
+                fontSize: 32,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             );
     });
   }
@@ -86,7 +90,11 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
           child: Text(
             _formatSecondsToMMSS(widget.value),
             textAlign: TextAlign.center,
-            style: JHGTextStyles.bigNumberStyle,
+            style: JhgFonts.poppins(
+              fontSize: 32,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         _TimerAdjustButton(
@@ -124,8 +132,9 @@ class _CountdownTimerAdjusterState extends State<_CountdownTimerAdjuster> {
     // it starts.
     if (!widget.isEnabled || widget.value <= kMinTimerIntervalSeconds) return;
     final nextValue = widget.value - 10;
-    widget.onChanged(
-        nextValue < kMinTimerIntervalSeconds ? kMinTimerIntervalSeconds : nextValue);
+    widget.onChanged(nextValue < kMinTimerIntervalSeconds
+        ? kMinTimerIntervalSeconds
+        : nextValue);
   }
 
   String _formatSecondsToMMSS(int totalSeconds) {

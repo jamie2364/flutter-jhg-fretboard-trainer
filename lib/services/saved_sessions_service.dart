@@ -55,7 +55,8 @@ class SavedSessionsService {
 
   /// Removes the session with [id].
   static Future<void> delete(String id) async {
-    final list = await load()..removeWhere((s) => s.id == id);
+    final list = await load()
+      ..removeWhere((s) => s.id == id);
     await _write(list);
   }
 

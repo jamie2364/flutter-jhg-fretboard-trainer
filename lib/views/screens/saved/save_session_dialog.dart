@@ -9,7 +9,6 @@ import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/library_controller.dart';
 import 'package:fretboard/models/library_folder.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const _kPrimary = Color(0xFFFE5D43);
 
@@ -61,7 +60,9 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
   List<(LibraryFolder, int)> _flatten() {
     final out = <(LibraryFolder, int)>[];
     void walk(String? parentId, int depth) {
-      final children = _lib.folders.where((f) => f.parentId == parentId).toList()
+      final children = _lib.folders
+          .where((f) => f.parentId == parentId)
+          .toList()
         ..sort((a, b) => a.name.compareTo(b.name));
       for (final f in children) {
         out.add((f, depth));
@@ -119,12 +120,12 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
         controller: c,
         autofocus: autofocus,
         textCapitalization: TextCapitalization.words,
-        style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
+        style: JhgFonts.poppins(color: Colors.white, fontSize: 15),
         cursorColor: _kPrimary,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(color: Colors.white38, fontSize: 15),
+          hintStyle: JhgFonts.poppins(color: Colors.white38, fontSize: 15),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -136,8 +137,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
     final typed = _name.text.trim();
     Navigator.pop(
       context,
-      SaveSessionResult(
-          typed.isEmpty ? widget.defaultName : typed, _folderId),
+      SaveSessionResult(typed.isEmpty ? widget.defaultName : typed, _folderId),
     );
   }
 
@@ -157,7 +157,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
           Row(
             children: [
               Text('FOLDER',
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                       color: Colors.white38,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -172,7 +172,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
                         color: _kPrimary, size: 14),
                     const SizedBox(width: 5),
                     Text('New',
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                             color: _kPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600)),
@@ -223,7 +223,7 @@ class _SaveSessionDialogState extends State<_SaveSessionDialog> {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
               ),
               child: Text('Cancel',
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: Colors.white70,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
@@ -270,14 +270,13 @@ class _FolderChoice extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon,
-                color: selected ? _kPrimary : Colors.white54, size: 16),
+            Icon(icon, color: selected ? _kPrimary : Colors.white54, size: 16),
             const SizedBox(width: 10),
             Expanded(
               child: Text(label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                       color: selected ? _kPrimary : Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w500)),

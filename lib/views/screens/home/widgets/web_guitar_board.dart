@@ -184,18 +184,20 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                                   gradient: LinearGradient(
                                     begin: Alignment.centerLeft,
                                     end: Alignment.centerRight,
-                                    colors: controller.highlightString ==
-                                            6 - index
-                                        ? [
-                                            JHGColors.primary,
-                                            JHGColors.primary,
-                                          ]
-                                        : [
-                                            const Color.fromRGBO(196, 196, 196, 1),
-                                            const Color.fromRGBO(196, 196, 196, 1),
-                                            Colors.black54,
-                                            Colors.black87,
-                                          ],
+                                    colors:
+                                        controller.highlightString == 6 - index
+                                            ? [
+                                                JHGColors.primary,
+                                                JHGColors.primary,
+                                              ]
+                                            : [
+                                                const Color.fromRGBO(
+                                                    196, 196, 196, 1),
+                                                const Color.fromRGBO(
+                                                    196, 196, 196, 1),
+                                                Colors.black54,
+                                                Colors.black87,
+                                              ],
                                   ),
                                 ),
                               ),

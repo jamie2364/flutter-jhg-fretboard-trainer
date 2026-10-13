@@ -9,7 +9,6 @@ import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/leader_board/widgets/leaderboard_widget.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class LeadershipScreen extends StatelessWidget {
   final String? intervalType;
@@ -18,8 +17,7 @@ class LeadershipScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<LeaderBoardController>();
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+    return JhgScaffold(
       body: GetBuilder<LeaderBoardController>(builder: (con) {
         if (!kIsWeb) return LeaderPortraitView(controller: controller);
         return Center(
@@ -54,8 +52,9 @@ class LeaderPortraitView extends StatelessWidget {
           // ─── CONTENT ────────────────────────────────────────────────
           Expanded(
             child: controller.isLoading.value
-                ? const Center(
-                    child: CircularProgressIndicator(color: JHGColors.primary, strokeWidth: 2))
+                ? Center(
+                    child: CircularProgressIndicator(
+                        color: context.jhg.accent, strokeWidth: 2))
                 : controller.scoreList.isEmpty
                     ? const _EmptyLeaderboard()
                     : SingleChildScrollView(
@@ -70,7 +69,6 @@ class LeaderPortraitView extends StatelessWidget {
       ),
     );
   }
-
 }
 
 /// Shown when the board has no scores yet.
@@ -88,7 +86,7 @@ class _EmptyLeaderboard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'No scores yet',
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               fontSize: 14,
               color: Colors.white54,
               fontWeight: FontWeight.w600,
@@ -97,7 +95,7 @@ class _EmptyLeaderboard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Play a round to claim the top spot',
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
                 fontSize: 12, color: Colors.white.withValues(alpha: 0.35)),
           ),
         ],
@@ -139,18 +137,16 @@ class LeaderLandscapeView extends StatelessWidget {
                     controller.isLoading.value
                         ? SizedBox(
                             height: width,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
-                                color: JHGColors.primary,
+                                color: context.jhg.accent,
                               ),
                             ))
                         : Column(
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(
-                                    top: 20.dp,
-                                    left: 10.0.dp,
-                                    right: 10.0.dp),
+                                    top: 20.dp, left: 10.0.dp, right: 10.0.dp),
                                 child: Container(
                                   width: 80.w,
                                   height: 10.h,
@@ -161,9 +157,9 @@ class LeaderLandscapeView extends StatelessWidget {
                                       Radius.circular(12),
                                     ),
                                     border: Border.all(
-                                      color: JHGColors.charcolGray,
+                                      color: context.jhg.border,
                                     ),
-                                    color: JHGColors.charcolGray,
+                                    color: context.jhg.surfaceNested,
                                   ),
                                   child: const Row(
                                     mainAxisAlignment:
@@ -176,9 +172,7 @@ class LeaderLandscapeView extends StatelessWidget {
                               ),
                               Padding(
                                 padding: EdgeInsets.only(
-                                    top: 20.dp,
-                                    left: 10.0.dp,
-                                    right: 10.0.dp),
+                                    top: 20.dp, left: 10.0.dp, right: 10.0.dp),
                                 child: SizedBox(
                                   width: 80.w,
                                   child: Column(
@@ -192,13 +186,13 @@ class LeaderLandscapeView extends StatelessWidget {
                                           children: [
                                             Text(
                                               AppStrings.user,
-                                              style:
-                                                  JHGTextStyles.subLabelStyle,
+                                              style: context
+                                                  .jhg.typography.tileSubtitle,
                                             ),
                                             Text(
                                               AppStrings.scoreTemp,
-                                              style:
-                                                  JHGTextStyles.subLabelStyle,
+                                              style: context
+                                                  .jhg.typography.tileSubtitle,
                                             )
                                           ],
                                         ),

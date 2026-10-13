@@ -12,7 +12,6 @@ import 'package:fretboard/views/screens/leader_board/leaderboard_screen.dart';
 import 'package:fretboard/views/screens/setting/settings_screen.dart';
 import 'package:fretboard/utils/board_nav.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // Mirrors the shared AppBottomNav used across the apps (dark bar, coral active,
 // stacked icon + label, no pill).
@@ -99,8 +98,7 @@ class AppNavBar extends StatelessWidget {
         // back rather than leaving the tab dead.
         if (!landedOnStart) {
           Get.off(() => const StartScreen(),
-              transition: Transition.noTransition,
-              duration: Duration.zero);
+              transition: Transition.noTransition, duration: Duration.zero);
         }
         break;
 
@@ -208,7 +206,7 @@ class AppNavBar extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: muted ? Colors.white54 : Colors.white,
             fontSize: 15,
             fontWeight: FontWeight.w600,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// A single leaderboard row, decoupled from any app's data model so the exact
 /// same podium + list UI can be dropped into every JHG app.
@@ -136,7 +135,7 @@ class _PodiumColumn extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   _initials(entry!.name),
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                     color: medal,
                     fontSize: isFirst ? 20 : 16,
                     fontWeight: FontWeight.w700,
@@ -151,12 +150,13 @@ class _PodiumColumn extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: medal,
-                    border: Border.all(color: const Color(0xFF0F0F0F), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFF0F0F0F), width: 2),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '$rank',
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: const Color(0xFF0F0F0F),
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -173,7 +173,7 @@ class _PodiumColumn extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: Colors.white,
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -184,7 +184,7 @@ class _PodiumColumn extends StatelessWidget {
           entry!.score,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: medal,
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -198,7 +198,10 @@ class _PodiumColumn extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [medal.withValues(alpha: 0.22), medal.withValues(alpha: 0.04)],
+              colors: [
+                medal.withValues(alpha: 0.22),
+                medal.withValues(alpha: 0.04)
+              ],
             ),
             border: Border(top: BorderSide(color: medal, width: 2.5)),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
@@ -206,7 +209,7 @@ class _PodiumColumn extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             '$rank',
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: medal.withValues(alpha: 0.5),
               fontSize: isFirst ? 34 : 26,
               fontWeight: FontWeight.w800,
@@ -268,7 +271,7 @@ class _RankList extends StatelessWidget {
 
   static Widget _colHeader(String text) => Text(
         text,
-        style: GoogleFonts.inter(
+        style: JhgFonts.inter(
           color: Colors.white38,
           fontSize: 11,
           fontWeight: FontWeight.w800,
@@ -287,16 +290,15 @@ class _RankRow extends StatelessWidget {
     final highlight = entry.isMe;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      decoration: highlight
-          ? const BoxDecoration(color: Color(0x12FE5D43))
-          : null,
+      decoration:
+          highlight ? const BoxDecoration(color: Color(0x12FE5D43)) : null,
       child: Row(
         children: [
           SizedBox(
             width: 26,
             child: Text(
               '$rank',
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: Colors.white38,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -309,7 +311,7 @@ class _RankRow extends StatelessWidget {
               entry.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.82),
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -319,7 +321,7 @@ class _RankRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             entry.score,
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -351,12 +353,11 @@ class _RefreshButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(JhgIcons.reset,
-                  color: Colors.white54, size: 15),
+              const Icon(JhgIcons.reset, color: Colors.white54, size: 15),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: Colors.white70,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

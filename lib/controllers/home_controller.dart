@@ -46,7 +46,7 @@ class HomeController extends GetxController {
 
   // Reverse mode state
   List<String> reverseChoices = [];
-  String? reverseSelectedNote;   // which button the user just tapped
+  String? reverseSelectedNote; // which button the user just tapped
   bool reverseWasCorrect = false; // was their tap correct
 
   // ── Interval mode state ("Name the Interval") ────────────────────────────
@@ -55,13 +55,14 @@ class HomeController extends GetxController {
   IntervalDifficulty intervalDifficulty = IntervalDifficulty.easy;
   IntervalGameType intervalGameType = IntervalGameType.name;
   IntervalPrompt? intervalPrompt;
-  int? intervalRootIndex;        // fretList index of the root note
-  int? intervalTargetIndex;      // fretList index of the target note (name mode)
+  int? intervalRootIndex; // fretList index of the root note
+  int? intervalTargetIndex; // fretList index of the target note (name mode)
   List<MusicInterval> intervalChoicesList = [];
-  MusicInterval? intervalSelected;    // which choice the user tapped (name mode)
+  MusicInterval? intervalSelected; // which choice the user tapped (name mode)
   bool intervalWasCorrect = false;
-  bool intervalBuildDone = false;     // build mode: locks after a tap for feedback
-  int? intervalBuildRevealIndex;      // build mode: correct target shown after a wrong tap
+  bool intervalBuildDone = false; // build mode: locks after a tap for feedback
+  int?
+      intervalBuildRevealIndex; // build mode: correct target shown after a wrong tap
 
   // ── Chord mode state ("Name / Build the Chord") ──────────────────────────
   // A chord shape lights up on the neck (Name) — the user picks the symbol; or
@@ -75,12 +76,12 @@ class HomeController extends GetxController {
   bool chordCatalogLoading = false;
 
   ChordShape? chordPrompt;
-  List<String> chordChoicesList = [];   // name mode: symbols to choose from
-  String? chordSelected;                // name mode: which symbol was tapped
+  List<String> chordChoicesList = []; // name mode: symbols to choose from
+  String? chordSelected; // name mode: which symbol was tapped
   bool chordWasCorrect = false;
-  Set<int> chordTapped = {};             // build mode: fretted indices placed
-  bool chordBuildDone = false;           // build mode: locked during feedback
-  Set<int>? chordBuildReveal;            // build mode: correct set after Reveal
+  Set<int> chordTapped = {}; // build mode: fretted indices placed
+  bool chordBuildDone = false; // build mode: locked during feedback
+  Set<int>? chordBuildReveal; // build mode: correct set after Reveal
 
   // ── Chord Lab ──────────────────────────────────────────────────────────────
   // The customize-session chord game type: one session rotates through the four
@@ -89,9 +90,9 @@ class HomeController extends GetxController {
   Set<String> chordLabTonalities = {...kChordLabTonalities};
   Set<ChordLabRound> chordLabRounds = {...ChordLabRound.values};
   ChordLabPrompt? chordLabPrompt;
-  Set<int> chordLabActive = {};   // currently lit fretted notes
-  int? chordLabFlashIndex;        // fret briefly flashed red after a wrong tap
-  bool chordLabDone = false;      // locked while the win feedback shows
+  Set<int> chordLabActive = {}; // currently lit fretted notes
+  int? chordLabFlashIndex; // fret briefly flashed red after a wrong tap
+  bool chordLabDone = false; // locked while the win feedback shows
   ChordLabRound? _lastLabRound;
 
   // ── Practice-stats guards ────────────────────────────────────────────────
@@ -116,12 +117,9 @@ class HomeController extends GetxController {
       isIntervalMode && intervalGameType == IntervalGameType.build;
 
   bool get isChordMode => currentGameMode.value == 'chord';
-  bool get isChordName =>
-      isChordMode && chordGameType == ChordGameType.name;
-  bool get isChordBuild =>
-      isChordMode && chordGameType == ChordGameType.build;
-  bool get isChordLab =>
-      isChordMode && chordGameType == ChordGameType.lab;
+  bool get isChordName => isChordMode && chordGameType == ChordGameType.name;
+  bool get isChordBuild => isChordMode && chordGameType == ChordGameType.build;
+  bool get isChordLab => isChordMode && chordGameType == ChordGameType.lab;
   bool get isChordLabName =>
       isChordLab && chordLabPrompt?.round == ChordLabRound.name;
 
@@ -134,7 +132,18 @@ class HomeController extends GetxController {
   }
 
   static const List<String> _allNotes = [
-    'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'
+    'A',
+    'A#',
+    'B',
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#'
   ];
 
   void onDefaultTimerInitialized() {
@@ -175,6 +184,7 @@ class HomeController extends GetxController {
   String? userName;
 
   RxBool timerIntervalExpanded = false.obs;
+
   /// Countdown length in seconds. Defaults to 2 minutes — a 1-second default
   /// made every unconfigured countdown end the moment it started.
   RxInt timerIntervalValue = 120.obs;
@@ -591,7 +601,8 @@ class HomeController extends GetxController {
     // wizard — see [timingChosen].
     timingChosen = true;
     if (isChoiceMode) {
-      timerMode.value = timerMode.value == 'stopwatch' ? 'countdown' : 'stopwatch';
+      timerMode.value =
+          timerMode.value == 'stopwatch' ? 'countdown' : 'stopwatch';
     } else {
       if (currentGameMode.value == 'stopwatch') {
         currentGameMode.value = 'countdown';
@@ -634,10 +645,14 @@ class HomeController extends GetxController {
   // otherwise resets score/state), then applied.
   SavedSession? _pendingRestore;
 
-  int get _activeStringCount =>
-      [string1, string2, string3, string4, string5, string6]
-          .where((s) => s)
-          .length;
+  int get _activeStringCount => [
+        string1,
+        string2,
+        string3,
+        string4,
+        string5,
+        string6
+      ].where((s) => s).length;
 
   String _difficultyLabel(int index) =>
       const ['Easy', 'Medium', 'Difficult'][index.clamp(0, 2)];
@@ -823,8 +838,7 @@ class HomeController extends GetxController {
 
   // Which intervals the user chose to practise (semitone values 0..12). All by
   // default so an unconfigured / Random session covers the whole catalog.
-  Set<int> selectedIntervals =
-      {for (final iv in kIntervals) iv.semitones};
+  Set<int> selectedIntervals = {for (final iv in kIntervals) iv.semitones};
 
   /// Sets the practised-interval filter. Ignores an empty set (there must be at
   /// least one interval to generate a question).
@@ -994,7 +1008,8 @@ class HomeController extends GetxController {
       ['q:${interval.short}', 'mode:${isIntervalBuild ? 'build' : 'name'}'],
       correct,
     ));
-    unawaited(PracticeStatsService.recordHistory(StatsModule.interval, correct));
+    unawaited(
+        PracticeStatsService.recordHistory(StatsModule.interval, correct));
   }
 
   Future<void> _playIntervalNotes() async {
@@ -1366,7 +1381,8 @@ class HomeController extends GetxController {
       ['round:${p.round.name}', 'q:${p.target.tonality}'],
       correct,
     ));
-    unawaited(PracticeStatsService.recordHistory(StatsModule.chordLab, correct));
+    unawaited(
+        PracticeStatsService.recordHistory(StatsModule.chordLab, correct));
   }
 
   void _advanceChordLab({Duration delay = const Duration(milliseconds: 700)}) {
@@ -1469,8 +1485,8 @@ class HomeController extends GetxController {
   }
 
   /// True if [set] exactly equals one of the round's accepted voicings.
-  bool _labMatches(ChordLabPrompt p, Set<int> set) => p.acceptable
-      .any((a) => a.length == set.length && a.containsAll(set));
+  bool _labMatches(ChordLabPrompt p, Set<int> set) =>
+      p.acceptable.any((a) => a.length == set.length && a.containsAll(set));
 
   /// True if [set] is a subset of some accepted voicing (i.e. still completable).
   bool _labCanExtendTo(ChordLabPrompt p, Set<int> set) =>
@@ -1602,24 +1618,36 @@ class HomeController extends GetxController {
     if (idx < 0 || idx >= offString.length) return;
     stringToggles.value++;
     switch (stringNumber) {
-      case 1: string1 = active;
-      case 2: string2 = active;
-      case 3: string3 = active;
-      case 4: string4 = active;
-      case 5: string5 = active;
-      case 6: string6 = active;
+      case 1:
+        string1 = active;
+      case 2:
+        string2 = active;
+      case 3:
+        string3 = active;
+      case 4:
+        string4 = active;
+      case 5:
+        string5 = active;
+      case 6:
+        string6 = active;
     }
     offString[idx] = active;
     // Guard: keep at least one string live.
     if (!offString.contains(true)) {
       offString[idx] = true;
       switch (stringNumber) {
-        case 1: string1 = true;
-        case 2: string2 = true;
-        case 3: string3 = true;
-        case 4: string4 = true;
-        case 5: string5 = true;
-        case 6: string6 = true;
+        case 1:
+          string1 = true;
+        case 2:
+          string2 = true;
+        case 3:
+          string3 = true;
+        case 4:
+          string4 = true;
+        case 5:
+          string5 = true;
+        case 6:
+          string6 = true;
       }
     }
     stringsChosen = true;
@@ -1629,12 +1657,18 @@ class HomeController extends GetxController {
   /// True when string [stringNumber] (1 = high e … 6 = low E) is active.
   bool isStringOn(int stringNumber) {
     switch (stringNumber) {
-      case 1: return string1;
-      case 2: return string2;
-      case 3: return string3;
-      case 4: return string4;
-      case 5: return string5;
-      case 6: return string6;
+      case 1:
+        return string1;
+      case 2:
+        return string2;
+      case 3:
+        return string3;
+      case 4:
+        return string4;
+      case 5:
+        return string5;
+      case 6:
+        return string6;
     }
     return false;
   }

@@ -20,7 +20,6 @@ import 'package:flutter/material.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/utils/chords.dart';
 import 'package:fretboard/utils/intervals.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // Shared accuracy palette (matches the Notes heatmap legend).
 const _cStruggle = Color(0xFFE05252);
@@ -107,8 +106,11 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
 
   bool get _isLab => module == 3;
   bool get _isNotes => module == 0;
-  String get _itemNoun =>
-      module == 0 ? 'note' : module == 1 ? 'interval' : 'chord';
+  String get _itemNoun => module == 0
+      ? 'note'
+      : module == 1
+          ? 'interval'
+          : 'chord';
 
   String get _intro {
     switch (module) {
@@ -211,7 +213,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
           Expanded(
             child: Text(
               _intro,
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                 color: Colors.white.withValues(alpha: 0.82),
                 fontSize: 12.5,
                 height: 1.5,
@@ -246,7 +248,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
               children: [
                 Text(
                   'Overall accuracy',
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: Colors.white54,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -255,7 +257,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
                 const SizedBox(height: 6),
                 Text(
                   _accWord(acc),
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                     color: color,
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -281,7 +283,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         children: [
           TextSpan(
             text: '$value ',
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -289,7 +291,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
           ),
           TextSpan(
             text: label,
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+            style: JhgFonts.inter(color: Colors.white38, fontSize: 12),
           ),
         ],
       ),
@@ -308,8 +310,8 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
     if (_range == _Range.all || days.isEmpty) return days;
     final now = DateTime.now();
     final span = _range == _Range.d7 ? 6 : 29;
-    final cutoff = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: span));
+    final cutoff =
+        DateTime(now.year, now.month, now.day).subtract(Duration(days: span));
     return days.where((d) {
       final dt = DateTime.tryParse(d.day);
       return dt == null || !dt.isBefore(cutoff);
@@ -379,7 +381,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Text(
         'No practice logged in $label. Try “All”, or play a round today.',
-        style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+        style: JhgFonts.inter(color: Colors.white38, fontSize: 12),
       ),
     );
   }
@@ -398,7 +400,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: JhgFonts.inter(
             color: color,
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
@@ -407,7 +409,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         const Spacer(),
         Text(
           'now ${(last.accuracy * 100).round()}%',
-          style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+          style: JhgFonts.inter(color: Colors.white38, fontSize: 12),
         ),
       ],
     );
@@ -424,7 +426,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
           ),
           child: Text(
             'Today: ${(only.accuracy * 100).round()}%',
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: _cCoral,
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -435,7 +437,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         Expanded(
           child: Text(
             '${only.correct} of ${only.attempts} correct so far.',
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+            style: JhgFonts.inter(color: Colors.white38, fontSize: 12),
           ),
         ),
       ],
@@ -446,8 +448,18 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
     final d = DateTime.tryParse(ymd);
     if (d == null) return 'the start';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${d.day} ${months[d.month - 1]}';
   }
@@ -456,9 +468,8 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
   Widget _highlightRow() {
     final strongest = data.strongest;
     final weakest = data.weakest;
-    final sameItem = strongest != null &&
-        weakest != null &&
-        strongest.key == weakest.key;
+    final sameItem =
+        strongest != null && weakest != null && strongest.key == weakest.key;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,16 +509,14 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
           Row(
             children: [
               Icon(
-                positive
-                    ? JhgIcons.trophy
-                    : JhgIcons.trendUp,
+                positive ? JhgIcons.trophy : JhgIcons.trendUp,
                 color: color,
                 size: 15,
               ),
               const SizedBox(width: 6),
               Text(
                 title,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: color,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -521,7 +530,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             entry == null ? '—' : _qualityLabel(entry.key),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: Colors.white,
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -533,7 +542,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             entry == null
                 ? 'No data yet'
                 : '${(acc * 100).round()}% · ${entry.value.correct}/${entry.value.attempts}',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 11.5),
+            style: JhgFonts.inter(color: Colors.white54, fontSize: 11.5),
           ),
         ],
       ),
@@ -560,9 +569,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             : module == 1
                 ? 'Every interval from minor 2nd to the octave.'
                 : 'Weakest chord qualities on the left.';
-    final listTitle = _isLab
-        ? 'Every chord in the Lab'
-        : 'Every $_itemNoun';
+    final listTitle = _isLab ? 'Every chord in the Lab' : 'Every $_itemNoun';
     final showingChart = _view == _BView.chart;
 
     return Container(
@@ -652,16 +659,14 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             child: Row(
               children: [
                 Icon(
-                  s == _sort
-                      ? JhgIcons.radioOn
-                      : JhgIcons.radioOff,
+                  s == _sort ? JhgIcons.radioOn : JhgIcons.radioOff,
                   size: 16,
                   color: s == _sort ? _cCoral : Colors.white38,
                 ),
                 const SizedBox(width: 10),
                 Text(
                   _sortLabel(s),
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -685,7 +690,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             const SizedBox(width: 5),
             Text(
               _sortLabel(_sort),
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                 color: Colors.white70,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -699,7 +704,18 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
 
   /// Chromatic note order for the Notes chart (all twelve always shown).
   static const List<String> _noteOrder = [
-    'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B',
   ];
 
   /// Bars for the chart: all 12 notes chromatically, all 12 intervals in pitch
@@ -716,9 +732,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
       ];
     }
     if (_isLab) {
-      return _roundOrder
-          .map((r) => _Bar(r.$2, data.byRound[r.$1]))
-          .toList();
+      return _roundOrder.map((r) => _Bar(r.$2, data.byRound[r.$1])).toList();
     }
     // Chords: practised qualities, weakest-first (matches the list order).
     return data.qualitiesWeakestFirst
@@ -794,7 +808,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: has ? Colors.white : Colors.white38,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -804,7 +818,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             if (has) ...[
               Text(
                 '${(acc * 100).round()}%',
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: color,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -813,12 +827,12 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
               const SizedBox(width: 6),
               Text(
                 '${entry!.correct}/${entry.attempts}',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+                style: JhgFonts.inter(color: Colors.white38, fontSize: 11),
               ),
             ] else
               Text(
                 'Not tried',
-                style: GoogleFonts.inter(color: Colors.white30, fontSize: 11),
+                style: JhgFonts.inter(color: Colors.white30, fontSize: 11),
               ),
           ],
         ),
@@ -879,7 +893,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
                   _qualityLabel(e.key),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -890,7 +904,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
                     _qualitySub(e.key),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: Colors.white38,
                       fontSize: 10.5,
                     ),
@@ -906,7 +920,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             child: Text(
               '${(acc * 100).round()}%',
               textAlign: TextAlign.right,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: color,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -919,7 +933,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
             child: Text(
               '${e.value.attempts}×',
               textAlign: TextAlign.right,
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 10.5),
+              style: JhgFonts.inter(color: Colors.white38, fontSize: 10.5),
             ),
           ),
         ],
@@ -934,7 +948,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
+          style: JhgFonts.poppins(
             color: Colors.white,
             fontSize: big ? 15 : 13.5,
             fontWeight: FontWeight.w600,
@@ -943,7 +957,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
         const SizedBox(height: 3),
         Text(
           sub,
-          style: GoogleFonts.inter(color: Colors.white38, fontSize: 11.5),
+          style: JhgFonts.inter(color: Colors.white38, fontSize: 11.5),
         ),
       ],
     );
@@ -974,7 +988,7 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
                   const SizedBox(width: 6),
                   Text(
                     it.$2,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: Colors.white70,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -983,8 +997,8 @@ class _StatBreakdownViewState extends State<StatBreakdownView> {
                   const SizedBox(width: 4),
                   Text(
                     it.$3,
-                    style: GoogleFonts.inter(
-                        color: Colors.white30, fontSize: 10.5),
+                    style:
+                        JhgFonts.inter(color: Colors.white30, fontSize: 10.5),
                   ),
                 ],
               ))
@@ -1026,7 +1040,8 @@ class _Segmented<T> extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
                 decoration: BoxDecoration(
                   color: o.$1 == value
                       ? _cCoral.withValues(alpha: 0.20)
@@ -1040,7 +1055,7 @@ class _Segmented<T> extends StatelessWidget {
                 ),
                 child: Text(
                   o.$2,
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: o.$1 == value ? Colors.white : Colors.white54,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1062,7 +1077,8 @@ class _BarChart extends StatelessWidget {
   final List<_Bar> bars;
 
   static const double _chartH = 148; // plot area (0–100%)
-  static const double _labelPad = 20; // headroom above the plot for value labels
+  static const double _labelPad =
+      20; // headroom above the plot for value labels
   static const double _barW = 30;
   static const double _gap = 12;
 
@@ -1096,7 +1112,7 @@ class _BarChart extends StatelessWidget {
     Widget tick(String t) => Transform.translate(
           offset: const Offset(0, -5), // centre the label on its gridline
           child: Text(t,
-              style: GoogleFonts.inter(color: Colors.white24, fontSize: 9)),
+              style: JhgFonts.inter(color: Colors.white24, fontSize: 9)),
         );
     // Offset down by the label headroom so 100/…/0 line up with the plot.
     return Padding(
@@ -1141,7 +1157,8 @@ class _BarChart extends StatelessWidget {
                     top: _labelPad + _chartH * (1 - f) - 0.5,
                     child: Container(
                       height: 1,
-                      color: Colors.white.withValues(alpha: f == 0 ? 0.16 : 0.06),
+                      color:
+                          Colors.white.withValues(alpha: f == 0 ? 0.16 : 0.06),
                     ),
                   ),
                 // Bars.
@@ -1172,7 +1189,7 @@ class _BarChart extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.clip,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: Colors.white54,
                       fontSize: 9.5,
                       fontWeight: FontWeight.w600,
@@ -1202,7 +1219,7 @@ class _BarChart extends StatelessWidget {
           if (b.hasData)
             Text(
               '${(b.acc * 100).round()}',
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: color,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w700,
@@ -1216,7 +1233,8 @@ class _BarChart extends StatelessWidget {
             height: fillH,
             decoration: BoxDecoration(
               color: b.hasData ? color : _cNoData.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(5)),
             ),
           ),
         ],
@@ -1262,11 +1280,12 @@ class _ProgressPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (final f in const [0.0, 0.5, 1.0]) {
       final y = padTop + plotH * (1 - f);
-      canvas.drawLine(Offset(padLeft, y), Offset(size.width - padRight, y), grid);
+      canvas.drawLine(
+          Offset(padLeft, y), Offset(size.width - padRight, y), grid);
       final tp = TextPainter(
         text: TextSpan(
           text: '${(f * 100).round()}',
-          style: GoogleFonts.inter(color: Colors.white24, fontSize: 9),
+          style: JhgFonts.inter(color: Colors.white24, fontSize: 9),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -1388,7 +1407,7 @@ class _AccuracyRing extends StatelessWidget {
             children: [
               Text(
                 '${(accuracy * 100).round()}',
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: Colors.white,
                   fontSize: size * 0.30,
                   fontWeight: FontWeight.w700,
@@ -1397,7 +1416,7 @@ class _AccuracyRing extends StatelessWidget {
               ),
               Text(
                 '%',
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: Colors.white54,
                   fontSize: size * 0.13,
                   fontWeight: FontWeight.w600,
@@ -1435,8 +1454,8 @@ class _RingPainter extends CustomPainter {
     canvas.drawCircle(center, radius, bg);
     const start = -math.pi / 2;
     final sweep = 2 * math.pi * accuracy.clamp(0.0, 1.0);
-    canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius), start, sweep, false, fg);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start,
+        sweep, false, fg);
   }
 
   @override
@@ -1478,7 +1497,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: JhgFonts.poppins(
                 color: Colors.white,
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -1490,7 +1509,7 @@ class _EmptyState extends StatelessWidget {
               '${noun}s you nail and which need more practice, so you always '
               'know what to work on next.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                 color: Colors.white.withValues(alpha: 0.55),
                 fontSize: 13,
                 height: 1.6,

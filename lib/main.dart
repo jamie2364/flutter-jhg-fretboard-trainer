@@ -63,10 +63,8 @@ class _MyAppState extends State<MyApp> {
           },
           debugShowCheckedModeBanner: false,
           title: 'JHG Fretboard',
-          // Additively attach the design-system tokens; existing theme unchanged.
-          theme: JHGTheme.themeData.copyWith(
+          theme: JhgTheme.dark().copyWith(
             pageTransitionsTheme: jhgPageTransitionsTheme,
-            extensions: <ThemeExtension<dynamic>>[JhgTokens.dark()],
           ),
           initialBinding: AppBindings(),
           navigatorKey: navKey,

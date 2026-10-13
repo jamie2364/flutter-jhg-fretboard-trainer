@@ -54,8 +54,8 @@ class LibraryFolder {
         id: j['id'] as String,
         name: j['name'] as String? ?? 'Folder',
         parentId: j['parentId'] as String?,
-        createdAt:
-            DateTime.tryParse(j['createdAt'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(j['createdAt'] as String? ?? '') ??
+            DateTime.now(),
         colorValue: (j['colorValue'] as num?)?.toInt(),
       );
 }

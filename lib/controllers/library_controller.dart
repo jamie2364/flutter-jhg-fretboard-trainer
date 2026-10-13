@@ -44,8 +44,7 @@ class LibraryController extends GetxController {
   }
 
   void _persistFolders() => _store.saveFolders(folders.toList());
-  void _persistSessions() =>
-      SavedSessionsService.overwrite(sessions.toList());
+  void _persistSessions() => SavedSessionsService.overwrite(sessions.toList());
 
   SavedSession? _sessionById(String id) =>
       sessions.firstWhereOrNull((s) => s.id == id);
@@ -210,8 +209,8 @@ class LibraryController extends GetxController {
   void moveSession(String id, String? folderId) {
     final i = sessions.indexWhere((s) => s.id == id);
     if (i == -1) return;
-    sessions[i] = sessions[i]
-        .copyWith(folderId: folderId, clearFolder: folderId == null);
+    sessions[i] =
+        sessions[i].copyWith(folderId: folderId, clearFolder: folderId == null);
     sessions.refresh();
     _persistSessions();
   }

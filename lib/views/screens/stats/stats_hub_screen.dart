@@ -7,8 +7,7 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_jhg_elements/jhg_elements.dart'
-    show JhgIconChipButton, JhgIcons, JhgScreenHeader;
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/heatmap_screen.dart';
@@ -17,7 +16,6 @@ import 'package:fretboard/views/screens/stats/module_stats_screen.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:fretboard/utils/routes.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const _cStruggle = Color(0xFFE05252);
 const _cLearning = Color(0xFFE8961A);
@@ -150,8 +148,7 @@ class _StatsHubScreenState extends State<StatsHubScreen> {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+    return JhgScaffold(
       body: kIsWeb
           ? Center(
               child: ConstrainedBox(
@@ -224,7 +221,7 @@ class _GameCard extends StatelessWidget {
                           const SizedBox(width: 9),
                           Text(
                             spec.title,
-                            style: GoogleFonts.poppins(
+                            style: JhgFonts.poppins(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -239,7 +236,7 @@ class _GameCard extends StatelessWidget {
                             : spec.subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
+                        style: JhgFonts.inter(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
@@ -290,7 +287,7 @@ class _GameCard extends StatelessWidget {
             children: [
               Text(
                 hasData ? '${(acc * 100).round()}' : '–',
-                style: GoogleFonts.poppins(
+                style: JhgFonts.poppins(
                   color: Colors.white,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -299,7 +296,7 @@ class _GameCard extends StatelessWidget {
               ),
               if (hasData)
                 Text('%',
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                         color: Colors.white38,
                         fontSize: 9,
                         fontWeight: FontWeight.w600)),
@@ -326,7 +323,7 @@ class _GameCard extends StatelessWidget {
                 sub.$2,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
+                style: JhgFonts.inter(
                   color: Colors.white54,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
@@ -336,7 +333,7 @@ class _GameCard extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               has ? '${(acc * 100).round()}%' : '–',
-              style: GoogleFonts.inter(
+              style: JhgFonts.inter(
                 color: has ? color : Colors.white24,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
@@ -414,7 +411,7 @@ class _LeaderboardTile extends StatelessWidget {
                 children: [
                   Text(
                     'Leaderboard',
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -423,7 +420,7 @@ class _LeaderboardTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     'See where you rank against everyone',
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: Colors.white54,
                       fontSize: 13,
                     ),

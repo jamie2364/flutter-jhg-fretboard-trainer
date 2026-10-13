@@ -158,7 +158,6 @@ List<TourStep> buildFretboardTourSteps(TourKeys keys) {
       completionStream: _bumped(() => _hc.stringToggles),
     ),
 
-
     // The payoff. Notes is one of three games on the same neck, and a player
     // who never finds this word thinks the app only does note names.
     TourStep(

@@ -19,7 +19,6 @@ import 'package:fretboard/features/tour/fretboard_tour.dart';
 import 'package:fretboard/features/tour/tour_controller.dart';
 import 'package:fretboard/features/tour/tour_service.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const _kBg = Color(0xFF0F0F0F);
 const _kPrimary = Color(0xFFFE5D43);
@@ -80,7 +79,7 @@ Widget _wizardHeading(String eyebrow, String title, String subtitle) {
     children: [
       Text(
         eyebrow,
-        style: GoogleFonts.inter(
+        style: JhgFonts.inter(
           color: _kPrimary,
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -90,7 +89,7 @@ Widget _wizardHeading(String eyebrow, String title, String subtitle) {
       const SizedBox(height: 6),
       Text(
         title,
-        style: GoogleFonts.poppins(
+        style: JhgFonts.poppins(
           color: _kOnSurface,
           fontSize: 30,
           fontWeight: FontWeight.w700,
@@ -101,7 +100,7 @@ Widget _wizardHeading(String eyebrow, String title, String subtitle) {
       const SizedBox(height: 6),
       Text(
         subtitle,
-        style: GoogleFonts.inter(color: _kMuted, fontSize: 14, height: 1.5),
+        style: JhgFonts.inter(color: _kMuted, fontSize: 14, height: 1.5),
       ),
     ],
   );
@@ -216,7 +215,7 @@ Widget _wizardPrimaryButton(String label, VoidCallback onTap) {
       ),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
+        style: JhgFonts.poppins(
           color: Colors.white,
           fontSize: 16,
           fontWeight: FontWeight.w700,
@@ -278,7 +277,7 @@ class _StringsSelector extends StatelessWidget {
         child: Center(
           child: Text(
             label,
-            style: GoogleFonts.poppins(
+            style: JhgFonts.poppins(
               color: on ? _kPrimary : Colors.white54,
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -383,7 +382,7 @@ class _RoundTypesSelector extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: on ? _kPrimary : _kOnSurface,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
@@ -394,7 +393,7 @@ class _RoundTypesSelector extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: _kMuted.withValues(alpha: 0.85),
                       fontSize: 13,
                       height: 1.3,
@@ -458,7 +457,7 @@ class _KeysSelector extends StatelessWidget {
                 child: Center(
                   child: Text(
                     key,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: on ? _kPrimary : Colors.white54,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -581,7 +580,7 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
                 children: [
                   Text(
                     label,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: selected ? _kPrimary : _kOnSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -592,7 +591,7 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: _kMuted.withValues(alpha: 0.85),
                       fontSize: 13,
                       height: 1.3,
@@ -635,7 +634,7 @@ class _SessionTimingStepState extends State<SessionTimingStep> {
                 ),
                 child: Text(
                   '$m min',
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                     color: on ? _kPrimary : Colors.white54,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -743,7 +742,7 @@ class _StartScreenState extends State<StartScreen> {
               children: [
                 Text(
                   'Fretboard Trainer',
-                  style: GoogleFonts.poppins(
+                  style: JhgFonts.poppins(
                     color: _kOnSurface,
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
@@ -754,7 +753,7 @@ class _StartScreenState extends State<StartScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'How would you like to practice?',
-                  style: GoogleFonts.inter(
+                  style: JhgFonts.inter(
                     color: _kMuted,
                     fontSize: 15,
                     height: 1.4,
@@ -812,11 +811,13 @@ class _StartScreenState extends State<StartScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Scaffold(
+        JhgScaffold(
           backgroundColor: _kBg,
-          // No nav bar on a first run: two ways in and nothing else to weigh up.
-          bottomNavigationBar:
-              firstRun ? null : const AppNavBar(activeTab: AppTab.home),
+          // Web keeps navigation persistent, including on a first run. Native
+          // retains the focused onboarding screen.
+          bottomNavigationBar: firstRun && !kIsWeb
+              ? null
+              : const AppNavBar(activeTab: AppTab.home),
           body: SafeArea(bottom: false, child: content),
         ),
         // Above the Scaffold rather than inside its body, so the fence reaches
@@ -918,7 +919,7 @@ class RandomModeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return JhgScaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Stack(
@@ -934,7 +935,7 @@ class RandomModeScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Random Practice',
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                           color: _kOnSurface,
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
@@ -945,7 +946,7 @@ class RandomModeScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Pick a mode and we pick the rest.',
-                        style: GoogleFonts.inter(
+                        style: JhgFonts.inter(
                           color: _kMuted,
                           fontSize: 15,
                           height: 1.4,
@@ -1027,7 +1028,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return JhgScaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Stack(
@@ -1043,7 +1044,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                     children: [
                       Text(
                         'Customized Practice',
-                        style: GoogleFonts.poppins(
+                        style: JhgFonts.poppins(
                           color: _kOnSurface,
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
@@ -1054,7 +1055,7 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Which mode would you like to practice?',
-                        style: GoogleFonts.inter(
+                        style: JhgFonts.inter(
                           color: _kMuted,
                           fontSize: 15,
                           height: 1.4,
@@ -1177,7 +1178,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return JhgScaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Column(
@@ -1411,7 +1412,7 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return JhgScaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Column(
@@ -1662,7 +1663,7 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return JhgScaffold(
       backgroundColor: _kBg,
       body: SafeArea(
         child: Column(
@@ -1803,7 +1804,7 @@ class _ModeCardState extends State<_ModeCard> {
                 children: [
                   Text(
                     widget.label,
-                    style: GoogleFonts.poppins(
+                    style: JhgFonts.poppins(
                       color: flash ? _kPrimary : _kOnSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -1814,7 +1815,7 @@ class _ModeCardState extends State<_ModeCard> {
                   const SizedBox(height: 3),
                   Text(
                     widget.subtitle,
-                    style: GoogleFonts.inter(
+                    style: JhgFonts.inter(
                       color: _kMuted.withValues(alpha: 0.85),
                       fontSize: 13,
                       height: 1.3,

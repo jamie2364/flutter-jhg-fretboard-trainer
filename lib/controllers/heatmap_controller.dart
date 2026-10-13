@@ -117,8 +117,7 @@ class HeatmapController extends GetxController {
   }
 
   // Summary stats
-  int get totalPracticed =>
-      stats.values.where((s) => s.hasData).length;
+  int get totalPracticed => stats.values.where((s) => s.hasData).length;
 
   int get mastered =>
       stats.values.where((s) => s.hasData && s.accuracy >= 0.85).length;

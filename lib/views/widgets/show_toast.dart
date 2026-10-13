@@ -15,7 +15,11 @@ showCustomToast(
     content: Text(
       message,
       textAlign: TextAlign.center,
-      style: JHGTextStyles.lrlabelStyle.copyWith(fontSize: 16),
+      style: JhgFonts.poppins(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
     ),
     backgroundColor: isError ? JHGColors.primary : JHGColors.green,
     padding: EdgeInsets.symmetric(

@@ -46,26 +46,71 @@ enum ChordLabRound {
 
 /// The 12 chromatic roots the trainer uses (sharps, matching note naming).
 const List<String> kChromaticRoots = [
-  'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#',
+  'A',
+  'A#',
+  'B',
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
 ];
 
 /// The curated, nameable tonalities offered in Chord Lab (raw library keys).
 /// The library's full exotic set (slash chords, one-offs) is intentionally left
 /// out — it belongs in the dictionary app, not a practice game.
 const List<String> kChordLabTonalities = [
-  'Major', 'm', '5', '6', 'm6', '7', 'm7', 'Maj7', 'mMaj7',
-  'dim', 'dim7', 'aug', 'sus2', 'sus4', 'Add9', 'mAdd9',
-  '9', 'm9', 'Maj9', '11', '13', 'm7b5',
+  'Major',
+  'm',
+  '5',
+  '6',
+  'm6',
+  '7',
+  'm7',
+  'Maj7',
+  'mMaj7',
+  'dim',
+  'dim7',
+  'aug',
+  'sus2',
+  'sus4',
+  'Add9',
+  'mAdd9',
+  '9',
+  'm9',
+  'Maj9',
+  '11',
+  '13',
+  'm7b5',
 ];
 
 /// Readable label for a Chord Lab tonality (the dropdown text).
 const Map<String, String> kChordLabTonalityLabels = {
-  'Major': 'Major', 'm': 'Minor', '5': 'Power (5)', '6': 'Sixth',
-  'm6': 'Minor 6th', '7': 'Dominant 7th', 'm7': 'Minor 7th',
-  'Maj7': 'Major 7th', 'mMaj7': 'Minor-Major 7th', 'dim': 'Diminished',
-  'dim7': 'Diminished 7th', 'aug': 'Augmented', 'sus2': 'Sus2', 'sus4': 'Sus4',
-  'Add9': 'Add9', 'mAdd9': 'Minor Add9', '9': 'Ninth', 'm9': 'Minor 9th',
-  'Maj9': 'Major 9th', '11': 'Eleventh', '13': 'Thirteenth',
+  'Major': 'Major',
+  'm': 'Minor',
+  '5': 'Power (5)',
+  '6': 'Sixth',
+  'm6': 'Minor 6th',
+  '7': 'Dominant 7th',
+  'm7': 'Minor 7th',
+  'Maj7': 'Major 7th',
+  'mMaj7': 'Minor-Major 7th',
+  'dim': 'Diminished',
+  'dim7': 'Diminished 7th',
+  'aug': 'Augmented',
+  'sus2': 'Sus2',
+  'sus4': 'Sus4',
+  'Add9': 'Add9',
+  'mAdd9': 'Minor Add9',
+  '9': 'Ninth',
+  'm9': 'Minor 9th',
+  'Maj9': 'Major 9th',
+  '11': 'Eleventh',
+  '13': 'Thirteenth',
   'm7b5': 'Half-diminished (m7♭5)',
 };
 
@@ -85,7 +130,17 @@ const Set<String> _easyTonalities = {'Major', 'm'};
 
 /// Extra tonalities unlocked at Medium (added to the Easy set).
 const Set<String> _mediumExtra = {
-  '7', 'Maj7', 'm7', 'sus2', 'sus4', '5', '6', 'm6', 'Add9', 'dim', 'aug',
+  '7',
+  'Maj7',
+  'm7',
+  'sus2',
+  'sus4',
+  '5',
+  '6',
+  'm6',
+  'Add9',
+  'dim',
+  'aug',
 };
 
 bool _tonalityAllowed(String tonality, ChordDifficulty d) {
@@ -109,16 +164,41 @@ String _canonicalRoot(String root) => root.replaceAll('sharp', '#');
 
 /// Compact chord-symbol suffix for a tonality (Major → "", m7 → "m7").
 const Map<String, String> _suffix = {
-  'Major': '', 'm': 'm', '5': '5', '6': '6', 'm6': 'm6',
-  '7': '7', 'm7': 'm7', 'Maj7': 'maj7', 'mMaj7': 'm(maj7)',
-  '9': '9', 'm9': 'm9', 'Maj9': 'maj9',
-  '11': '11', 'm11': 'm11', 'Maj11': 'maj11',
-  '13': '13', 'm13': 'm13', 'Maj13': 'maj13',
-  'sus2': 'sus2', 'sus4': 'sus4',
-  'Add9': 'add9', 'mAdd9': 'm(add9)', 'Add2': 'add2', 'Add4': 'add4',
-  'dim': 'dim', 'dim7': 'dim7', 'aug': 'aug', '+': 'aug',
-  'm7b5': 'm7♭5', '7b9': '7♭9', '7sharp9': '7♯9', '7sharp5': '7♯5',
-  '7b5': '7♭5', '6/9': '6/9', 'm6/9': 'm6/9',
+  'Major': '',
+  'm': 'm',
+  '5': '5',
+  '6': '6',
+  'm6': 'm6',
+  '7': '7',
+  'm7': 'm7',
+  'Maj7': 'maj7',
+  'mMaj7': 'm(maj7)',
+  '9': '9',
+  'm9': 'm9',
+  'Maj9': 'maj9',
+  '11': '11',
+  'm11': 'm11',
+  'Maj11': 'maj11',
+  '13': '13',
+  'm13': 'm13',
+  'Maj13': 'maj13',
+  'sus2': 'sus2',
+  'sus4': 'sus4',
+  'Add9': 'add9',
+  'mAdd9': 'm(add9)',
+  'Add2': 'add2',
+  'Add4': 'add4',
+  'dim': 'dim',
+  'dim7': 'dim7',
+  'aug': 'aug',
+  '+': 'aug',
+  'm7b5': 'm7♭5',
+  '7b9': '7♭9',
+  '7sharp9': '7♯9',
+  '7sharp5': '7♯5',
+  '7b5': '7♭5',
+  '6/9': '6/9',
+  'm6/9': 'm6/9',
 };
 
 /// Readable name for a chord quality, used by the Stats screen. Prefers the
@@ -143,12 +223,25 @@ String _tonalitySuffix(String tonality) {
 
 /// Human-readable quality for the prompt subtitle ("m7" → "Minor 7th").
 const Map<String, String> _qualityName = {
-  'Major': 'Major', 'm': 'Minor', '5': 'Power chord', '6': 'Major 6th',
-  'm6': 'Minor 6th', '7': 'Dominant 7th', 'm7': 'Minor 7th',
-  'Maj7': 'Major 7th', '9': 'Dominant 9th', 'm9': 'Minor 9th',
-  'Maj9': 'Major 9th', '11': '11th', '13': '13th', 'sus2': 'Suspended 2nd',
-  'sus4': 'Suspended 4th', 'Add9': 'Added 9th', 'dim': 'Diminished',
-  'dim7': 'Diminished 7th', 'aug': 'Augmented',
+  'Major': 'Major',
+  'm': 'Minor',
+  '5': 'Power chord',
+  '6': 'Major 6th',
+  'm6': 'Minor 6th',
+  '7': 'Dominant 7th',
+  'm7': 'Minor 7th',
+  'Maj7': 'Major 7th',
+  '9': 'Dominant 9th',
+  'm9': 'Minor 9th',
+  'Maj9': 'Major 9th',
+  '11': '11th',
+  '13': '13th',
+  'sus2': 'Suspended 2nd',
+  'sus4': 'Suspended 4th',
+  'Add9': 'Added 9th',
+  'dim': 'Diminished',
+  'dim7': 'Diminished 7th',
+  'aug': 'Augmented',
 };
 
 // ── Position parsing ─────────────────────────────────────────────────────────
@@ -196,8 +289,18 @@ const List<int> _openStringPc = [4, 9, 2, 7, 11, 4];
 
 /// Pitch class of each canonical (sharp-spelled) root.
 const Map<String, int> _rootPc = {
-  'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
-  'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11,
+  'C': 0,
+  'C#': 1,
+  'D': 2,
+  'D#': 3,
+  'E': 4,
+  'F': 5,
+  'F#': 6,
+  'G': 7,
+  'G#': 8,
+  'A': 9,
+  'A#': 10,
+  'B': 11,
 };
 
 /// Every pitch class (relative to the root) a voicing of this tonality may
@@ -467,8 +570,8 @@ class ChordLabPrompt {
 /// A chord in the catalog: its identity plus every playable (≤ fret 15)
 /// voicing. Difficulty selection narrows these down at pick time.
 class _ChordEntry {
-  _ChordEntry(this.root, this.tonality, this.symbol, this.qualityName,
-      this.variations);
+  _ChordEntry(
+      this.root, this.tonality, this.symbol, this.qualityName, this.variations);
   final String root;
   final String tonality;
   final String symbol;
@@ -512,7 +615,8 @@ class ChordCatalog {
         root,
         model.tonality,
         '$root${_tonalitySuffix(model.tonality)}',
-        _qualityName[model.tonality] ?? '${_tonalitySuffix(model.tonality)} chord'.trim(),
+        _qualityName[model.tonality] ??
+            '${_tonalitySuffix(model.tonality)} chord'.trim(),
         variations,
       ));
     }
@@ -695,11 +799,10 @@ class ChordCatalog {
     required Set<ChordLabRound> rounds,
     ChordLabRound? avoid,
   }) {
-    final allowed =
-        rounds.isEmpty ? ChordLabRound.values.toSet() : rounds;
+    final allowed = rounds.isEmpty ? ChordLabRound.values.toSet() : rounds;
     for (var attempt = 0; attempt < 40; attempt++) {
-      final shape =
-          _pickLabShape(difficulty: difficulty, keys: keys, tonalities: tonalities);
+      final shape = _pickLabShape(
+          difficulty: difficulty, keys: keys, tonalities: tonalities);
       if (shape == null) return null;
 
       final order = [...allowed]..shuffle(_rng);
@@ -719,7 +822,8 @@ class ChordCatalog {
 
   ChordLabPrompt? _buildLabRound(
       ChordLabRound round, ChordShape shape, ChordDifficulty difficulty) {
-    final sets = shape.acceptableFrettedSets.where((s) => s.isNotEmpty).toList();
+    final sets =
+        shape.acceptableFrettedSets.where((s) => s.isNotEmpty).toList();
     if (sets.isEmpty) return null;
     final window = _fretWindow(difficulty);
 
@@ -736,9 +840,8 @@ class ChordCatalog {
       case ChordLabRound.complete:
         final voicing = _bigEnough(sets, 2);
         if (voicing == null) return null;
-        final k = difficulty == ChordDifficulty.hard
-            ? min(2, voicing.length - 1)
-            : 1;
+        final k =
+            difficulty == ChordDifficulty.hard ? min(2, voicing.length - 1) : 1;
         final hidden = (voicing.toList()..shuffle(_rng)).take(k).toSet();
         final given = voicing.difference(hidden);
         if (given.isEmpty) return null;
@@ -799,15 +902,18 @@ class ChordCatalog {
   /// bigger valid voicing. Null if no clean choice exists.
   int? _pickExtraNote(Set<int> voicing, List<Set<int>> sets, int window) {
     final usedCols = voicing.map((i) => i % 6).toSet();
-    final freeCols = [for (var c = 0; c < 6; c++) if (!usedCols.contains(c)) c]
-      ..shuffle(_rng);
+    final freeCols = [
+      for (var c = 0; c < 6; c++)
+        if (!usedCols.contains(c)) c
+    ]..shuffle(_rng);
     for (final col in freeCols) {
       for (var attempt = 0; attempt < 8; attempt++) {
         final fret = 1 + _rng.nextInt(window); // 1..window
         final candidate = fret * 6 + col;
         final grafted = {...voicing, candidate};
         // Reject if the grafted set is itself an accepted voicing.
-        if (sets.any((s) => s.length == grafted.length && s.containsAll(grafted))) {
+        if (sets
+            .any((s) => s.length == grafted.length && s.containsAll(grafted))) {
           continue;
         }
         return candidate;

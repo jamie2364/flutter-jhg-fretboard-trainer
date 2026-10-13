@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fretboard/services/audio_pack_service.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/home_controller.dart';
 import 'package:fretboard/controllers/leaderboard_controller.dart';
@@ -51,10 +52,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _tour = ensureFretboardTour();
     super.initState();
     if (!kIsWeb) {
-      // Bump packVersion whenever this app's server audio pack changes, so
-      // existing users re-download once; a plain app update never re-downloads.
-      StringsDownloadService()
-          .isStringsDownloaded("jhg-fretboard-trainer", packVersion: 1);
+      // Download + verify the note-sample pack. Routed through AudioPackService
+      // so it runs a real structural check and re-downloads if any string bank
+      // is missing or half-extracted. Fire-and-forget.
+      AudioPackService.ensureAudioPack();
 
       isFreePlan = SplashScreen.session.isFreePlan;
       if (isFreePlan) {
@@ -96,8 +97,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return Stack(
       children: [
-        Scaffold(
-          backgroundColor: const Color(0xFF0F0F0F),
+        JhgScaffold(
           body: GetBuilder<HomeController>(
               init: HomeController(),
               builder: (controller) {
@@ -110,13 +110,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ? Container(
                             height: height,
                             width: width,
-                            color: const Color(0xFF0F0F0F),
+                            color: context.jhg.page,
                             child: WebBoard(controller: controller),
                           )
                         : Container(
                             width: width,
                             height: height,
-                            color: const Color(0xFF0F0F0F),
+                            color: context.jhg.page,
                             child: isPortraitViewport
                                 ? PortraitBoard(controller: controller)
                                 : LandscapeBoard(controller: controller),

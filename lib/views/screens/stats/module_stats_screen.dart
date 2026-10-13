@@ -6,14 +6,12 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_jhg_elements/jhg_elements.dart'
-    show JhgIconChipButton, JhgIcons, JhgScreenHeader;
+import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/controllers/heatmap_controller.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/views/screens/heatmap/stats_breakdown_view.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ModuleStatsScreen extends StatefulWidget {
   const ModuleStatsScreen({super.key, required this.module});
@@ -61,46 +59,21 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
         _ => 'Chord Lab',
       };
 
-  void _confirmReset() {
-    showDialog(
+  void _confirmReset() async {
+    final confirmed = await showJhgConfirm(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C2C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Reset $_resetName stats?',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
+      title: 'Reset $_resetName stats?',
+      message:
           'This permanently clears your $_resetName accuracy stats. Your other '
           'games and score history are unaffected.',
-          style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              controller.resetModule(widget.module);
-              _loadHistory();
-            },
-            child: Text('Reset',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFFE05252),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
+      confirmLabel: 'Reset',
+      cancelLabel: 'Cancel',
+      accent: context.jhg.danger,
     );
+    if (confirmed && mounted) {
+      controller.resetModule(widget.module);
+      _loadHistory();
+    }
   }
 
   @override
@@ -152,8 +125,7 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+    return JhgScaffold(
       body: kIsWeb
           ? Center(
               child: ConstrainedBox(
@@ -170,7 +142,7 @@ class _ModuleStatsScreenState extends State<ModuleStatsScreen> {
     required VoidCallback onTap,
     bool active = false,
   }) {
-    const coral = Color(0xFFFE5D43);
+    final coral = context.jhg.accent;
     return JhgIconChipButton(
       icon: icon,
       onTap: onTap,

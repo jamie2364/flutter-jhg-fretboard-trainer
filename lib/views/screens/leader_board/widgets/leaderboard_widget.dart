@@ -5,10 +5,7 @@ import 'package:fretboard/models/leaderboard.dart';
 import 'package:fretboard/utils/app_strings.dart';
 import 'package:fretboard/views/screens/leader_board/widgets/leaderboard_content.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Builds the modern podium + ranked-list leaderboard from the raw score data.
-/// Shared by the portrait, web and landscape layouts so they stay identical.
 Widget populateScoreList(List<LeaderboardData> leaderboardData) {
   final controller = Get.find<LeaderBoardController>();
   final me = controller.username.value;
@@ -22,7 +19,7 @@ Widget populateScoreList(List<LeaderboardData> leaderboardData) {
 
   return LeaderboardContent(
     entries: entries,
-    primary: JHGColors.primary,
+    primary: JhgTokens.dark().accent,
     scoreLabel: AppStrings.scoreTemp.toUpperCase(),
     refreshLabel: AppStrings.loadMore,
     onRefresh: controller.getLeaderBoard,
@@ -34,8 +31,8 @@ Widget leaderBoardTitleWidget() {
     padding: const EdgeInsets.only(top: 12),
     child: Text(
       AppStrings.titleLeaderBoardTitle,
-      style: GoogleFonts.poppins(
-        color: JHGColors.primary,
+      style: JhgFonts.poppins(
+        color: JhgTokens.dark().accent,
         fontSize: 16,
         fontWeight: FontWeight.bold,
       ),
