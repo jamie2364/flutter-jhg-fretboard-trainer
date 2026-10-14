@@ -304,7 +304,8 @@ class _ExpandedPanel extends StatelessWidget {
 
           // Idle: no explainer line — the header already names the game and
           // "Press play to start" guidance lives in the prompt widgets.
-          if (!c.isStart && !c.isPaused) ...[
+          if ((!c.isStart && !c.isPaused) ||
+              (!isReverse && c.highlightNode == null)) ...[
             const SizedBox(height: 4),
           ]
 
@@ -357,7 +358,7 @@ class _ExpandedPanel extends StatelessWidget {
                   border: Border.all(
                       color: JHGColors.primary.withValues(alpha: 0.4)),
                 ),
-                child: Text(c.highlightNode ?? '',
+                child: Text(c.highlightNode ?? '—',
                     style: JhgFonts.poppins(
                         color: JHGColors.primary,
                         fontSize: 28,

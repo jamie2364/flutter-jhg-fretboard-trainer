@@ -252,6 +252,7 @@ class HomeController extends GetxController {
   Future<void> initializeData() async {
     selectedColor = Colors.transparent;
     isStart = false;
+    isPaused = false;
     selectedFret = null;
     selectedString = null;
     selectedNote = null;

@@ -72,15 +72,12 @@ class FretSoundPlayer {
 
   static Future<web.AudioBuffer> _loadBuffer(String assetPath) async {
     final context = _audioContext;
-    final clean =
-        assetPath.startsWith('assets/') ? assetPath.substring(7) : assetPath;
-    final response = await web.window
-        .fetch(Uri.encodeFull('assets/assets/$clean').toJS)
-        .toDart;
+    final url = Uri.encodeFull(assetPath);
+    final response = await web.window.fetch(url.toJS).toDart;
 
     if (!response.ok) {
       throw StateError(
-        'Failed to fetch audio asset $assetPath (${response.status})',
+        'Failed to fetch audio asset $url (${response.status})',
       );
     }
 

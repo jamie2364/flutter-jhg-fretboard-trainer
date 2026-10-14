@@ -365,8 +365,9 @@ class _ExpandedPanel extends StatelessWidget {
 
           // ── Content: depends on game state ─────────────────────────────
 
-          // Idle: mode chip + hint
-          if (!c.isStart && !c.isPaused) ...[
+          // Idle: mode chip + hint (also fallback if find mode has no target note yet)
+          if ((!c.isStart && !c.isPaused) ||
+              (!isReverse && c.highlightNode == null)) ...[
             GestureDetector(
               onTap: onModeTap,
               child: Container(
@@ -436,7 +437,7 @@ class _ExpandedPanel extends StatelessWidget {
                     border: Border.all(
                         color: JHGColors.primary.withValues(alpha: 0.4)),
                   ),
-                  child: Text(c.highlightNode ?? '',
+                  child: Text(c.highlightNode ?? '—',
                       style: JhgFonts.poppins(
                           color: JHGColors.primary,
                           fontSize: 28,
@@ -495,7 +496,7 @@ class _CollapsedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = controller;
     final isPlaying = c.isStart || c.isPaused;
-    final showNote = isPlaying && !isReverse;
+    final showNote = isPlaying && !isReverse && c.highlightNode != null;
     final showAnswers = isPlaying && isReverse && c.reverseChoices.isNotEmpty;
     final locked = c.reverseSelectedNote != null;
 
