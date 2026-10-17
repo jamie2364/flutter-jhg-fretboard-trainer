@@ -22,7 +22,26 @@ import 'package:universal_html/html.dart' as html;
 
 import 'leaderboard_controller.dart';
 
+class SessionHistoryItem {
+  SessionHistoryItem({
+    required this.prompt,
+    required this.correctAnswer,
+    required this.userAnswer,
+    required this.isCorrect,
+    this.isRevealed = false,
+    required this.timestamp,
+  });
+
+  final String prompt;
+  final String correctAnswer;
+  final String userAnswer;
+  final bool isCorrect;
+  final bool isRevealed;
+  final DateTime timestamp;
+}
+
 class HomeController extends GetxController {
+  final RxList<SessionHistoryItem> sessionHistory = <SessionHistoryItem>[].obs;
   var userNameWeb = 'DefaultUserName'.obs;
 
   List<String> defaultTimer = ['Stopwatch', "Countdown"];
@@ -358,17 +377,15 @@ class HomeController extends GetxController {
 
   int score = 0;
 
+  // [playFeedback] is kept for call-site compatibility but no longer gates a
+  // sound: the right / wrong answer cues were removed because they overlapped
+  // the note / chord playback and muddied it. Answers still give a haptic tick
+  // and the green / coral colour change.
   void incrementScore({bool playFeedback = true}) {
     score = score + 1;
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.green;
-    // Answer feedback: cheerful cue + a light tick. Callers that answer by
-    // tapping a fret (find, interval/chord build, chord lab) pass
-    // playFeedback:false, because the fret's own note has just sounded and a
-    // second cue on top of it just muddies the moment. Button-answer modes
-    // (identify, name interval/chord) keep the cue.
-    if (playFeedback) unawaited(FeedbackSounds.instance.playCorrect());
     unawaited(HapticFeedback.lightImpact());
     update();
   }
@@ -378,10 +395,6 @@ class HomeController extends GetxController {
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.primary;
-    // Answer feedback: buzzer + a firmer tap so a miss is felt as well as heard.
-    // Board-tap answers pass playFeedback:false (the fret note already sounded);
-    // button-answer modes keep the buzzer. See incrementScore for the full list.
-    if (playFeedback) unawaited(FeedbackSounds.instance.playWrong());
     unawaited(HapticFeedback.mediumImpact());
     update();
   }
@@ -412,9 +425,11 @@ class HomeController extends GetxController {
     int randomIndex = getRandomIndex();
     highlightFret = randomIndex;
     highlightNode = fretList[randomIndex].note;
-    highlightString = fretList[randomIndex].string;
     if (currentGameMode.value == 'reverse') {
+      highlightString = null;
       generateReverseChoices(highlightNode!);
+    } else {
+      highlightString = fretList[randomIndex].string;
     }
     update();
   }
@@ -434,6 +449,7 @@ class HomeController extends GetxController {
     isPaused = false;
     roundsStarted.value++;
     if (isIntervalMode) {
+      highlightString = null;
       if (isIntervalBuild) {
         newBuildIntervalPrompt();
       } else {
@@ -443,6 +459,7 @@ class HomeController extends GetxController {
       return;
     }
     if (isChordMode) {
+      highlightString = null;
       // The catalog can still be loading on the first play — start the round
       // as soon as it's ready.
       if (_chordCatalog == null) {
@@ -460,9 +477,11 @@ class HomeController extends GetxController {
     previousHighlightFret = highlightFret;
     previousHighlightNode = highlightNode;
     highlightNode = fretList[randomIndex].note;
-    highlightString = fretList[randomIndex].string;
     if (currentGameMode.value == 'reverse') {
+      highlightString = null;
       generateReverseChoices(highlightNode!);
+    } else {
+      highlightString = fretList[randomIndex].string;
     }
     update();
   }
@@ -491,6 +510,9 @@ class HomeController extends GetxController {
     reverseWasCorrect = false;
     _clearIntervalState();
     _clearChordState();
+    if (resetAll) {
+      sessionHistory.clear();
+    }
 
     // Keep the chosen trainer mode on reset — only the plain find-note timer
     // modes fall back to the saved default. Identify / interval stay put so the
@@ -947,6 +969,13 @@ class HomeController extends GetxController {
     unawaited(tapped.playSound());
     unawaited(HeatmapService.recordAttempt(index, isCorrect));
     _recordIntervalStat(isCorrect);
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Build ${want.name} from ${root.note}',
+      correctAnswer: intervalPrompt?.target.note ?? '',
+      userAnswer: tapped.note ?? '',
+      isCorrect: isCorrect,
+      timestamp: DateTime.now(),
+    ));
 
     if (isCorrect) {
       selectedColor = JHGColors.green;
@@ -1039,6 +1068,13 @@ class HomeController extends GetxController {
       unawaited(HeatmapService.recordAttempt(intervalTargetIndex!, isCorrect));
     }
     _recordIntervalStat(isCorrect);
+    sessionHistory.add(SessionHistoryItem(
+      prompt: '${intervalPrompt?.root.note} → ${intervalPrompt?.target.note}',
+      correctAnswer: correct.name,
+      userAnswer: choice.name,
+      isCorrect: isCorrect,
+      timestamp: DateTime.now(),
+    ));
 
     if (isCorrect) {
       incrementScore();
@@ -1222,6 +1258,7 @@ class HomeController extends GetxController {
     chordTapped = {};
     chordBuildDone = false;
     chordBuildReveal = null;
+    chordRevealIndex = 0;
     selectedFret = null;
     selectedColor = Colors.transparent;
     _chordStatDone = false;
@@ -1243,6 +1280,13 @@ class HomeController extends GetxController {
     chordSelected = symbol;
     chordWasCorrect = isCorrect;
     _recordChordStat(isCorrect);
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Name the Chord',
+      correctAnswer: correct,
+      userAnswer: symbol,
+      isCorrect: isCorrect,
+      timestamp: DateTime.now(),
+    ));
 
     if (isCorrect) {
       incrementScore();
@@ -1253,9 +1297,6 @@ class HomeController extends GetxController {
         if (isStart) newChordNamePrompt();
       });
     } else {
-      // Wrong pick: dock a point and flash the tapped symbol, but keep the
-      // same question. Clear the selection after the flash so the user can
-      // try again — we never reveal the answer or auto-advance on a miss.
       decrementScore();
       final tapped = symbol;
       Future.delayed(const Duration(milliseconds: 550), () {
@@ -1271,7 +1312,8 @@ class HomeController extends GetxController {
 
   /// Build mode: toggle a fretted position. Open strings (fret 0) aren't part
   /// of the placed shape — tapping one just sounds the note. The round is won
-  /// when the placed set matches any accepted voicing of the target chord.
+  /// when the placed set matches any accepted voicing of the target chord, OR
+  /// any legitimate chord voicing according to music theory (pitch-class set).
   void tapChordFret(int index) {
     if (!isStart) return;
     if (chordBuildDone) return; // locked while showing feedback
@@ -1288,13 +1330,27 @@ class HomeController extends GetxController {
       chordTapped.add(index);
     }
 
-    final matched = chordPrompt?.acceptableFrettedSets.any((s) =>
-            s.length == chordTapped.length && s.containsAll(chordTapped)) ??
-        false;
+    final bool matchesTheory = chordPrompt != null &&
+        isPitchClassChordMatch(
+          root: chordPrompt!.root,
+          tonality: chordPrompt!.tonality,
+          frettedIndices: chordTapped,
+        );
+    final matched = matchesTheory ||
+        (chordPrompt?.acceptableFrettedSets.any((s) =>
+                s.length == chordTapped.length && s.containsAll(chordTapped)) ??
+            false);
     if (matched) {
       chordBuildDone = true;
       selectedColor = JHGColors.green;
       _recordChordStat(true);
+      sessionHistory.add(SessionHistoryItem(
+        prompt: 'Build ${chordPrompt?.symbol ?? ''}',
+        correctAnswer: chordPrompt?.symbol ?? '',
+        userAnswer: chordPrompt?.symbol ?? '',
+        isCorrect: true,
+        timestamp: DateTime.now(),
+      ));
       // The tapped fret's note already sounded above, so skip the extra cue.
       incrementScore(playFeedback: false);
       final delay = identifyAutoAdvance
@@ -1314,18 +1370,31 @@ class HomeController extends GetxController {
     update();
   }
 
+  int chordRevealIndex = 0;
+
   /// Build mode: give up on the current chord — reveal a correct shape (green,
-  /// with note names on the board) and wait. Counts as a miss. The round does
-  /// NOT auto-advance: the Reveal control becomes "Next" and the user taps it
-  /// (nextBuildChord) when they've studied the answer.
+  /// with note names on the board) and wait. Cycles through available standard
+  /// voicings when tapped repeatedly so the user sees multiple options rather
+  /// than just one static result.
   void revealChordBuild() {
-    if (!isStart || chordBuildDone) return;
+    if (!isStart) return;
     final sets = chordPrompt?.acceptableFrettedSets;
     if (sets == null || sets.isEmpty) return;
-    chordBuildReveal = sets.first;
-    chordBuildDone = true;
-    _recordChordStat(false);
-    decrementScore();
+    if (!chordBuildDone) {
+      chordBuildDone = true;
+      _recordChordStat(false);
+      decrementScore();
+      sessionHistory.add(SessionHistoryItem(
+        prompt: 'Build ${chordPrompt?.symbol ?? ''}',
+        correctAnswer: chordPrompt?.symbol ?? '',
+        userAnswer: '(Revealed)',
+        isCorrect: false,
+        isRevealed: true,
+        timestamp: DateTime.now(),
+      ));
+    }
+    chordBuildReveal = sets[chordRevealIndex % sets.length];
+    chordRevealIndex++;
     update();
   }
 
@@ -1333,6 +1402,212 @@ class HomeController extends GetxController {
   void nextBuildChord() {
     if (!isStart) return;
     newBuildChordPrompt();
+  }
+
+  /// Play audio for whatever is currently active on screen (note, chord, or interval).
+  Future<void> playCurrentPromptSound() async {
+    if (isChordMode) {
+      if (chordPrompt != null) {
+        await _playChord(chordPrompt!);
+      } else if (chordLabPrompt != null) {
+        await _playChord(chordLabPrompt!.target);
+      }
+    } else if (isIntervalMode) {
+      await _playIntervalNotes();
+    } else if (currentGameMode.value == 'reverse' && highlightFret != null) {
+      await fretList[highlightFret!].playSound();
+    } else if (highlightFret != null) {
+      await fretList[highlightFret!].playSound();
+    }
+  }
+
+  /// Unified Reveal Answer across all game modes.
+  void revealAnswer() {
+    if (!isStart) return;
+    if (isChordBuild) {
+      revealChordBuild();
+    } else if (isIntervalBuild) {
+      revealIntervalBuild();
+    } else if (isChordName || (isChordLab && isChordLabName)) {
+      revealChordName();
+    } else if (isChordLab) {
+      // Chord Lab board rounds (Complete / Remove / Build) — the eye had no
+      // branch here, so it did nothing on those rounds.
+      revealChordLab();
+    } else if (isIntervalName) {
+      revealIntervalName();
+    } else if (currentGameMode.value == 'reverse') {
+      revealReverseAnswer();
+    } else {
+      revealFindNote();
+    }
+  }
+
+  void revealIntervalBuild() {
+    final p = intervalPrompt;
+    if (!isStart || p == null) return;
+    intervalBuildRevealIndex = fretList.indexOf(p.target);
+    intervalBuildDone = true;
+    _recordIntervalStat(false);
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Build ${p.interval.name} from ${p.root.note}',
+      correctAnswer: p.target.note ?? '',
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    update();
+  }
+
+  void revealReverseAnswer() {
+    if (!isStart ||
+        highlightNode == null ||
+        highlightFret == null ||
+        reverseSelectedNote != null) {
+      return;
+    }
+    reverseSelectedNote = highlightNode;
+    // Highlight the revealed note as correct (green), not as a wrong pick.
+    reverseWasCorrect = true;
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Identify Note',
+      correctAnswer: highlightNode ?? '',
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    unawaited(fretList[highlightFret!].playSound());
+    // Advance to the next note after a beat so the answer is seen.
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (!isStart) return;
+      reverseSelectedNote = null;
+      reverseWasCorrect = false;
+      highLightTheGame();
+    });
+    update();
+  }
+
+  void revealIntervalName() {
+    final p = intervalPrompt;
+    if (!isStart || p == null || intervalSelected != null) return;
+    intervalSelected = p.interval;
+    // Highlight the revealed interval as correct (green), not as a wrong pick.
+    intervalWasCorrect = true;
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: '${p.root.note} to ${p.target.note}',
+      correctAnswer: p.interval.name,
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    unawaited(_playIntervalNotes());
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (isStart) newIntervalPrompt();
+    });
+    update();
+  }
+
+  void revealChordName() {
+    if (!isStart || chordSelected != null) return;
+    final isLab = isChordLab && isChordLabName;
+    final correct =
+        isLab ? chordLabPrompt?.target.symbol : chordPrompt?.symbol;
+    if (correct == null) return;
+    chordSelected = correct;
+    // Show the revealed answer highlighted as the correct one (green), not as a
+    // wrong pick (coral). The point is still docked below and the attempt is
+    // logged as revealed, so this only drives the on-screen highlight.
+    chordWasCorrect = true;
+    if (isLab) {
+      chordLabDone = true;
+      _recordLabStat(false);
+    } else {
+      _recordChordStat(false);
+    }
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: isLab ? 'Chord Lab: $correct' : 'Chord Name',
+      correctAnswer: correct,
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    if (chordPrompt != null) {
+      unawaited(_playChord(chordPrompt!));
+    } else if (chordLabPrompt != null) {
+      unawaited(_playChord(chordLabPrompt!.target));
+    }
+    // Move on to the next chord after a beat, so the answer is seen first.
+    if (isLab) {
+      _advanceChordLab(delay: const Duration(milliseconds: 1100));
+    } else {
+      Future.delayed(const Duration(milliseconds: 1100), () {
+        if (isStart) newChordNamePrompt();
+      });
+    }
+    update();
+  }
+
+  /// Chord Lab board rounds (Complete / Remove / Build): give up and show a
+  /// correct voicing (green), then advance. These rounds are answered on the
+  /// board, so there is no choice grid to light — the reveal lays the solved
+  /// shape onto the neck.
+  void revealChordLab() {
+    final p = chordLabPrompt;
+    if (!isStart || p == null || chordLabDone) return;
+    // Prefer a voicing that keeps the round's given (locked) notes; fall back to
+    // any accepted voicing.
+    final solution =
+        p.acceptable.firstWhereOrNull((a) => a.containsAll(p.locked)) ??
+            (p.acceptable.isNotEmpty ? p.acceptable.first : null);
+    if (solution == null) return;
+    chordLabActive = {...solution};
+    chordLabFlashIndex = null;
+    chordLabDone = true;
+    selectedColor = JHGColors.green;
+    _recordLabStat(false);
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Chord Lab: ${p.target.symbol}',
+      correctAnswer: p.target.symbol,
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    _advanceChordLab(delay: const Duration(milliseconds: 1100));
+    update();
+  }
+
+  void revealFindNote() {
+    if (!isStart || highlightFret == null) return;
+    selectedFret = highlightFret;
+    selectedColor = JHGColors.green;
+    decrementScore();
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Find $highlightNode on string $highlightString',
+      correctAnswer: '$highlightNode (Fret ${fretList[highlightFret!].fret})',
+      userAnswer: '(Revealed)',
+      isCorrect: false,
+      isRevealed: true,
+      timestamp: DateTime.now(),
+    ));
+    unawaited(fretList[highlightFret!].playSound());
+    // Advance to the next note after a beat so the revealed fret is seen.
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (!isStart) return;
+      selectedFret = null;
+      selectedColor = Colors.transparent;
+      highLightTheGame();
+    });
+    update();
   }
 
   // ── Chord Lab ────────────────────────────────────────────────────────────
@@ -1485,18 +1760,43 @@ class HomeController extends GetxController {
     }
   }
 
-  /// True if [set] exactly equals one of the round's accepted voicings.
-  bool _labMatches(ChordLabPrompt p, Set<int> set) =>
-      p.acceptable.any((a) => a.length == set.length && a.containsAll(set));
+  /// True if [set] exactly equals one of the round's accepted voicings or completes
+  /// the chord according to musical pitch-class theory.
+  bool _labMatches(ChordLabPrompt p, Set<int> set) {
+    if (p.acceptable.any((a) => a.length == set.length && a.containsAll(set))) {
+      return true;
+    }
+    if (set.containsAll(p.locked)) {
+      return isPitchClassChordMatch(
+        root: p.target.root,
+        tonality: p.target.tonality,
+        frettedIndices: set,
+      );
+    }
+    return false;
+  }
 
-  /// True if [set] is a subset of some accepted voicing (i.e. still completable).
-  bool _labCanExtendTo(ChordLabPrompt p, Set<int> set) =>
-      p.acceptable.any((a) => a.containsAll(set));
+  /// True if [set] is a subset of some accepted voicing or can legally extend to a valid chord.
+  bool _labCanExtendTo(ChordLabPrompt p, Set<int> set) {
+    if (p.acceptable.any((a) => a.containsAll(set))) return true;
+    return canExtendToPitchClassChord(
+      root: p.target.root,
+      tonality: p.target.tonality,
+      currentNotes: set,
+    );
+  }
 
   void _winChordLab() {
     chordLabFlashIndex = null;
     chordLabDone = true;
     selectedColor = JHGColors.green;
+    sessionHistory.add(SessionHistoryItem(
+      prompt: 'Chord Lab: ${chordLabPrompt?.target.symbol ?? ''}',
+      correctAnswer: chordLabPrompt?.target.symbol ?? '',
+      userAnswer: !_labHadWrong ? 'Solved' : 'With hints',
+      isCorrect: !_labHadWrong,
+      timestamp: DateTime.now(),
+    ));
     // A board round counts as "known" only if solved with no wrong taps.
     _recordLabStat(!_labHadWrong);
     // The winning tap's fret note already sounded, so skip the extra cue.
@@ -1552,6 +1852,15 @@ class HomeController extends GetxController {
     unawaited(PracticeStatsService.record(
         StatsModule.note, 'mode:identify', isCorrect));
     unawaited(PracticeStatsService.recordHistory(StatsModule.note, isCorrect));
+    sessionHistory.add(SessionHistoryItem(
+      prompt: highlightFret != null
+          ? 'Fret ${fretList[highlightFret!].fret}'
+          : 'Identify Note',
+      correctAnswer: highlightNode ?? '',
+      userAnswer: note,
+      isCorrect: isCorrect,
+      timestamp: DateTime.now(),
+    ));
 
     if (isCorrect) {
       previousHighlightFret = highlightFret;

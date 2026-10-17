@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:math' show pi, sin;
 
 import 'package:flutter/material.dart';
@@ -100,6 +101,11 @@ class _PortraitBoardState extends State<PortraitBoard> {
                       ),
                     const Spacer(),
                     JhgIconChipButton.header(
+                      icon: JhgIcons.navHistory,
+                      onTap: () => _showSessionHistory(context, c),
+                    ),
+                    const SizedBox(width: 8),
+                    JhgIconChipButton.header(
                       icon: JhgIcons.save,
                       onTap: () => _saveSession(context, c),
                     ),
@@ -140,11 +146,8 @@ class _PortraitBoardState extends State<PortraitBoard> {
                     Positioned(
                       left: 0,
                       right: 0,
-                      bottom: 0,
-                      // Flush to the bottom (the nav bar) — no gap. A gap here
-                      // let the ivory neck show through between the tile and
-                      // the bar; drills / dictionaries seat the tile hard
-                      // against the bottom so the fretboard ends at the tile.
+                      bottom: 8,
+                      // Subtle gap above the bottom navigation bar matching the drills layout
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                         child: _panelCollapsed
@@ -213,6 +216,177 @@ Future<void> _saveSession(BuildContext context, HomeController c) async {
   );
 }
 
+// ─── Session History ───────────────────────────────────────────────────────────
+Future<void> _showSessionHistory(BuildContext context, HomeController c) async {
+  await showJHGBlurDialog(
+    context: context,
+    builder: (ctx) => Obx(() {
+      final items = c.sessionHistory.reversed.toList();
+      final total = items.length;
+      final correctCount = items.where((i) => i.isCorrect).length;
+      final pct = total == 0 ? 0 : (correctCount * 100 / total).round();
+
+      return JHGFrostedDialog(
+        icon: JhgIcons.navHistory,
+        title: 'Session History',
+        description: total == 0
+            ? 'No attempts recorded yet this session.'
+            : '$correctCount of $total correct ($pct% accuracy)',
+        onClose: () => Navigator.of(ctx).pop(),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    children: [
+                      const Icon(JhgIcons.navHistory,
+                          size: 36, color: Colors.white30),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No attempts yet',
+                        style: JhgFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Your note, chord, and interval answers will appear here as you play.',
+                        textAlign: TextAlign.center,
+                        style: JhgFonts.inter(
+                          color: Colors.white60,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 340),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final isCorrect = item.isCorrect;
+                      final isRevealed = item.isRevealed;
+
+                      final badgeColor = isCorrect
+                          ? JHGColors.green
+                          : (isRevealed
+                              ? const Color(0xFFFE5D43)
+                              : const Color(0xFFE53935)); // ds-guard: allow
+                      final badgeIcon = isCorrect
+                          ? JhgIcons.check
+                          : (isRevealed ? JhgIcons.visible : JhgIcons.close);
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: badgeColor.withValues(alpha: 0.20),
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: badgeColor, width: 1.2),
+                              ),
+                              child:
+                                  Icon(badgeIcon, size: 14, color: badgeColor),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.prompt,
+                                    style: JhgFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isRevealed
+                                        ? 'Revealed: ${item.correctAnswer}'
+                                        : (isCorrect
+                                            ? 'Answer: ${item.correctAnswer}'
+                                            : 'Picked: ${item.userAnswer}  •  Correct: ${item.correctAnswer}'),
+                                    style: JhgFonts.inter(
+                                      color: isCorrect
+                                          ? JHGColors.green
+                                          : (isRevealed
+                                              ? const Color(0xFFFE5D43)
+                                              : const Color(0xFFE53935)), // ds-guard: allow
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${item.timestamp.hour.toString().padLeft(2, '0')}:${item.timestamp.minute.toString().padLeft(2, '0')}',
+                              style: JhgFonts.inter(
+                                color: Colors.white38,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (items.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: () => c.sessionHistory.clear(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Clear history',
+                        style: JhgFonts.inter(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+      );
+    }),
+  );
+}
+
 // ─── Expanded floating card ────────────────────────────────────────────────────
 // Blurred glass card that overlays the bottom of the fretboard.
 // Uses dictionaries' ClipRRect → BackdropFilter → Container pattern.
@@ -235,148 +409,145 @@ class _ExpandedPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = controller;
+    final isPlaying = c.isStart || c.isPaused;
+    final modeLabel = isChord
+        ? (c.isChordLab
+            ? _chordLabHeader(c)
+            : c.isChordBuild
+                ? 'BUILD THE CHORD'
+                : 'NAME THE CHORD')
+        : isInterval
+            ? (c.isIntervalBuild
+                ? 'BUILD THE INTERVAL'
+                : 'NAME THE INTERVAL')
+            : isReverse
+                ? 'IDENTIFY THE NOTE'
+                : 'FIND THE NOTE';
 
+    // Canonical frosted collapse chip (34), the same one the dictionaries /
+    // drills open panel uses.
+    final collapseBtn = JhgGlassChevron(onTap: onCollapse, expanded: true);
+
+    // Canonical glass tile — default open padding (20), matching the
+    // dictionaries / drills open panel.
     return JhgGlassTile.open(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Header row: label + collapse arrow ──────────────────────
+          // ── Header row: label + utility actions + collapse chevron ──
           Row(
             children: [
-              Text(
-                // Always the game type, so the user knows exactly what
-                // they're practising (matters most in Random Practice,
-                // where the type was rolled for them).
-                isChord
-                    ? (c.isChordLab
-                        ? _chordLabHeader(c)
-                        : c.isChordBuild
-                            ? 'BUILD THE CHORD'
-                            : 'NAME THE CHORD')
-                    : isInterval
-                        ? (c.isIntervalBuild
-                            ? 'BUILD THE INTERVAL'
-                            : 'NAME THE INTERVAL')
-                        : isReverse
-                            ? 'IDENTIFY THE NOTE'
-                            : 'FIND THE NOTE',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const Spacer(),
-              // Skip — draw a fresh question, no score change. Only while a
-              // round is running.
-              if (c.isStart)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: JhgIconChipButton.compact(
-                    icon: JhgIcons.next,
-                    onTap: c.skipQuestion,
-                    iconColor: Colors.white54,
+              Expanded(
+                child: Text(
+                  modeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // Matches the dictionaries / drills open-tile eyebrow.
+                  style: const TextStyle(
+                    color: Color(0xFFB3B0AE),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
                   ),
                 ),
-              // Listen — audio is no longer auto-played during a round;
-              // tap to hear the current note/chord. Active only while a
-              // round is running.
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: JhgIconChipButton.compact(
-                  icon: JhgIcons.volume,
-                  onTap: c.isStart ? c.playCurrentPrompt : () {},
-                  iconColor: c.isStart ? Colors.white54 : Colors.white24,
-                ),
               ),
-              JhgGlassChevron(onTap: onCollapse, expanded: true),
+              const SizedBox(width: 8),
+              if (c.isStart) ...[
+                JhgIconChipButton.compact(
+                  icon: JhgIcons.volume,
+                  onTap: () => unawaited(c.playCurrentPromptSound()),
+                ),
+                const SizedBox(width: 8),
+                if (!c.isChordBuild) ...[
+                  JhgIconChipButton.compact(
+                    icon: JhgIcons.visible,
+                    onTap: c.revealAnswer,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                JhgIconChipButton.compact(
+                  key: fretboardTourKeys.skipButton,
+                  icon: JhgIcons.next,
+                  onTap: c.skipQuestion,
+                ),
+                const SizedBox(width: 8),
+              ],
+              collapseBtn,
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
 
-          // ── Timer — lives in the tile now (not the top) ──────────────
-          const Center(child: CountTimerWidget()),
-          const SizedBox(height: 14),
+          // ── Session Status: TIME + SCORE boxes (dict / drills style) ─
+          if (isPlaying)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _StatRow(controller: c),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Center(child: CountTimerWidget()),
+            ),
 
-          // ── Content: depends on game state ───────────────────────────
-
-          // Idle: no explainer line — the header already names the game and
-          // "Press play to start" guidance lives in the prompt widgets.
+          // ── Mode-specific content area ──────────────────────────────
           if ((!c.isStart && !c.isPaused) ||
               (!isReverse && c.highlightNode == null)) ...[
-            const SizedBox(height: 4),
-          ]
-
-          // Interval NAME playing: 2×2 interval-name grid
-          else if (c.isIntervalName) ...[
-            _IntervalChoicePanel(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Interval BUILD playing: the target interval to play + score
-          else if (c.isIntervalBuild) ...[
-            _IntervalBuildPrompt(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Chord NAME playing: choice grid of chord symbols
-          else if (c.isChordName) ...[
-            _ChordChoicePanel(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Chord BUILD playing: the chord to place + score + controls
-          else if (c.isChordBuild) ...[
-            _ChordBuildPrompt(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Chord Lab playing: per-round prompt + score (+ name grid)
-          else if (c.isChordLab) ...[
-            _ChordLabPanel(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Identify mode playing: answer buttons
-          else if (isReverse) ...[
-            _ReverseChoicePanel(controller: c),
-            const SizedBox(height: 14),
-          ]
-
-          // Find note mode playing: note badge (score now lives in the
-          // bottom score bar).
-          else ...[
-            Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                decoration: BoxDecoration(
-                  color: JHGColors.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                      color: JHGColors.primary.withValues(alpha: 0.4)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Press play to start',
+                style: JhgFonts.inter(
+                  color: Colors.white38,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
-                child: Text(c.highlightNode ?? '—',
-                    style: JhgFonts.poppins(
-                        color: JHGColors.primary,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold)),
               ),
             ),
-            const SizedBox(height: 14),
-          ],
-
-          // ── Control row ──────────────────────────────────────────────
-          _ControlRow(controller: c),
-
-          // ── Score — a plain line directly under the play button, no
-          // tile or box behind it, in every mode ──────────────────────
-          if (c.isStart || c.isPaused) ...[
+          ] else if (c.isIntervalName) ...[
+            _IntervalChoicePanel(controller: c),
             const SizedBox(height: 12),
-            _ScoreLine(score: c.score),
+          ] else if (c.isIntervalBuild) ...[
+            _IntervalBuildPrompt(controller: c),
+            const SizedBox(height: 12),
+          ] else if (c.isChordName) ...[
+            _ChordChoicePanel(controller: c),
+            const SizedBox(height: 12),
+          ] else if (c.isChordBuild) ...[
+            _ChordBuildPrompt(controller: c),
+            const SizedBox(height: 12),
+          ] else if (c.isChordLab) ...[
+            _ChordLabPanel(controller: c),
+            const SizedBox(height: 12),
+          ] else if (isReverse) ...[
+            _ReverseChoicePanel(controller: c),
+            const SizedBox(height: 12),
+          ] else ...[
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                decoration: BoxDecoration(
+                  color: JHGColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: JHGColors.primary.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  c.highlightNode ?? '—',
+                  style: JhgFonts.poppins(
+                    color: JHGColors.primary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
           ],
+
+          // ── Primary Control row ─────────────────────────────────────
+          _ControlRow(controller: c),
         ],
       ),
     );
@@ -502,12 +673,12 @@ class _CollapsedTile extends StatelessWidget {
         !c.isChordLabName &&
         isPlaying &&
         c.chordLabPrompt?.round != ChordLabRound.remove;
+    final showChordLabRemoveHint = c.isChordLab &&
+        isPlaying &&
+        c.chordLabPrompt?.round == ChordLabRound.remove;
     final locked = c.reverseSelectedNote != null;
     final intervalLocked = c.intervalSelected != null;
 
-    // Score + time as compact stat pills — legible at a glance and visually
-    // separated from the prompt so the collapsed tile doesn't read as one
-    // cramped block.
     Widget answerButton(String note) {
       final s = _answerStyle(note, c);
       final isWrongPick = c.reverseSelectedNote != null &&
@@ -519,7 +690,7 @@ class _CollapsedTile extends StatelessWidget {
           onTap: locked ? null : () => c.selectReverseAnswer(note),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            height: 40,
+            height: 42,
             decoration: BoxDecoration(
               color: s.bg,
               borderRadius: BorderRadius.circular(10),
@@ -528,10 +699,10 @@ class _CollapsedTile extends StatelessWidget {
             child: Center(
               child: Text(
                 note,
-                style: TextStyle(
+                style: JhgFonts.poppins(
                   color: s.text,
                   fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                 ),
               ),
@@ -542,13 +713,10 @@ class _CollapsedTile extends StatelessWidget {
     }
 
     final playBtn = JhgTransportButton(
-      // Same key as the open panel's transport. Only one tile state is built at
-      // a time, and starting a round collapses the panel — so without this the
-      // spotlight loses its target at the exact moment the step completes.
       key: fretboardTourKeys.playButton,
       state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
-      size: 44,
-      iconSize: 18,
+      size: 46,
+      iconSize: 20,
       onTap: c.isStart
           ? c.pauseGame
           : c.isPaused
@@ -559,111 +727,148 @@ class _CollapsedTile extends StatelessWidget {
                 },
     );
 
+    // Canonical frosted expand affordance (42 · r13) — the same control the
+    // dictionaries / drills tiles use, not a hand-rolled 32px square.
     final expandBtn = JhgGlassChevron(onTap: onExpand, expanded: false);
 
-    // Skip → draw a fresh question, no score change. Only while a round runs.
-    final skipBtn = JhgIconChipButton(
+    // In-tile chips (34 · r11 · 18) straight from jhg_elements, so the utility
+    // controls read as the suite's canonical chip rather than a local variant.
+    final skipBtn = JhgIconChipButton.compact(
       key: fretboardTourKeys.skipButton,
       icon: JhgIcons.next,
       onTap: c.skipQuestion,
-      size: 44,
-      radius: 12,
-      iconColor: Colors.white54,
-      background: Colors.white.withValues(alpha: 0.04),
-      borderColor: Colors.white.withValues(alpha: 0.16),
     );
 
+    final listenBtn = JhgIconChipButton.compact(
+      icon: JhgIcons.volume,
+      onTap: () => unawaited(c.playCurrentPromptSound()),
+    );
+
+    final revealBtn = JhgIconChipButton.compact(
+      icon: JhgIcons.visible,
+      onTap: c.revealAnswer,
+    );
+
+    Widget buildPromptWidget() {
+      if (!isPlaying) {
+        return const Text(
+          'Tap play to start',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _kTileLead,
+        );
+      }
+      if (isChord && c.isChordLab) {
+        return c.isChordLabName
+            ? const Text(
+                'Which chord?',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _kTileAsk,
+              )
+            : _TileHero(c.chordLabPrompt?.target.symbol ?? '—');
+      }
+      if (isChord && c.isChordBuild) {
+        return _TilePrompt(
+          lead: 'Play',
+          hero: c.chordPrompt?.symbol ?? '—',
+        );
+      }
+      if (isChord) {
+        return const Text(
+          'Which chord?',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _kTileAsk,
+        );
+      }
+      if (isInterval && c.isIntervalBuild) {
+        return _TilePrompt(
+          lead: 'Play',
+          hero: c.intervalPrompt?.interval.name ?? '—',
+        );
+      }
+      if (isInterval) {
+        return const Text(
+          'Which interval?',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _kTileAsk,
+        );
+      }
+      if (isReverse) {
+        return const Text(
+          'Which note is this?',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _kTileAsk,
+        );
+      }
+      return _TilePrompt(lead: 'Find', hero: c.highlightNode ?? '—');
+    }
+
+    // Canonical glass tile — default padding (12), same as the dictionaries /
+    // drills control tile, so the box reads as the shared jhg_elements surface
+    // rather than a locally padded variant.
     return JhgGlassTile.closed(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // ── Tier 1: Eyebrow + Utility controls & Expand ─────────────
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      modeLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    // The prompt line. Whatever the player has to act on — a
-                    // note, a chord symbol, an interval — is the hero and gets
-                    // real size; the words around it stay small so they don't
-                    // compete with it.
-                    if (!isPlaying)
-                      const Text(
-                        'Tap play to start',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: _kTileLead,
-                      )
-                    else if (isChord && c.isChordLab)
-                      // Board rounds surface the target symbol; the name round
-                      // asks for the name.
-                      (c.isChordLabName
-                          ? const Text('Which chord?',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _kTileAsk)
-                          : _TileHero(c.chordLabPrompt?.target.symbol ?? '—'))
-                    else if (isChord && c.isChordBuild)
-                      _TilePrompt(
-                          lead: 'Play', hero: c.chordPrompt?.symbol ?? '—')
-                    else if (isChord)
-                      const Text('Which chord?',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: _kTileAsk)
-                    else if (isInterval && c.isIntervalBuild)
-                      _TilePrompt(
-                          lead: 'Play',
-                          hero: c.intervalPrompt?.interval.name ?? '—')
-                    else if (isInterval)
-                      const Text('Which interval?',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: _kTileAsk)
-                    else if (isReverse)
-                      const Text('Which note is this?',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: _kTileAsk)
-                    else
-                      _TilePrompt(lead: 'Find', hero: c.highlightNode ?? '—'),
-                    // Score and running time on one plain line under the
-                    // prompt — no pill or box behind them.
-                    if (isPlaying) ...[
-                      const SizedBox(height: 3),
-                      _ScoreTimeLine(controller: c),
-                    ],
-                  ],
+                child: Text(
+                  modeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // Matches the dictionaries / drills tile eyebrow.
+                  style: const TextStyle(
+                    color: Color(0xFFB3B0AE),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
-              // Save lives on the top-right of the screen, so the tile is
-              // just prompt + score/time + controls.
               if (c.isStart) ...[
+                listenBtn,
+                const SizedBox(width: 8),
+                if (!showChordBuildControls) ...[
+                  revealBtn,
+                  const SizedBox(width: 8),
+                ],
                 skipBtn,
-                const SizedBox(width: 7),
+                const SizedBox(width: 8),
               ],
-              playBtn,
-              const SizedBox(width: 7),
               expandBtn,
             ],
           ),
-          // Identify mode: answer choices stay usable while collapsed.
+
+          const SizedBox(height: 14),
+
+          // ── Tier 2: Hero Prompt & Transport Play Button ─────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: buildPromptWidget()),
+              const SizedBox(width: 14),
+              playBtn,
+            ],
+          ),
+
+          // ── Session stats: TIME + SCORE boxes (dict / drills style) ──
+          if (isPlaying) ...[
+            const SizedBox(height: 12),
+            _StatRow(controller: c),
+          ],
+
+          // ── Tier 3: Mode-specific choice options / actions ───────────
           if (showAnswers) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Row(
               children: [
                 for (int i = 0; i < c.reverseChoices.length; i++) ...[
@@ -673,65 +878,114 @@ class _CollapsedTile extends StatelessWidget {
               ],
             ),
           ],
-          // Interval NAME mode: 2×2 grid stays usable while collapsed.
+
           if (showIntervalAnswers) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             _IntervalChoiceGrid(
               controller: c,
               locked: intervalLocked,
             ),
           ],
-          // Chord NAME mode: 2×2 symbol grid stays usable while collapsed.
+
           if (showChordAnswers) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             _ChordChoiceGrid(
               controller: c,
               locked: c.chordSelected != null,
             ),
           ],
-          // Chord BUILD mode: clear / reveal controls while collapsed.
+
           if (showChordBuildControls) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             _ChordBuildControls(controller: c),
           ],
-          // Chord Lab NAME round: symbol grid stays usable while collapsed.
+
           if (showChordLabAnswers) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             _ChordChoiceGrid(
               controller: c,
               locked: c.chordSelected != null,
               onPick: c.selectChordLabName,
             ),
           ],
-          // Chord Lab Complete / Build rounds: a Clear control.
+
           if (showChordLabClear) ...[
-            const SizedBox(height: 10),
-            Center(
-              child: GestureDetector(
-                onTap: c.clearChordLab,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(JhgIcons.backspace,
-                          color: Colors.white60, size: 15),
-                      const SizedBox(width: 8),
-                      Text('Clear',
-                          style: JhgFonts.poppins(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600)),
-                    ],
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(JhgIcons.help, color: Colors.white38, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _chordLabHint(c.chordLabPrompt!.round),
+                    style: JhgFonts.inter(
+                      color: Colors.white54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: c.clearChordLab,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(JhgIcons.backspace,
+                            color: Colors.white60, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Clear',
+                          style: JhgFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          if (showChordLabRemoveHint) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(JhgIcons.help,
+                      color: JHGColors.primary, size: 13),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Tap the note that doesn't belong",
+                    style: JhgFonts.inter(
+                      color: Colors.white60,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1013,8 +1267,8 @@ class _ControlRow extends StatelessWidget {
         // Timer-mode cycle
         JhgCircleIconButton(
           icon: _resolveTimerIcon(isChoiceMode ? c.timerMode.value : mode),
-          size: 56,
-          iconSize: 22,
+          size: 50,
+          iconSize: 20,
           enabled: !disabled,
           onTap: c.cycleGameMode,
         ),
@@ -1025,8 +1279,8 @@ class _ControlRow extends StatelessWidget {
           // Tapping while running pauses (Reset is the separate control), so
           // show a pause glyph — a stop icon promised something else.
           state: c.isStart ? JhgTransportState.pause : JhgTransportState.play,
-          size: 72,
-          iconSize: 36,
+          size: 64,
+          iconSize: 28,
           onTap: c.isStart
               ? c.pauseGame
               : c.isPaused
@@ -1040,8 +1294,8 @@ class _ControlRow extends StatelessWidget {
         // Reset
         JhgCircleIconButton(
           icon: JhgIcons.reset,
-          size: 56,
-          iconSize: 22,
+          size: 50,
+          iconSize: 20,
           onTap: () => c.resetGame(true),
         ),
       ],
@@ -1049,84 +1303,110 @@ class _ControlRow extends StatelessWidget {
   }
 }
 
-// ─── Shared bottom score bar ──────────────────────────────────────────────────
-// One clean, full-width strip that lives at the BOTTOM of the tile (below the
-// answer options), so the score reads the same in every mode and never crowds
-// the prompt. "Score:" is white; the number is coral. On the collapsed tile it
-// also carries the running time on the right.
-/// Bare score readout — "Score: 12", centred, with nothing behind it. Used
-/// under the play button on the open panel.
-class _ScoreLine extends StatelessWidget {
-  const _ScoreLine({required this.score});
-  final int score;
+// ─── Session stat boxes (TIME / SCORE) ────────────────────────────────────────
+// The same label-over-value info box the dictionaries / drills tiles use for
+// ROOT / TONALITY, so the fretboard tile reads as the same family. TIME turns
+// coral while the clock runs; SCORE turns green / coral with its sign.
+
+/// A single dict-style info box: a small label over a bold value.
+class _StatBox extends StatelessWidget {
+  const _StatBox({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.labelColor,
+    this.borderColor,
+    this.fillColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final Color? labelColor;
+  final Color? borderColor;
+  final Color? fillColor;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          'Score:',
-          style: JhgFonts.inter(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: fillColor ?? Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: borderColor ?? Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: labelColor ?? Colors.white38,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$score',
-          style: JhgFonts.poppins(
-            color: JHGColors.primary,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: JhgFonts.poppins(
+              color: valueColor ?? Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/// The collapsed tile's status line — "Score 3 · 01:58" as plain text, with no
-/// pill or box behind it (the same line Ear Training uses). The time turns
-/// coral while the clock is running.
-class _ScoreTimeLine extends StatelessWidget {
-  const _ScoreTimeLine({required this.controller});
+/// The TIME + SCORE box pair, shared by the collapsed tile and the open panel
+/// so the session readout is identical in both.
+class _StatRow extends StatelessWidget {
+  const _StatRow({required this.controller});
   final HomeController controller;
 
   @override
   Widget build(BuildContext context) {
     final c = controller;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Score ${c.score}',
-          style: JhgFonts.poppins(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            height: 1.1,
+    return Obx(() {
+      final score = c.score;
+      final running = c.isStart;
+      final time = c.formatTime(c.secondsRemaining.value);
+      return Row(
+        children: [
+          Expanded(
+            child: _StatBox(
+              label: 'TIME',
+              value: time,
+              valueColor: running ? JHGColors.primary : Colors.white,
+              labelColor: running ? JHGColors.primary : null,
+              borderColor: running
+                  ? JHGColors.primary.withValues(alpha: 0.30)
+                  : null,
+              fillColor: running
+                  ? JHGColors.primary.withValues(alpha: 0.10)
+                  : null,
+            ),
           ),
-        ),
-        Text(
-          '  ·  ',
-          style: JhgFonts.poppins(color: Colors.white30, fontSize: 15),
-        ),
-        Text(
-          c.formatTime(c.secondsRemaining.value),
-          style: JhgFonts.poppins(
-            color: c.isStart ? JHGColors.primary : Colors.white54,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            height: 1.1,
+          const SizedBox(width: 10),
+          Expanded(
+            child: _StatBox(
+              label: 'SCORE',
+              value: '$score',
+              valueColor: score > 0
+                  ? JHGColors.green
+                  : score < 0
+                      ? JHGColors.primary
+                      : Colors.white,
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }
 
@@ -1293,11 +1573,11 @@ class _IntervalChoiceGrid extends StatelessWidget {
           onTap: locked ? null : () => c.selectIntervalAnswer(choice),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            height: 50,
+            height: 46,
             decoration: BoxDecoration(
               color: s.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: s.border, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: s.border, width: 1.4),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -1307,7 +1587,7 @@ class _IntervalChoiceGrid extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: JhgFonts.poppins(
                 color: s.text,
-                fontSize: 14,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1659,11 +1939,11 @@ class _ChordChoiceGrid extends StatelessWidget {
           onTap: locked ? null : () => pick(symbol),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            height: 50,
+            height: 46,
             decoration: BoxDecoration(
               color: s.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: s.border, width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: s.border, width: 1.4),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -1785,26 +2065,43 @@ class _ChordBuildControls extends StatelessWidget {
       Color? tint,
     }) {
       final color = tint ?? Colors.white70;
+      final isEnabled = onTap != null;
       return GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: onTap == null ? 0.03 : 0.07),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            color: isEnabled
+                ? (tint != null
+                    ? tint.withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.07))
+                : Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isEnabled
+                  ? (tint != null
+                      ? tint.withValues(alpha: 0.35)
+                      : Colors.white.withValues(alpha: 0.14))
+                  : Colors.white.withValues(alpha: 0.06),
+            ),
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 15, color: onTap == null ? Colors.white24 : color),
-            const SizedBox(width: 6),
-            Text(label,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: isEnabled ? color : Colors.white24),
+              const SizedBox(width: 6),
+              Text(
+                label,
                 style: JhgFonts.inter(
-                  color: onTap == null ? Colors.white24 : color,
+                  color: isEnabled ? color : Colors.white24,
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                )),
-          ]),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -1816,33 +2113,45 @@ class _ChordBuildControls extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          pill(
+            icon: JhgIcons.reset,
+            label: 'Other voicing',
+            tint: Colors.white,
+            onTap: c.revealChordBuild,
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: c.nextBuildChord,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
                 color: JHGColors.primary,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
                     color: JHGColors.primary.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('Next',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Next',
                     style: JhgFonts.poppins(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
-                    )),
-                const SizedBox(width: 6),
-                const Icon(JhgIcons.chevronRight,
-                    color: Colors.white, size: 17),
-              ]),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(JhgIcons.chevronRight,
+                      color: Colors.white, size: 16),
+                ],
+              ),
             ),
           ),
         ],
@@ -1853,17 +2162,18 @@ class _ChordBuildControls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Text(
             '$placed placed',
             style: JhgFonts.inter(
-              color: Colors.white54,
+              color: Colors.white60,
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

@@ -208,26 +208,24 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       if (widget.isPortrait) {
         final bandTop = _cellTopFor(minF);
         final bandBottom = _cellTopFor(maxF) + _cellHeightFor(maxF);
+        // The bottom card floats over the lower ~260px of the portrait viewport.
+        // Center the active note band inside the clear visible area above the card!
+        final visibleViewport = (viewport - 260).clamp(200.0, viewport);
         double offset;
 
-        if (bandBottom - bandTop <= viewport || anchorFret == null) {
-          // Whole band fits (or nothing special to anchor): centre it.
-          offset = (bandTop + bandBottom) / 2 - viewport / 2;
+        if (bandBottom - bandTop <= visibleViewport || anchorFret == null) {
+          offset = (bandTop + bandBottom) / 2 - visibleViewport / 2;
         } else {
-          // Band taller than the screen: keep the anchor note on screen and
-          // show as much of the neck toward the far note as fits. Push the
-          // anchor to the near edge so the gap fills the rest of the viewport.
           final anchorCenter =
               _cellTopFor(anchorFret) + _cellHeightFor(anchorFret) / 2;
-          final farBelow = maxF > anchorFret; // a note higher up the neck
-          final farAbove = minF < anchorFret; // a note lower down the neck
+          final farBelow = maxF > anchorFret;
+          final farAbove = minF < anchorFret;
           if (farBelow && !farAbove) {
-            offset = anchorCenter - viewport * 0.18; // anchor near the top
+            offset = anchorCenter - visibleViewport * 0.20;
           } else if (farAbove && !farBelow) {
-            offset = anchorCenter - viewport * 0.82; // anchor near the bottom
+            offset = anchorCenter - visibleViewport * 0.80;
           } else {
-            offset =
-                anchorCenter - viewport / 2; // notes both sides — centre it
+            offset = anchorCenter - visibleViewport / 2;
           }
         }
 
@@ -269,7 +267,10 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final isReverse = controller.currentGameMode.value == 'reverse';
     final int? selected = controller.selectedFret;
     final int? target = controller.highlightFret;
-    final int? highlightString = controller.highlightString;
+    final bool isFindMode = !isReverse &&
+        !controller.isIntervalMode &&
+        !controller.isChordMode;
+    final int? highlightString = isFindMode ? controller.highlightString : null;
 
     final bool isInterval = controller.currentGameMode.value == 'interval';
     final bool isIntervalBuild = controller.isIntervalBuild;
@@ -279,25 +280,11 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final bool isChordName = controller.isChordName;
     final bool isChordLab = controller.isChordLab;
 
-    // Notes (find / identify) and interval modes let the player narrow the neck
-    // to a chosen set of strings, so the string chips become live toggles and
-    // the muted strings dim. Chord modes use fixed shapes, so their chips stay
-    // static (dimming a string a chord actually uses would just mislead).
     final bool stringSelectable = !isChord;
-    // Chord Lab is board-interactive on every round except Name (answered on
-    // the choice grid).
-    final bool isChordLabBoard = isChordLab &&
-        controller.chordLabPrompt != null &&
-        controller.chordLabPrompt!.round != ChordLabRound.name;
 
-    // Board taps are live in find mode and in the BUILD variants of interval /
-    // chord (where the user taps to answer). Identify and the NAME variants
-    // answer with buttons instead.
-    final bool tapMode = controller.isStart &&
-        (isIntervalBuild ||
-            isChordBuild ||
-            isChordLabBoard ||
-            (!isReverse && !isInterval && !isChord));
+    // Board taps are active whenever the game is running so the user can play
+    // any fret sound and place answers.
+    final bool tapMode = controller.isStart;
 
     // Whether the coral "identify this fret" glow is showing right now.
     final bool showReverseTarget = isReverse &&
@@ -348,7 +335,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                 ScrollConfiguration.of(context).copyWith(scrollbars: false),
             child: SingleChildScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.only(bottom: 340),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,7 +682,10 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                   ? const LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: [JHGColors.primary, JHGColors.primary],
+                      colors: [
+                        Color(0xFFE53935), // ds-guard: allow — true branding red
+                        Color(0xFFE53935), // ds-guard: allow
+                      ],
                     )
                   : LinearGradient(
                       begin: Alignment.centerLeft,

@@ -466,6 +466,169 @@ bool _voicingFitsChord(String root, String tonality, List<int?> frets) {
   return required.every(relative.contains);
 }
 
+/// True if [frettedIndices] forms a musically valid, playable guitar voicing
+/// for [root] [tonality]. Recognizes any legitimate chord voicing (e.g. D#sus2
+/// built from the D string, open shapes, barre shapes, CAGED inversions, triads)
+/// even if that exact variation is not in the bundled dictionary.
+bool isPitchClassChordMatch({
+  required String root,
+  required String tonality,
+  required Set<int> frettedIndices,
+}) {
+  if (frettedIndices.isEmpty) return false;
+  final rootPc = _rootPc[root];
+  if (rootPc == null) return false;
+  final allowed = _allowedTones[tonality];
+  final required = _requiredTones[tonality];
+  if (allowed == null || required == null) return false;
+
+  final cols = <int>{};
+  final frets = <int>[];
+  final relativePcs = <int>{};
+
+  for (final idx in frettedIndices) {
+    if (idx < 0) return false;
+    final col = idx % 6;
+    final fret = idx ~/ 6;
+    if (fret <= 0) continue; // fretted notes only
+    if (!cols.add(col)) return false; // multiple notes on same string
+    frets.add(fret);
+    final notePc = (_openStringPc[col] + fret) % 12;
+    relativePcs.add((notePc - rootPc + 12) % 12);
+  }
+
+  if (frets.isEmpty) return false;
+
+  // Hand reach span check: maximum fret span <= 5
+  frets.sort();
+  if (frets.last - frets.first > 4) return false;
+
+  // Must have at least 2 notes (for power chords) or 3 for standard chords
+  final minNotes = tonality == '5' ? 2 : 3;
+  if (frettedIndices.length < minNotes) return false;
+
+  // No notes foreign to the chord
+  if (relativePcs.difference(allowed).isNotEmpty) return false;
+
+  // Must contain all required tones (e.g. root + 3rd/sus, etc.)
+  if (!required.every(relativePcs.contains)) return false;
+
+  return true;
+}
+
+/// True if [currentNotes] can still legally be extended to a valid voicing of
+/// [root] [tonality]. Used in Chord Lab to immediately recognize valid chord tones
+/// and allow alternative completions.
+bool canExtendToPitchClassChord({
+  required String root,
+  required String tonality,
+  required Set<int> currentNotes,
+}) {
+  if (currentNotes.isEmpty) return true;
+  final rootPc = _rootPc[root];
+  if (rootPc == null) return true;
+  final allowed = _allowedTones[tonality];
+  if (allowed == null) return true;
+
+  final cols = <int>{};
+  final frets = <int>[];
+  for (final idx in currentNotes) {
+    if (idx < 0) return false;
+    final col = idx % 6;
+    final fret = idx ~/ 6;
+    if (fret <= 0) continue;
+    if (!cols.add(col)) return false; // duplicate on same string
+    frets.add(fret);
+    final notePc = (_openStringPc[col] + fret) % 12;
+    final rel = (notePc - rootPc + 12) % 12;
+    if (!allowed.contains(rel)) return false; // foreign note!
+  }
+
+  if (frets.length > 1) {
+    frets.sort();
+    if (frets.last - frets.first > 5) return false; // unplayable span
+  }
+
+  return true;
+}
+
+/// Scores a voicing by standard guitar commonality so that widely taught,
+/// standard barre and open chords rank highest, and obscure drop shapes rank lowest.
+int _voicingScore(String root, List<int?> frets) {
+  var score = 0;
+  final rootPc = _rootPc[root];
+
+  // 1. Root on lowest sounding string (bass)
+  int? lowestCol;
+  int? lowestFret;
+  for (var col = 0; col < 6; col++) {
+    if (frets[col] != null) {
+      lowestCol = col;
+      lowestFret = frets[col]!;
+      break;
+    }
+  }
+  if (lowestCol != null && lowestFret != null && rootPc != null) {
+    final bassPc = (_openStringPc[lowestCol] + lowestFret) % 12;
+    if (bassPc == rootPc) {
+      score += 150; // major bonus for root in bass
+    }
+  }
+
+  // 2. Number of sounding strings
+  var soundingCount = 0;
+  for (final f in frets) {
+    if (f != null) soundingCount++;
+  }
+  score += soundingCount * 20;
+
+  // 3. Compact fret span & lower neck preference
+  final nonZeroFrets =
+      frets.where((f) => f != null && f > 0).cast<int>().toList();
+  if (nonZeroFrets.isNotEmpty) {
+    nonZeroFrets.sort();
+    final span = nonZeroFrets.last - nonZeroFrets.first;
+    if (span <= 3) {
+      score += 40;
+    } else if (span <= 4) {
+      score += 15;
+    }
+
+    if (nonZeroFrets.last <= 5) {
+      score += 30;
+    } else if (nonZeroFrets.last <= 9) {
+      score += 10;
+    }
+
+    // Barre bonus: 3+ strings sharing the min non-zero fret (e.g. barre across strings)
+    final minF = nonZeroFrets.first;
+    if (frets.where((f) => f == minF).length >= 3) {
+      score += 80;
+    }
+  }
+
+  // 4. Open-chord bonus (uses open strings in lower frets)
+  if (frets.contains(0) && (nonZeroFrets.isEmpty || nonZeroFrets.last <= 4)) {
+    score += 70;
+  }
+
+  // 5. No holes in middle strings (consecutive strings sound)
+  var seenFirst = false;
+  var seenEnd = false;
+  var hasMiddleHole = false;
+  for (var col = 0; col < 6; col++) {
+    if (frets[col] != null) {
+      if (seenEnd) hasMiddleHole = true;
+      seenFirst = true;
+    } else {
+      if (seenFirst) seenEnd = true;
+    }
+  }
+  if (!hasMiddleHole) score += 40;
+
+  return score;
+}
+
 /// Board (fretList) index for the note on [col] (0 = low-E) at [fret].
 int boardIndex(int col, int fret) => fret * 6 + col;
 
@@ -611,6 +774,10 @@ class ChordCatalog {
       }
       if (variations.isEmpty) continue;
 
+      // Sort variations so standard, common guitar shapes rank first
+      variations.sort(
+          (a, b) => _voicingScore(root, b).compareTo(_voicingScore(root, a)));
+
       _entries.add(_ChordEntry(
         root,
         model.tonality,
@@ -657,13 +824,18 @@ class ChordCatalog {
   ChordShape _shapeFor(_ChordEntry entry, int window) {
     final inWindow =
         entry.variations.where((f) => _maxFret(f) <= window).toList();
+    // Prioritize top-ranked standard/common guitar voicings (first is highest score)
     final display = inWindow.isNotEmpty
-        ? inWindow[_rng.nextInt(inWindow.length)]
+        ? inWindow.first
         : (List<List<int?>>.from(entry.variations)
               ..sort((a, b) => _maxFret(a).compareTo(_maxFret(b))))
             .first;
 
-    final acceptable = (inWindow.isNotEmpty ? inWindow : [display])
+    final orderedVariations = <List<int?>>[
+      ...inWindow,
+      ...entry.variations.where((v) => !inWindow.contains(v)),
+    ];
+    final acceptable = orderedVariations
         .map(frettedBoardIndices)
         .where((s) => s.isNotEmpty)
         .toList();
