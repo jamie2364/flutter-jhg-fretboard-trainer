@@ -106,4 +106,6 @@ dependency_overrides:
       url: https://github.com/jamie2364/flutter-jhg-reg-page
       ref: master
   flutter_jhg_elements:
-    path: ../flutter_jhg_elements
+    git:
+      url: https://github.com/jamie2364/flutter_jhg_elements
+      ref: NewElements

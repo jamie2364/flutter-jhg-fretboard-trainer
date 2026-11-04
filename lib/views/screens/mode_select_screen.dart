@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:fretboard/controllers/home_controller.dart';
+import 'package:fretboard/services/audio_pack_service.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
@@ -675,6 +676,13 @@ class _StartScreenState extends State<StartScreen> {
     Get.find<HomeController>();
     SavedSessionsService.refreshCount();
 
+    // Fetch + verify the note-sample pack the moment the user lands here. This
+    // is the post-login landing, so the download starts right after sign-in
+    // instead of waiting until the board (HomeScreen) is first opened. Fire-and-
+    // forget and idempotent: the service no-ops once the pack is on disk and
+    // shows its own "Getting your sounds ready" dialog on the first attempt.
+    if (!kIsWeb) AudioPackService.ensureAudioPack();
+
     // The tour is registered and started HERE, not on the board. The old one
     // lived in the board's own initState, so it never ran on the screen the
     // user actually lands on, and its first instruction described a wizard they
@@ -797,8 +805,8 @@ class _StartScreenState extends State<StartScreen> {
                   label: 'Customized Practice',
                   subtitle: 'Choose the mode, game and difficulty yourself.',
                   onTap: () => Get.to(() => const ModeSelectScreen(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 260)),
+                      transition: Transition.noTransition,
+                      duration: Duration.zero),
                 ),
                 if (!firstRun) const _SavedSessionsButton(),
               ],
@@ -858,8 +866,8 @@ class _SavedSessionsButton extends StatelessWidget {
                     : 'Open any of your $count saved sessions.',
             onTap: () => Get.to(() => const SavedSessionsScreen(),
                 routeName: kSavedRoute,
-                transition: Transition.rightToLeft,
-                duration: const Duration(milliseconds: 260)),
+                transition: Transition.noTransition,
+                duration: Duration.zero),
           ),
         );
       },
@@ -1188,17 +1196,8 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
             _wizardHeader(
                 step: _step + 1, stepCount: _totalSteps, onBack: _back),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, animation) {
-                  final slide = Tween<Offset>(
-                    begin: Offset(_forward ? 0.12 : -0.12, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return SlideTransition(position: slide, child: child);
-                },
+              child: JhgStepSwitcher(
+                reverse: !_forward,
                 child: KeyedSubtree(
                   key: ValueKey(_step),
                   child: _stepChild(),
@@ -1422,17 +1421,8 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
             _wizardHeader(
                 step: _step + 1, stepCount: _totalDots, onBack: _back),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, animation) {
-                  final slide = Tween<Offset>(
-                    begin: Offset(_forward ? 0.12 : -0.12, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return SlideTransition(position: slide, child: child);
-                },
+              child: JhgStepSwitcher(
+                reverse: !_forward,
                 child: KeyedSubtree(
                   key: ValueKey('${_type.name}-$_step'),
                   child: _stepChild(),
@@ -1672,17 +1662,8 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
             // +1 so the first dot (Mode, chosen on the previous screen) is done.
             _wizardHeader(step: _step + 1, stepCount: 4, onBack: _back),
             Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, animation) {
-                  final slide = Tween<Offset>(
-                    begin: Offset(_forward ? 0.12 : -0.12, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return SlideTransition(position: slide, child: child);
-                },
+              child: JhgStepSwitcher(
+                reverse: !_forward,
                 child: KeyedSubtree(
                   key: ValueKey(_step),
                   child: _stepChild(),

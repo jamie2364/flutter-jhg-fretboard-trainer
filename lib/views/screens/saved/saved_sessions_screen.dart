@@ -339,11 +339,24 @@ class SavedSessionsScreen extends StatelessWidget {
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
+  /// Guards against a fast double-tap resuming (and navigating) twice. The
+  /// stashed restore is consumed by the first board that builds, so a second
+  /// navigation would come up as a fresh session instead of the restored score
+  /// and clock. Reset shortly after so a later, deliberate resume still works.
+  /// Static because the screen is a StatelessWidget and only one is on screen.
+  static bool _resuming = false;
+
   void _resume(SavedSession s) {
+    if (_resuming) return;
+    _resuming = true;
     Get.find<HomeController>()
       ..prepareRestore(s)
       ..quickStartSession = false;
     openBoard(replace: true);
+    Future.delayed(
+      const Duration(milliseconds: 600),
+      () => _resuming = false,
+    );
   }
 
   void _folderMenu(

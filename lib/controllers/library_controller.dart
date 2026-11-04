@@ -179,7 +179,20 @@ class LibraryController extends GetxController {
 
   void deleteFolder(String id) {
     folders.removeWhere((f) => f.id == id);
-    // Orphan any sessions filed here back to the root.
+    // Lift any DIRECT sub-folders up to the root. A sub-folder left pointing at
+    // the deleted parent is unreachable in the UI (the tree is rendered by
+    // matching parentId), which silently loses every session nested inside it.
+    // Deeper descendants keep their parent — itself still present — so the rest
+    // of each subtree survives intact.
+    var foldersChanged = false;
+    for (var i = 0; i < folders.length; i++) {
+      if (folders[i].parentId == id) {
+        folders[i] = folders[i].copyWith(clearParent: true);
+        foldersChanged = true;
+      }
+    }
+    if (foldersChanged) folders.refresh();
+    // Orphan any sessions filed directly here back to the root.
     var changed = false;
     for (var i = 0; i < sessions.length; i++) {
       if (sessions[i].folderId == id) {

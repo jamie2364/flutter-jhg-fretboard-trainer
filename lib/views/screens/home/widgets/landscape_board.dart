@@ -224,8 +224,8 @@ class LandscapeBoard extends StatelessWidget {
                           controller.resetGame(false);
                           Get.to(() => const SettingScreen(),
                               routeName: kSettingsRoute,
-                              transition: Transition.rightToLeft,
-                              duration: const Duration(milliseconds: 260));
+                              transition: Transition.noTransition,
+                              duration: Duration.zero);
                           if (isFreePlan) {
                             controller.interstitialAds?.showInterstitial();
                           }

@@ -74,9 +74,14 @@ double _ballLeftFor(int col) => col * _kStringSpacing + 12.0 - _kBallRadius;
 double _cellLeftFor(int col) => col * _kStringSpacing;
 
 class GuitarBoard extends StatefulWidget {
-  const GuitarBoard({super.key, required this.isPortrait});
+  const GuitarBoard({super.key, required this.isPortrait, this.tileHeight});
 
   final bool isPortrait;
+
+  /// Live height of the floating control tile (portrait only). The board sizes
+  /// its bottom scroll slack and its auto-scroll "clear area" to this so the
+  /// active notes never hide behind the tile, whatever mode is showing.
+  final ValueListenable<double>? tileHeight;
 
   @override
   State<GuitarBoard> createState() => _GuitarBoardAltState();
@@ -84,6 +89,9 @@ class GuitarBoard extends StatefulWidget {
 
 class _GuitarBoardAltState extends State<GuitarBoard> {
   late bool isPortrait;
+  // Captured in build so the tile-height listener can re-scroll without a
+  // Get.find lookup.
+  HomeController? _controller;
   final ScrollController _scrollController = ScrollController();
   // Signature (minFret*100 + maxFret) of the note band last scrolled to, so an
   // unrelated update() that leaves the shown notes unchanged doesn't re-scroll.
@@ -93,13 +101,30 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
   void initState() {
     super.initState();
     isPortrait = widget.isPortrait;
+    widget.tileHeight?.addListener(_onTileHeightChanged);
   }
 
   @override
   void dispose() {
+    widget.tileHeight?.removeListener(_onTileHeightChanged);
     _scrollController.dispose();
     super.dispose();
   }
+
+  // The tile grew or shrank (mode / round change): the bottom scroll slack and
+  // the clear area above the tile both moved, so rebuild (for the new padding)
+  // and re-centre the current note band inside the new open space.
+  void _onTileHeightChanged() {
+    if (!mounted) return;
+    _lastScrollSig = null;
+    setState(() {}); // apply the new bottom padding
+    final c = _controller;
+    if (c != null) _scrollToFret(c);
+  }
+
+  // Current tile height (portrait), with a safe default before the first
+  // measurement arrives.
+  double get _tileHeightPx => widget.tileHeight?.value ?? 240.0;
 
   // Fret numbers (0-15) of every note currently drawn on the board, so the
   // auto-scroll can keep as many as possible in view. Empty ⇒ nothing to show
@@ -208,9 +233,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       if (widget.isPortrait) {
         final bandTop = _cellTopFor(minF);
         final bandBottom = _cellTopFor(maxF) + _cellHeightFor(maxF);
-        // The bottom card floats over the lower ~260px of the portrait viewport.
-        // Center the active note band inside the clear visible area above the card!
-        final visibleViewport = (viewport - 260).clamp(200.0, viewport);
+        // The neck fills the full height and the tile floats over its lower
+        // part, so centre the active note band in the clear area ABOVE the tile,
+        // using the tile's real measured height (+ a small margin) so the band
+        // never lands behind it — short Find-note bar or tall Name-chord grid.
+        final clearBelow = _tileHeightPx + 16;
+        final visibleViewport = (viewport - clearBelow).clamp(160.0, viewport);
         double offset;
 
         if (bandBottom - bandTop <= visibleViewport || anchorFret == null) {
@@ -252,6 +280,7 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     return GetBuilder<HomeController>(
       init: HomeController(),
       builder: (controller) {
+        _controller = controller;
         _scrollToFret(controller);
         return widget.isPortrait
             ? _buildPortraitFixed(context, controller)
@@ -317,25 +346,35 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
         controller.isStart &&
         controller.chordBuildReveal != null;
 
-    return Column(
-      children: [
-        const SizedBox(height: 10),
-        // ── Pinned string-name chips (never scroll away) ──────────────────────
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 26),
-            child: _stringLabelsRow(controller, interactive: stringSelectable),
+    // Match the dictionaries / drills board: the neck stretches the full height
+    // and ends at the SAME small gap above the nav bar as the floating tile
+    // (tile sits at bottom:8), so the two bottoms line up — the tile overlays
+    // the lower neck and nothing peeks out below it, and neither touches the bar.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          // ── Pinned string-name chips (never scroll away) ────────────────────
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 26),
+              child: _stringLabelsRow(controller, interactive: stringSelectable),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        // ── Scrollable fretboard ──────────────────────────────────────────────
-        Expanded(
+          const SizedBox(height: 8),
+          // ── Scrollable fretboard ────────────────────────────────────────────
+          Expanded(
           child: ScrollConfiguration(
             behavior:
                 ScrollConfiguration.of(context).copyWith(scrollbars: false),
             child: SingleChildScrollView(
               controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 340),
+              // Bottom slack = the live tile height (+ a small margin): exactly
+              // enough for the auto-scroll to lift the lowest frets (15/16) into
+              // the clear area above the tile, while the neck's end tucks behind
+              // the tile's top edge rather than leaving a dead gap.
+              padding: EdgeInsets.only(bottom: _tileHeightPx + 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,7 +545,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 

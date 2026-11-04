@@ -36,6 +36,13 @@ class _PortraitBoardState extends State<PortraitBoard> {
   bool _prevGameRunning = false;
   Worker? _panelWorker;
 
+  // Live height of the floating control tile. The board reads this to size its
+  // bottom scroll slack and its "clear area above the tile" centring, so the
+  // active notes always land in the open space no matter which mode's tile
+  // (short Find-note bar vs tall Name-chord grid) is showing. Seeded with a
+  // sensible default for the very first frame before the first measurement.
+  final ValueNotifier<double> _tileHeight = ValueNotifier<double>(240);
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +54,7 @@ class _PortraitBoardState extends State<PortraitBoard> {
   @override
   void dispose() {
     _panelWorker?.dispose();
+    _tileHeight.dispose();
     super.dispose();
   }
 
@@ -133,8 +141,11 @@ class _PortraitBoardState extends State<PortraitBoard> {
                     // dictionaries) — the neck runs behind the tile rather than
                     // being clipped above it. Auto-scroll keeps the active notes
                     // centred in the open area above the tile.
-                    const Positioned.fill(
-                      child: GuitarBoard(isPortrait: true),
+                    Positioned.fill(
+                      child: GuitarBoard(
+                        isPortrait: true,
+                        tileHeight: _tileHeight,
+                      ),
                     ),
 
                     // One bottom overlay that swaps between the expanded
@@ -150,21 +161,25 @@ class _PortraitBoardState extends State<PortraitBoard> {
                       // Subtle gap above the bottom navigation bar matching the drills layout
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                        child: _panelCollapsed
-                            ? _CollapsedTile(
-                                controller: c,
-                                isReverse: isReverse,
-                                isInterval: isInterval,
-                                isChord: isChord,
-                                onExpand: () => _setCollapsed(false),
-                              )
-                            : _ExpandedPanel(
-                                controller: c,
-                                isReverse: isReverse,
-                                isInterval: isInterval,
-                                isChord: isChord,
-                                onCollapse: () => _setCollapsed(true),
-                              ),
+                        child: _MeasureSize(
+                          onChange: (size) =>
+                              _tileHeight.value = size.height,
+                          child: _panelCollapsed
+                              ? _CollapsedTile(
+                                  controller: c,
+                                  isReverse: isReverse,
+                                  isInterval: isInterval,
+                                  isChord: isChord,
+                                  onExpand: () => _setCollapsed(false),
+                                )
+                              : _ExpandedPanel(
+                                  controller: c,
+                                  isReverse: isReverse,
+                                  isInterval: isInterval,
+                                  isChord: isChord,
+                                  onCollapse: () => _setCollapsed(true),
+                                ),
+                        ),
                       ),
                     ),
                   ],
@@ -491,8 +506,17 @@ class _ExpandedPanel extends StatelessWidget {
             ),
 
           // ── Mode-specific content area ──────────────────────────────
+          // The highlightNode guard belongs to FIND-NOTE mode only: that mode
+          // carries its target on highlightNode, so a null node between rounds
+          // means "nothing to show yet". Chord and interval modes never set
+          // highlightNode, so without the mode gate they fell through to
+          // "Press play to start" for the whole round — hiding the chord /
+          // interval prompt in the open panel.
           if ((!c.isStart && !c.isPaused) ||
-              (!isReverse && c.highlightNode == null)) ...[
+              (!isReverse &&
+                  !isInterval &&
+                  !isChord &&
+                  c.highlightNode == null)) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
@@ -2218,4 +2242,38 @@ Widget _chordLoadingHint(HomeController c) {
       ),
     ),
   );
+}
+
+// ─── Size reporter ────────────────────────────────────────────────────────────
+// Reports its child's rendered height to [onChange] after each layout (only
+// when it actually changes). Used to tell the fretboard how tall the floating
+// control tile currently is, so the board can keep the active notes clear of it.
+class _MeasureSize extends StatefulWidget {
+  const _MeasureSize({required this.onChange, required this.child});
+  final ValueChanged<Size> onChange;
+  final Widget child;
+
+  @override
+  State<_MeasureSize> createState() => _MeasureSizeState();
+}
+
+class _MeasureSizeState extends State<_MeasureSize> {
+  final GlobalKey _key = GlobalKey();
+  Size? _lastSize;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _key.currentContext;
+      if (ctx == null || !mounted) return;
+      final box = ctx.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final size = box.size;
+      if (size != _lastSize) {
+        _lastSize = size;
+        widget.onChange(size);
+      }
+    });
+    return SizedBox(key: _key, child: widget.child);
+  }
 }

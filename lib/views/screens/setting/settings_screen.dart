@@ -68,13 +68,13 @@ class _SettingScreenState extends State<SettingScreen> {
                               : '$count sessions waiting for you',
                       onTap: () {
                         SavedSessionsService.refreshCount();
-                        // Both screens carry the nav bar — a sliding
-                        // push would drag the bar across.
+                        // Both screens carry the nav bar, so swap instantly —
+                        // a sliding push would drag the bar across.
                         Get.off(
                           () => const SavedSessionsScreen(),
                           routeName: kSavedRoute,
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 260),
+                          transition: Transition.noTransition,
+                          duration: Duration.zero,
                         );
                       },
                     ),
