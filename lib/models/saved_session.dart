@@ -27,6 +27,8 @@ class SavedSession {
     required this.secondsRemaining,
     required this.title,
     required this.subtitle,
+    this.level,
+    this.fretCap,
     this.folderId,
     this.colorValue,
     this.customName,
@@ -43,6 +45,19 @@ class SavedSession {
   final int chordGameType; // ChordGameType index
   final int intervalDifficulty; // IntervalDifficulty index
   final int chordDifficulty; // ChordDifficulty index
+
+  /// The Customized Practice level, stored as [PracticeLevel.name] ("easy" /
+  /// "medium" / "hard"). Null for Quick start and for sessions saved before
+  /// levels existed — both restore to the full board.
+  final String? level;
+
+  /// Highest fret this session used. Recorded at save time so a session always
+  /// carries the window it was actually played in — the level name alone would
+  /// lose that if a custom window is ever added on top of a preset. Restore
+  /// currently derives the window from [level]; this is the audit trail.
+  /// Null = the whole neck.
+  final int? fretCap;
+
   final List<bool> strings; // [string1..string6]
   final List<int> selectedIntervals; // semitones
   final List<String> chordLabKeys;
@@ -90,6 +105,8 @@ class SavedSession {
         chordGameType: chordGameType,
         intervalDifficulty: intervalDifficulty,
         chordDifficulty: chordDifficulty,
+        level: level,
+        fretCap: fretCap,
         strings: strings,
         selectedIntervals: selectedIntervals,
         chordLabKeys: chordLabKeys,
@@ -126,6 +143,8 @@ class SavedSession {
         'chordGameType': chordGameType,
         'intervalDifficulty': intervalDifficulty,
         'chordDifficulty': chordDifficulty,
+        'level': level,
+        'fretCap': fretCap,
         'strings': strings,
         'selectedIntervals': selectedIntervals,
         'chordLabKeys': chordLabKeys,
@@ -151,6 +170,10 @@ class SavedSession {
         chordGameType: (j['chordGameType'] as num?)?.toInt() ?? 0,
         intervalDifficulty: (j['intervalDifficulty'] as num?)?.toInt() ?? 0,
         chordDifficulty: (j['chordDifficulty'] as num?)?.toInt() ?? 0,
+        // Missing on sessions saved before levels shipped — treat as no level,
+        // i.e. the full board, which is how they actually ran.
+        level: j['level'] as String?,
+        fretCap: (j['fretCap'] as num?)?.toInt(),
         strings: ((j['strings'] as List?) ?? const [])
             .map((e) => e == true)
             .toList()

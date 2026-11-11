@@ -63,6 +63,9 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
     const radius = 35.0;
     if (bestIndex >= 0 && bestDist <= radius * radius) {
       final e = fretList[bestIndex];
+      // The dimmed region is out of bounds for answers: a near-miss on a fret
+      // the level excludes must not be graded, or score the user a point.
+      if (!controller.isFretInWindow(e.fret ?? 0)) return;
       controller.playSound(bestIndex, e.note!, e.string!, e.fretSound!);
     }
   }
@@ -201,6 +204,13 @@ class _WebPortraitGuitarBoardState extends State<WebPortraitGuitarBoard> {
                                   ),
                                 ),
                               ),
+                            ),
+                          // Customized Practice: dim everything past the
+                          // level's window, exactly as the mobile board does.
+                          if (controller.dimsPastLevel)
+                            _WebFretWindowShade(
+                              cap: controller.fretCap ?? _webFretCount,
+                              boardContentHeight: boardHeight,
                             ),
                           for (final fret in _singleDotFrets)
                             _FretMarkerDot(
@@ -403,4 +413,51 @@ BoxDecoration _glossyBall(Color base) {
     ),
     border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 0.8),
   );
+}
+
+/// Dims the part of the web neck past the session's fret window, plus a coral
+/// hairline at the boundary. Mirrors the mobile board's `_fretWindowShade`.
+class _WebFretWindowShade extends StatelessWidget {
+  const _WebFretWindowShade({
+    required this.cap,
+    required this.boardContentHeight,
+  });
+
+  final int cap;
+  final double boardContentHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cap >= _webFretCount - 1) return const SizedBox.shrink();
+    // Same mapping the note dots use: fret F's centre sits at `_noteTop(F)`, and
+    // the cap fret's playing area ends halfway to the next fret.
+    final top = _noteTop(cap) + _webFretSpacing / 2;
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: top,
+      height: (boardContentHeight - top).clamp(0.0, boardContentHeight),
+      child: IgnorePointer(
+        child: Stack(
+          children: [
+            const Positioned.fill(
+              child: ColoredBox(color: Color(0x8F0B0B0B)),
+            ),
+            Positioned(
+              left: 6,
+              right: 6,
+              top: 0,
+              height: 2,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: JHGColors.primary.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -80,25 +80,27 @@ class _WebBoardState extends State<WebBoard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ── Timer — always at top ──────────────────────────────────────
-              const CountTimerWidget(),
-
-              // ── Fretboard fills full Expanded height at all times ──────────
-              // Both the expanded panel and the collapsed tile are Positioned
-              // overlays so the guitar board always gets the full space.
+              // ── Fretboard — top-anchored so its nut lines up with the Drills
+              // and Dictionaries boards exactly. Both of those pad the neck down
+              // 22px on web, then carry a 38px string-label header. The round
+              // timer that used to sit above the board has moved into the control
+              // tile, so nothing pushes the neck down any more.
               Expanded(
                 child: Stack(
                   children: [
-                    // Fretboard + collapsed tile in a centred Row so the
+                    // Fretboard + collapsed tile in a top-anchored Row so the
                     // tile appears to the left of the neck without overlapping it.
                     Positioned.fill(
-                      child: LayoutBuilder(
-                        builder: (ctx, constraints) {
-                          final boardHeight = (constraints.maxHeight - 42)
-                              .clamp(260.0, 640.0)
-                              .toDouble();
-                          return Center(
-                            child: Row(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 22),
+                        child: LayoutBuilder(
+                          builder: (ctx, constraints) {
+                            final boardHeight = (constraints.maxHeight - 38 - 12)
+                                .clamp(260.0, double.infinity)
+                                .toDouble();
+                            return Align(
+                              alignment: Alignment.topCenter,
+                              child: Row(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
@@ -151,7 +153,8 @@ class _WebBoardState extends State<WebBoard> {
                               ],
                             ),
                           );
-                        },
+                          },
+                        ),
                       ),
                     ),
 
@@ -360,6 +363,13 @@ class _ExpandedPanel extends StatelessWidget {
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          // ── Timer — moved here from above the board so the fretboard can sit
+          // at the same height as the Drills & Dictionaries boards. In countdown
+          // mode this is the +/- adjuster; otherwise it's the running clock.
+          const Center(child: CountTimerWidget()),
 
           const SizedBox(height: 14),
 
@@ -579,6 +589,8 @@ class _CollapsedTile extends StatelessWidget {
               }),
               const SizedBox(height: 10),
             ],
+            Center(child: _CompactTimer(controller: c)),
+            const SizedBox(height: 10),
             Center(child: playBtn),
           ]
 
@@ -616,7 +628,9 @@ class _CollapsedTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+            Center(child: _CompactTimer(controller: c)),
+            const SizedBox(height: 12),
             Center(child: playBtn),
             if (showNote) ...[
               const SizedBox(height: 12),
@@ -906,4 +920,28 @@ class _BtnStyle {
   final Color bg;
   final Color border;
   final Color text;
+}
+
+// ─── Compact clock for the collapsed tile ─────────────────────────────────────
+// The narrow collapsed tile can't fit the full +/- countdown adjuster, so it
+// shows a small read-only clock. The adjuster still lives in the expanded panel.
+
+class _CompactTimer extends StatelessWidget {
+  const _CompactTimer({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Text(
+        controller.formatTime(controller.secondsRemaining.value),
+        style: JhgFonts.poppins(
+          fontSize: 18,
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }

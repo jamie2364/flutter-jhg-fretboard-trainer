@@ -14,15 +14,21 @@
 import 'dart:math';
 
 import 'package:fretboard/models/chord_model.dart';
+import 'package:fretboard/utils/levels.dart';
 
-/// Highest fret drawn on the trainer board (frets 0..15).
-const int kMaxBoardFret = 15;
+/// Highest fret drawn on the trainer board (frets 0..15) — re-exported from
+/// utils/levels.dart, which is now the one place that owns the board extent.
+export 'package:fretboard/utils/levels.dart' show kMaxBoardFret;
 
 /// Difficulty widens both the chord vocabulary and how high up the neck a shape
 /// may sit:
 ///   easy   — Major / minor triads, open or low positions (≤ fret 4).
 ///   medium — adds 7ths, sixths, sus, add9, dim, aug (≤ fret 9).
 ///   hard   — the full catalog of standard qualities, anywhere up to fret 15.
+///
+/// The session's [PracticeLevel] is the coarser preset the wizard sets first;
+/// the difficulty is the fine-tuning that follows it. When both apply, the
+/// effective window is their intersection (see [effectiveChordWindow]).
 enum ChordDifficulty { easy, medium, hard }
 
 /// The chord game types. `lab` is the customized Chord Lab, which rotates
@@ -123,6 +129,18 @@ int _fretWindow(ChordDifficulty d) {
     case ChordDifficulty.hard:
       return kMaxBoardFret;
   }
+}
+
+/// The window a chord session may actually use: the level's fret cap and the
+/// difficulty's own window, whichever is shorter.
+///
+/// Easy difficulty + Hard level keeps the Easy vocabulary but lets those shapes
+/// sit anywhere on the neck; Hard difficulty + Easy level never asks for the
+/// dusty end. Both are what the player asked for, so neither side wins outright.
+int effectiveChordWindow(ChordDifficulty difficulty, PracticeLevel? level) {
+  final base = _fretWindow(difficulty);
+  if (level == null) return base;
+  return level.fretCap < base ? level.fretCap : base;
 }
 
 /// Tonalities unlocked at Easy (also included at Medium/Hard).
@@ -303,6 +321,118 @@ const Map<String, int> _rootPc = {
   'B': 11,
 };
 
+// ── Enharmonic chord-tone spelling ───────────────────────────────────────────
+//
+// The board names every note with sharps (A#, C#, …). Inside a chord that reads
+// wrong: the minor 3rd of G is B♭, not A#. These helpers spell each sounding
+// note the way the chord actually reads — stacking letters up from the root and
+// picking the accidental that lands on the right pitch — so Gm shows G · B♭ · D,
+// not G · A# · D.
+
+const List<String> _noteLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const Map<String, int> _letterPc = {
+  'C': 0,
+  'D': 2,
+  'E': 4,
+  'F': 5,
+  'G': 7,
+  'A': 9,
+  'B': 11,
+};
+
+/// Plain sharp names, used as a fallback when the root can't be parsed.
+const List<String> _sharpNames = [
+  'C',
+  'C♯',
+  'D',
+  'D♯',
+  'E',
+  'F',
+  'F♯',
+  'G',
+  'G♯',
+  'A',
+  'A♯',
+  'B',
+];
+
+/// Letter-steps (0..6) above the root letter for each semitone interval. This is
+/// the usual reading for triads/7ths/extensions; genuinely ambiguous intervals
+/// (b5 vs ♯11, °7 vs 6th) are corrected per-quality in [_degreeOverrides].
+const Map<int, int> _degreeSteps = {
+  0: 0,
+  1: 1,
+  2: 1,
+  3: 2,
+  4: 2,
+  5: 3,
+  6: 4,
+  7: 4,
+  8: 4,
+  9: 5,
+  10: 6,
+  11: 6,
+};
+
+/// Per-quality corrections where the default enharmonic would mis-spell a tone.
+const Map<String, Map<int, int>> _degreeOverrides = {
+  'dim7': {9: 6}, // diminished 7th reads as a (double-flat) 7th, not a 6th
+  '7sharp11': {6: 3}, // the ♯11 is an 11th, not a flat-5
+  'Maj7sharp11': {6: 3},
+};
+
+String _accidentalFor(int delta) {
+  switch (delta) {
+    case 0:
+      return '';
+    case 1:
+      return '♯';
+    case 2:
+      return '♯♯';
+    case -1:
+      return '♭';
+    case -2:
+      return '♭♭';
+    default:
+      return delta > 0 ? '♯' : '♭';
+  }
+}
+
+/// Spells the note at [pitchClass] (0 = C … 11 = B) the way it reads inside the
+/// chord [root] [tonality]. Falls back to a plain sharp name for unknown roots.
+String chordNoteLabel({
+  required String root,
+  required String tonality,
+  required int pitchClass,
+}) {
+  final pc = ((pitchClass % 12) + 12) % 12;
+  final rootPc = _rootPc[root];
+  final rootLetterIdx =
+      root.isEmpty ? -1 : _noteLetters.indexOf(root[0].toUpperCase());
+  if (rootPc == null || rootLetterIdx < 0) return _sharpNames[pc];
+
+  final interval = ((pc - rootPc) % 12 + 12) % 12;
+  final steps = _degreeOverrides[tonality]?[interval] ?? _degreeSteps[interval]!;
+  final letter = _noteLetters[(rootLetterIdx + steps) % 7];
+  final naturalPc = _letterPc[letter]!;
+  var delta = ((pc - naturalPc) % 12 + 12) % 12;
+  if (delta > 6) delta -= 12; // choose the nearer accidental (e.g. 10 → -2)
+  return '$letter${_accidentalFor(delta)}';
+}
+
+/// Chord-correct label for the note at [boardIndex] (fret*6 + col) within
+/// [shape] — the spelling used on the neck for Name / Build / reveal.
+String chordNoteLabelForIndex(ChordShape shape, int boardIndex) {
+  final col = boardIndex % 6;
+  final fret = boardIndex ~/ 6;
+  final pc = (_openStringPc[col] + fret) % 12;
+  return chordNoteLabel(
+    root: shape.root,
+    tonality: shape.tonality,
+    pitchClass: pc,
+  );
+}
+
 /// Every pitch class (relative to the root) a voicing of this tonality may
 /// contain. A voicing with any note outside this set is rejected. Tonalities
 /// absent from the map (slash chords, rare one-offs) skip validation and trust
@@ -474,6 +604,7 @@ bool isPitchClassChordMatch({
   required String root,
   required String tonality,
   required Set<int> frettedIndices,
+  bool allowOpen = false,
 }) {
   if (frettedIndices.isEmpty) return false;
   final rootPc = _rootPc[root];
@@ -483,29 +614,33 @@ bool isPitchClassChordMatch({
   if (allowed == null || required == null) return false;
 
   final cols = <int>{};
-  final frets = <int>[];
+  final frets = <int>[]; // fretted (fret > 0) only, for the hand-span check
   final relativePcs = <int>{};
 
   for (final idx in frettedIndices) {
     if (idx < 0) return false;
     final col = idx % 6;
     final fret = idx ~/ 6;
-    if (fret <= 0) continue; // fretted notes only
+    if (fret == 0 && !allowOpen) continue; // open strings ignored unless opted in
     if (!cols.add(col)) return false; // multiple notes on same string
-    frets.add(fret);
+    if (fret > 0) frets.add(fret);
     final notePc = (_openStringPc[col] + fret) % 12;
     relativePcs.add((notePc - rootPc + 12) % 12);
   }
 
-  if (frets.isEmpty) return false;
+  // Total sounding strings (fretted + any allowed open).
+  final sounding = cols.length;
+  if (sounding == 0) return false;
 
-  // Hand reach span check: maximum fret span <= 5
-  frets.sort();
-  if (frets.last - frets.first > 4) return false;
+  // Hand reach span check: maximum fretted span <= 4 (open strings are free).
+  if (frets.isNotEmpty) {
+    frets.sort();
+    if (frets.last - frets.first > 4) return false;
+  }
 
-  // Must have at least 2 notes (for power chords) or 3 for standard chords
+  // Must have at least 2 notes (for power chords) or 3 for standard chords.
   final minNotes = tonality == '5' ? 2 : 3;
-  if (frettedIndices.length < minNotes) return false;
+  if (sounding < minNotes) return false;
 
   // No notes foreign to the chord
   if (relativePcs.difference(allowed).isNotEmpty) return false;
@@ -749,7 +884,10 @@ class ChordCatalog {
   }
 
   final List<_ChordEntry> _entries = [];
-  final Map<ChordDifficulty, List<_ChordEntry>> _poolCache = {};
+
+  /// Keyed by difficulty + effective window, so a level that narrows the neck
+  /// gets its own pool rather than reusing the wider one.
+  final Map<String, List<_ChordEntry>> _poolCache = {};
   final Random _rng = Random();
   String? _lastSymbol;
 
@@ -789,26 +927,28 @@ class ChordCatalog {
     }
   }
 
-  List<_ChordEntry> _pool(ChordDifficulty d) {
-    return _poolCache.putIfAbsent(d, () {
-      final window = _fretWindow(d);
+  List<_ChordEntry> _pool(ChordDifficulty d, PracticeLevel? level) {
+    final window = effectiveChordWindow(d, level);
+    return _poolCache.putIfAbsent('${d.name}|$window', () {
       return _entries.where((e) {
         if (!_tonalityAllowed(e.tonality, d)) return false;
-        // Must have at least one voicing inside this difficulty's fret window.
+        // Must have at least one voicing inside the effective fret window.
         return e.variations.any((frets) => _maxFret(frets) <= window);
       }).toList();
     });
   }
 
   /// True once at least one chord is available for [difficulty].
-  bool hasChords(ChordDifficulty difficulty) => _pool(difficulty).isNotEmpty;
+  bool hasChords(ChordDifficulty difficulty, {PracticeLevel? level}) =>
+      _pool(difficulty, level).isNotEmpty;
 
   /// Picks the next chord question for [difficulty], avoiding an immediate
-  /// repeat. Returns null only if the pool is empty.
-  ChordShape? pick(ChordDifficulty difficulty) {
-    final pool = _pool(difficulty);
+  /// repeat. [level] narrows the neck to the session's fret window (null = the
+  /// difficulty's own window). Returns null only if the pool is empty.
+  ChordShape? pick(ChordDifficulty difficulty, {PracticeLevel? level}) {
+    final pool = _pool(difficulty, level);
     if (pool.isEmpty) return null;
-    final window = _fretWindow(difficulty);
+    final window = effectiveChordWindow(difficulty, level);
 
     _ChordEntry entry = pool[_rng.nextInt(pool.length)];
     // One re-roll to dodge showing the same chord twice in a row.
@@ -857,9 +997,10 @@ class ChordCatalog {
   List<String> choices(
     ChordShape correct,
     ChordDifficulty difficulty, {
+    PracticeLevel? level,
     int count = 4,
   }) {
-    final pool = _pool(difficulty);
+    final pool = _pool(difficulty, level);
     final sameRoot = <String>{};
     final sameQuality = <String>{};
     final others = <String>{};
@@ -906,14 +1047,15 @@ class ChordCatalog {
       kChordLabTonalities.where(_presentTonalities.contains).toList();
 
   /// Picks a target chord for Chord Lab: any entry whose root and tonality are
-  /// both selected and that has a voicing inside the difficulty window. Returns
+  /// both selected and that has a voicing inside the effective window. Returns
   /// null only when nothing in the whole selection fits.
   ChordShape? _pickLabShape({
     required ChordDifficulty difficulty,
     required Set<String> keys,
     required Set<String> tonalities,
+    PracticeLevel? level,
   }) {
-    final window = _fretWindow(difficulty);
+    final window = effectiveChordWindow(difficulty, level);
     final candidates = _entries
         .where((e) =>
             keys.contains(e.root) &&
@@ -969,12 +1111,16 @@ class ChordCatalog {
     required Set<String> keys,
     required Set<String> tonalities,
     required Set<ChordLabRound> rounds,
+    PracticeLevel? level,
     ChordLabRound? avoid,
   }) {
     final allowed = rounds.isEmpty ? ChordLabRound.values.toSet() : rounds;
     for (var attempt = 0; attempt < 40; attempt++) {
       final shape = _pickLabShape(
-          difficulty: difficulty, keys: keys, tonalities: tonalities);
+          difficulty: difficulty,
+          keys: keys,
+          tonalities: tonalities,
+          level: level);
       if (shape == null) return null;
 
       final order = [...allowed]..shuffle(_rng);
@@ -982,7 +1128,7 @@ class ChordCatalog {
       order.sort((a, b) => (a == avoid ? 1 : 0) - (b == avoid ? 1 : 0));
 
       for (final round in order) {
-        final prompt = _buildLabRound(round, shape, difficulty);
+        final prompt = _buildLabRound(round, shape, difficulty, level);
         if (prompt != null) {
           _lastSymbol = shape.symbol;
           return prompt;
@@ -992,12 +1138,12 @@ class ChordCatalog {
     return null;
   }
 
-  ChordLabPrompt? _buildLabRound(
-      ChordLabRound round, ChordShape shape, ChordDifficulty difficulty) {
+  ChordLabPrompt? _buildLabRound(ChordLabRound round, ChordShape shape,
+      ChordDifficulty difficulty, PracticeLevel? level) {
     final sets =
         shape.acceptableFrettedSets.where((s) => s.isNotEmpty).toList();
     if (sets.isEmpty) return null;
-    final window = _fretWindow(difficulty);
+    final window = effectiveChordWindow(difficulty, level);
 
     switch (round) {
       case ChordLabRound.name:

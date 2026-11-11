@@ -7,10 +7,12 @@ import 'package:fretboard/services/audio_pack_service.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
+import 'package:fretboard/utils/levels.dart';
 import 'package:fretboard/utils/routes.dart';
 import 'package:fretboard/views/screens/saved/saved_sessions_screen.dart';
 import 'package:fretboard/views/screens/widgets/chord_lab_intro_dialog.dart';
 import 'package:fretboard/views/screens/widgets/multi_select_dropdown.dart';
+import 'package:fretboard/views/screens/widgets/practice_level_step.dart';
 import 'package:fretboard/services/app_flags.dart';
 import 'package:fretboard/models/saved_session.dart';
 import 'package:fretboard/views/widgets/app_nav_bar.dart';
@@ -710,6 +712,9 @@ class _StartScreenState extends State<StartScreen> {
   void _quickStart() {
     final hc = Get.find<HomeController>();
     hc.resetStrings();
+    // Quick start deliberately has NO level: it keeps the whole neck and every
+    // note, exactly as it always has. Customized Practice is where levels live.
+    hc.setPracticeLevel(null);
     hc.switchToFindMode();
     // Quick start is the only entry that hands mode-picking to the board, so
     // it is the only one that shows the Modes shifter there.
@@ -895,14 +900,16 @@ class RandomModeScreen extends StatelessWidget {
   void _randomNotes() {
     final hc = Get.find<HomeController>();
     hc.resetStrings(); // Random Practice uses the whole neck.
+    // No level: Random Practice asks "everything", so the board stays whole.
+    hc.setPracticeLevel(null);
     _rng.nextBool() ? hc.switchToIdentifyMode() : hc.switchToFindMode();
     _launch();
   }
 
   void _randomInterval() {
     final hc = Get.find<HomeController>();
-    // Random Practice is "everything" — clear any interval / string filter left
-    // over from a previous customized session.
+    // Random Practice is "everything" — clear any interval / string / level
+    // filter left over from a previous customized session.
     hc.resetIntervalFilter();
     hc.resetStrings();
     hc.switchToIntervalMode(
@@ -910,6 +917,7 @@ class RandomModeScreen extends StatelessWidget {
           IntervalGameType.values[_rng.nextInt(IntervalGameType.values.length)],
       difficulty: IntervalDifficulty
           .values[_rng.nextInt(IntervalDifficulty.values.length)],
+      clearLevel: true,
     );
     _launch();
   }
@@ -921,6 +929,7 @@ class RandomModeScreen extends StatelessWidget {
       type: randomTypes[_rng.nextInt(randomTypes.length)],
       difficulty:
           ChordDifficulty.values[_rng.nextInt(ChordDifficulty.values.length)],
+      clearLevel: true,
     );
     _launch();
   }
@@ -1017,21 +1026,19 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   // they live behind one "Notes" card with a type step, matching the Intervals
   // and Chords wizards.
   void _selectNotes() {
+    // Setup screens host the main AppNavBar, so entering one must not slide the bar.
     Get.to(() => NoteSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 260));
+        transition: Transition.noTransition, duration: Duration.zero);
   }
 
   void _selectInterval() {
     Get.to(() => IntervalSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 260));
+        transition: Transition.noTransition, duration: Duration.zero);
   }
 
   void _selectChord() {
     Get.to(() => ChordSetupScreen(fromSwitcher: widget.fromSwitcher),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 260));
+        transition: Transition.noTransition, duration: Duration.zero);
   }
 
   @override
@@ -1108,9 +1115,13 @@ class _ModeSelectScreenState extends State<ModeSelectScreen> {
   }
 }
 
-/// Two-step interval setup wizard: pick the game type, then the difficulty,
-/// then drop into the training board. Single route (matches the app's wizard
-/// pattern) so there's no deep navigation stack to unwind.
+/// Interval setup wizard: pick the game type, the session level, which
+/// intervals to drill, which strings, then the timing — then drop into the
+/// board. Single route (matches the app's wizard pattern) so there's no deep
+/// navigation stack to unwind.
+///
+/// The level owns the interval difficulty too (spacing + direction), so the
+/// wizard no longer asks for both.
 class IntervalSetupScreen extends StatefulWidget {
   const IntervalSetupScreen({super.key, this.fromSwitcher = false});
   final bool fromSwitcher;
@@ -1120,13 +1131,13 @@ class IntervalSetupScreen extends StatefulWidget {
 }
 
 class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
-  // Local steps: 0 = game, 1 = intervals, 2 = strings, 3 = difficulty.
+  // Local steps: 0 = game, 1 = level, 2 = intervals, 3 = strings, 4 = timing.
   // Mode was picked on the previous screen and counts as the wizard's Step 1,
   // so the dots/eyebrows are offset by one (a leading "done" dot for Mode).
   int _step = 0;
   bool _forward = true;
   IntervalGameType _type = IntervalGameType.name;
-  IntervalDifficulty _difficulty = IntervalDifficulty.medium;
+  PracticeLevel? _level;
 
   // Which intervals to practise — every interval selected by default so a user
   // can breeze through. Stored as semitone strings for the dropdown. Unison
@@ -1139,8 +1150,16 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
   static final List<MusicInterval> _intervalOptions =
       kIntervals.where((iv) => iv.semitones != 0).toList();
 
-  // Mode + game + intervals + strings + difficulty + timing.
-  static const int _totalSteps = 6;
+  // Mode + game + level + intervals + strings + timing.
+  static const int _totalSteps = 7;
+
+  @override
+  void initState() {
+    super.initState();
+    // Open on the level last used; it is only applied on launch, so backing out
+    // of the wizard never mutates a session that was never started.
+    _level = Get.find<HomeController>().practiceLevel;
+  }
 
   void _pickType(IntervalGameType type) => setState(() {
         _forward = true;
@@ -1148,21 +1167,24 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
         _step = 1;
       });
 
-  void _pickDifficulty(IntervalDifficulty difficulty) {
-    // Difficulty → timing (the final step), which starts the session.
-    setState(() {
-      _forward = true;
-      _difficulty = difficulty;
-      _step = 4;
-    });
-  }
+  void _pickLevel(PracticeLevel level) => setState(() {
+        _forward = true;
+        _level = level;
+        _step = 2;
+      });
 
   void _launch({required bool useTimer, required int minutes}) {
     final hc = Get.find<HomeController>();
+    final level = _level;
     hc.switchToIntervalMode(
       type: _type,
-      difficulty: _difficulty,
+      // The level decides the spread and direction; a null level leaves the
+      // controller's current tier alone.
+      difficulty: level == null
+          ? null
+          : IntervalDifficulty.values[level.difficultyIndex],
       intervals: _intervals.map(int.parse).toSet(),
+      level: level,
     );
     hc.applySessionTiming(useTimer: useTimer, minutes: minutes);
     hc.quickStartSession = false;
@@ -1215,11 +1237,11 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
       case 0:
         return _typeStep();
       case 1:
-        return _intervalsStep();
+        return _levelStep();
       case 2:
-        return _stringsStep();
+        return _intervalsStep();
       case 3:
-        return _difficultyStep();
+        return _stringsStep();
       default:
         return SessionTimingStep(
           eyebrow: 'STEP 6 · TIMING',
@@ -1252,7 +1274,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
 
   Widget _intervalsStep() => _focusCentredStep(
         heading: _wizardHeading(
-            'STEP 3 · INTERVALS', 'Intervals', 'Which ones to practise?'),
+            'STEP 4 · INTERVALS', 'Intervals', 'Which ones to practise?'),
         focus: MultiSelectDropdown(
           options: [
             for (final iv in _intervalOptions)
@@ -1270,7 +1292,7 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
           _wizardPrimaryButton('Continue', () {
             setState(() {
               _forward = true;
-              _step = 2;
+              _step = 3;
             });
           }),
         ],
@@ -1278,49 +1300,31 @@ class _IntervalSetupScreenState extends State<IntervalSetupScreen> {
 
   Widget _stringsStep() => _focusCentredStep(
         heading: _wizardHeading(
-            'STEP 4 · STRINGS', 'Strings', 'Which strings to use?'),
+            'STEP 5 · STRINGS', 'Strings', 'Which strings to use?'),
         focus: _StringsSelector(controller: Get.find<HomeController>()),
         below: [
           const SizedBox(height: 20),
           _wizardPrimaryButton('Continue', () {
             setState(() {
               _forward = true;
-              _step = 3;
+              _step = 4;
             });
           }),
         ],
       );
 
-  Widget _difficultyStep() => _focusCentredStep(
-        heading: _wizardHeading('STEP 5 · DIFFICULTY', 'Difficulty',
-            'How challenging should it be?'),
-        focus: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ModeCard(
-              label: 'Easy',
-              subtitle: 'Small gaps, notes a few frets apart.',
-              onTap: () => _pickDifficulty(IntervalDifficulty.easy),
-            ),
-            const SizedBox(height: 12),
-            _ModeCard(
-              label: 'Medium',
-              subtitle: 'Same or a nearby string, moving up.',
-              onTap: () => _pickDifficulty(IntervalDifficulty.medium),
-            ),
-            const SizedBox(height: 12),
-            _ModeCard(
-              label: 'Difficult',
-              subtitle: 'Anywhere on the neck, either direction.',
-              onTap: () => _pickDifficulty(IntervalDifficulty.hard),
-            ),
-          ],
-        ),
+  Widget _levelStep() => PracticeLevelStep(
+        eyebrow: 'STEP 3 · LEVEL',
+        subtitle: 'Each level widens the neck and the interval gaps together.',
+        selected: _level,
+        onPick: _pickLevel,
+        footnote: 'Easy keeps both notes on one string, a few frets apart.',
       );
 }
 
-/// Two-step chord setup wizard: pick the game type, then the difficulty, then
-/// drop into the training board. Mirrors IntervalSetupScreen exactly.
+/// Chord setup wizard: pick the game type, the session level, the chord
+/// vocabulary to practise, then the timing. Chord Lab adds its keys, tonalities
+/// and round-type steps in between.
 class ChordSetupScreen extends StatefulWidget {
   const ChordSetupScreen({super.key, this.fromSwitcher = false});
   final bool fromSwitcher;
@@ -1341,20 +1345,37 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
 
   bool get _isLab => _type == ChordGameType.lab;
 
-  // Name/Build: [game, difficulty, timing]. Chord Lab: [game, keys, tonalities,
-  // rounds, difficulty, timing]. Mode was picked on the previous screen (the
-  // wizard's Step 1), so dots/eyebrows are offset by one.
+  // Name/Build: [game, level, tune, timing]. Chord Lab: [game, keys,
+  // tonalities, rounds, level, timing] — the lab's vocabulary is already
+  // chosen by its tonalities step, so it skips the tune step. Mode was picked
+  // on the previous screen (the wizard's Step 1), so dots/eyebrows are offset.
   List<String> get _steps => _isLab
-      ? const ['game', 'keys', 'tonalities', 'rounds', 'difficulty', 'timing']
-      : const ['game', 'difficulty', 'timing'];
+      ? const ['game', 'keys', 'tonalities', 'rounds', 'level', 'timing']
+      : const ['game', 'level', 'tune', 'timing'];
   String get _stepId => _steps[_step];
   int get _totalDots => _steps.length + 1; // + Mode
+
+  /// Neck window chosen on the level step (null = keep the previous level).
+  PracticeLevel? _level;
+
+  /// True once the user picked a chord vocabulary on the tune step, so a later
+  /// re-pick of the level does not stomp a deliberate choice.
+  bool _vocabularyChosen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _level = Get.find<HomeController>().practiceLevel;
+  }
 
   void _pickType(ChordGameType type) {
     setState(() {
       _forward = true;
       _type = type;
       _step = 1;
+      // A type switch re-walks the step list; a vocabulary choice made for a
+      // different game type is still valid (it only narrows chord qualities).
+      _vocabularyChosen = false;
     });
     // Chord Lab is the deepest, most feature-rich chord mode — brief the player
     // on what it does the moment they step into it (once the keys step has
@@ -1374,9 +1395,10 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
         tonalities: _tonalities,
         rounds: _rounds,
         difficulty: _difficulty,
+        level: _level,
       );
     } else {
-      hc.switchToChordMode(type: _type, difficulty: _difficulty);
+      hc.switchToChordMode(type: _type, difficulty: _difficulty, level: _level);
     }
     hc.applySessionTiming(useTimer: useTimer, minutes: minutes);
     hc.quickStartSession = false;
@@ -1389,12 +1411,27 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
 
   ChordDifficulty _difficulty = ChordDifficulty.easy;
 
-  void _pickDifficulty(ChordDifficulty difficulty) {
-    // Difficulty → timing (the final step), which starts the session.
+  /// The level step: sets the neck window, and (unless the player has already
+  /// fine-tuned it) starts the chord vocabulary at the matching tier.
+  void _pickLevel(PracticeLevel level) {
     setState(() {
       _forward = true;
+      _level = level;
+      if (!_vocabularyChosen) {
+        _difficulty = ChordDifficulty.values[level.difficultyIndex];
+      }
+      // Name/Build: level → tune. Chord Lab: level is the last content step.
+      _step = _isLab ? 5 : 2;
+    });
+  }
+
+  /// The tune step: chord vocabulary only — the neck window stays the level's.
+  void _pickVocabulary(ChordDifficulty difficulty) {
+    setState(() {
+      _forward = true;
+      _vocabularyChosen = true;
       _difficulty = difficulty;
-      _step++;
+      _step = _isLab ? 5 : 3;
     });
   }
 
@@ -1446,8 +1483,10 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
         return _tonalitiesStep();
       case 'rounds':
         return _roundsStep();
-      case 'difficulty':
-        return _difficultyStep();
+      case 'level':
+        return _levelStep();
+      case 'tune':
+        return _tuneStep();
       case 'timing':
         return SessionTimingStep(
           eyebrow: _eyebrow('TIMING'),
@@ -1549,51 +1588,87 @@ class _ChordSetupScreenState extends State<ChordSetupScreen> {
         ],
       );
 
-  Widget _difficultyStep() {
-    // Chord Lab difficulty controls neck position only (tonalities are already
-    // chosen); Name/Build difficulty also widens the vocabulary.
-    final (easy, medium, hard) = _isLab
-        ? (
-            'Open and low positions (up to fret 4).',
-            'Up the neck to fret 9.',
-            'Anywhere up to fret 15.',
-          )
-        : (
-            'Open major and minor chords, low on the neck.',
-            'Adds 7ths, sixths, sus and add9 shapes.',
-            'Every chord type, all over the neck.',
-          );
+  Widget _levelStep() {
+    final isLab = _isLab;
+    final stepNo = _step + 2; // Mode is Step 1.
+    return PracticeLevelStep(
+      eyebrow: 'STEP $stepNo · LEVEL',
+      subtitle: isLab
+          ? 'How far up the neck should the lab draw its shapes?'
+          : 'How far up the neck? The chord types come next.',
+      selected: _level,
+      onPick: _pickLevel,
+      // Name/Build only: jump straight to chord types and keep whatever neck
+      // window is already configured (the whole board when there is none).
+      onCustomize: isLab
+          ? null
+          : () => setState(() {
+                _forward = true;
+                _vocabularyChosen = true;
+                _step = 2;
+              }),
+      customizeLabel: 'Skip — just choose chord types',
+      footnote: isLab
+          ? 'Chord Lab already knows which chords to drill — the level only '
+              'sets how far up the neck they can appear.'
+          : 'Next: which chord types to drill within that window.',
+    );
+  }
+
+  /// Chord vocabulary, on top of the level's neck window. Deliberately separate
+  /// from the level: the level answers "how far up the neck", this answers
+  /// "which chords", and conflating them made both harder to change.
+  Widget _tuneStep() {
+    final range =
+        _level?.fretRangeLabel.toLowerCase() ?? 'the whole neck (no level set)';
+    const rows = [
+      (
+        ChordDifficulty.easy,
+        'Triads',
+        'Major and minor, open or barre — the shapes every player starts with.',
+      ),
+      (
+        ChordDifficulty.medium,
+        'Sevenths & colour',
+        'Adds 7ths, sixths, sus, add9, dim and aug.',
+      ),
+      (
+        ChordDifficulty.hard,
+        'Everything',
+        'The full standard vocabulary, including extended and altered chords.',
+      ),
+    ];
     return _focusCentredStep(
-      heading: _wizardHeading(_eyebrow('DIFFICULTY'), 'Difficulty',
-          'How challenging should it be?'),
+      heading: _wizardHeading('STEP ${_step + 2} · CHORDS', 'Chord types',
+          'Which shapes should we draw?'),
       focus: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ModeCard(
-            label: 'Easy',
-            subtitle: easy,
-            onTap: () => _pickDifficulty(ChordDifficulty.easy),
-          ),
-          const SizedBox(height: 12),
-          _ModeCard(
-            label: 'Medium',
-            subtitle: medium,
-            onTap: () => _pickDifficulty(ChordDifficulty.medium),
-          ),
-          const SizedBox(height: 12),
-          _ModeCard(
-            label: 'Difficult',
-            subtitle: hard,
-            onTap: () => _pickDifficulty(ChordDifficulty.hard),
-          ),
+          // The neck window is locked by the level; show it so the two settings
+          // read as one configuration rather than unrelated screens.
+          _RangeBanner(range: 'Neck window: $range'),
+          const SizedBox(height: 18),
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _SelectableModeCard(
+              label: rows[i].$2,
+              subtitle: rows[i].$3,
+              selected: _difficulty == rows[i].$1,
+              onTap: () => _pickVocabulary(rows[i].$1),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Two-step note-game wizard: choose Find or Identify, pick the strings to
-/// practise, then drop into the board.
+/// Note-game wizard: choose Find or Identify, pick the session level, pick the
+/// strings to practise, then drop into the board.
+///
+/// The level is inserted before Strings so the strings step can be read as
+/// "which of these frets do you want on top of the window?" rather than as a
+/// competing difficulty control.
 class NoteSetupScreen extends StatefulWidget {
   const NoteSetupScreen({super.key, this.fromSwitcher = false});
   final bool fromSwitcher;
@@ -1603,9 +1678,24 @@ class NoteSetupScreen extends StatefulWidget {
 }
 
 class _NoteSetupScreenState extends State<NoteSetupScreen> {
-  int _step = 0; // 0 = game, 1 = strings, 2 = timing
+  // 0 = game, 1 = level, 2 = strings, 3 = timing.
+  int _step = 0;
   bool _forward = true;
   bool _identify = false;
+  PracticeLevel? _level;
+
+  /// Set as soon as the user picks a level, so the strings step can show the
+  /// window they are about to practise in.
+  static const int _totalSteps = 5; // + the Mode step already chosen
+
+  @override
+  void initState() {
+    super.initState();
+    // Open on the level last used, so a repeat visit is one tap from the
+    // previous setup. It is NOT applied to the controller until _launch, so
+    // backing out of the wizard never mutates a session that was never started.
+    _level = Get.find<HomeController>().practiceLevel;
+  }
 
   void _pickGame(bool identify) => setState(() {
         _forward = true;
@@ -1613,9 +1703,16 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
         _step = 1;
       });
 
+  void _pickLevel(PracticeLevel level) => setState(() {
+        _forward = true;
+        _level = level;
+        _step = 2;
+      });
+
   void _launch({required bool useTimer, required int minutes}) {
     final hc = Get.find<HomeController>();
     _identify ? hc.switchToIdentifyMode() : hc.switchToFindMode();
+    hc.setPracticeLevel(_level);
     hc.applySessionTiming(useTimer: useTimer, minutes: minutes);
     hc.quickStartSession = false;
     if (widget.fromSwitcher) {
@@ -1641,10 +1738,12 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
       case 0:
         return _gameStep();
       case 1:
+        return _levelStep();
+      case 2:
         return _stringsStep();
       default:
         return SessionTimingStep(
-          eyebrow: 'STEP 4 · TIMING',
+          eyebrow: 'STEP 5 · TIMING',
           onStart: (useTimer, minutes) =>
               _launch(useTimer: useTimer, minutes: minutes),
         );
@@ -1660,7 +1759,8 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // +1 so the first dot (Mode, chosen on the previous screen) is done.
-            _wizardHeader(step: _step + 1, stepCount: 4, onBack: _back),
+            _wizardHeader(
+                step: _step + 1, stepCount: _totalSteps, onBack: _back),
             Expanded(
               child: JhgStepSwitcher(
                 reverse: !_forward,
@@ -1696,16 +1796,24 @@ class _NoteSetupScreenState extends State<NoteSetupScreen> {
         ),
       );
 
+  Widget _levelStep() => PracticeLevelStep(
+        eyebrow: 'STEP 3 · LEVEL',
+        subtitle: 'How far up the neck? Easy keeps to the open position.',
+        selected: _level,
+        onPick: _pickLevel,
+        footnote: 'You can change the level any time from Customized Practice.',
+      );
+
   Widget _stringsStep() => _focusCentredStep(
         heading: _wizardHeading(
-            'STEP 3 · STRINGS', 'Strings', 'Which strings to use?'),
+            'STEP 4 · STRINGS', 'Strings', 'Which strings to use?'),
         focus: _StringsSelector(controller: Get.find<HomeController>()),
         below: [
           const SizedBox(height: 20),
           _wizardPrimaryButton('Continue', () {
             setState(() {
               _forward = true;
-              _step = 2;
+              _step = 3;
             });
           }),
         ],
@@ -1810,6 +1918,129 @@ class _ModeCardState extends State<_ModeCard> {
               icon: JhgIcons.chevronRight,
               onTap: null,
               isActive: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Read-only lock banner shown above the chord-type cards: the neck window is
+/// the level's, and this says so instead of silently inheriting it.
+class _RangeBanner extends StatelessWidget {
+  const _RangeBanner({required this.range});
+  final String range;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: _kPrimary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kPrimary.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          const Icon(JhgIcons.locked, size: 14, color: _kPrimary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              range,
+              style: JhgFonts.inter(
+                color: _kPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card with a visible selected state — the tune step shows the current
+/// vocabulary pre-selected, unlike the auto-advancing [_ModeCard] cards.
+class _SelectableModeCard extends StatelessWidget {
+  const _SelectableModeCard({
+    required this.label,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? _kPrimary.withValues(alpha: 0.55)
+                : Colors.white.withValues(alpha: 0.08),
+            width: selected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: JhgFonts.poppins(
+                      color: selected ? _kPrimary : _kOnSurface,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: JhgFonts.inter(
+                      color: _kMuted.withValues(alpha: 0.9),
+                      fontSize: 12.5,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: selected ? _kPrimary : Colors.transparent,
+                border: Border.all(
+                  color: selected
+                      ? _kPrimary
+                      : Colors.white.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+              ),
+              child: selected
+                  ? const Icon(JhgIcons.check, color: Colors.white, size: 14)
+                  : null,
             ),
           ],
         ),

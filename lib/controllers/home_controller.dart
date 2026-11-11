@@ -8,12 +8,14 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:fretboard/services/feedback_sounds.dart';
 import 'package:flutter_jhg_elements/jhg_elements.dart';
 import 'package:fretboard/models/freth_list.dart';
+import 'package:fretboard/models/board_model.dart';
 import 'package:fretboard/models/saved_session.dart';
 import 'package:fretboard/services/heatmap_service.dart';
 import 'package:fretboard/services/practice_stats_service.dart';
 import 'package:fretboard/services/saved_sessions_service.dart';
 import 'package:fretboard/utils/intervals.dart';
 import 'package:fretboard/utils/chords.dart';
+import 'package:fretboard/utils/levels.dart';
 import 'package:fretboard/services/chord_service.dart';
 import 'package:fretboard/services/local_db_service.dart';
 import 'package:get/get.dart';
@@ -74,6 +76,17 @@ class HomeController extends GetxController {
   IntervalDifficulty intervalDifficulty = IntervalDifficulty.easy;
   IntervalGameType intervalGameType = IntervalGameType.name;
   IntervalPrompt? intervalPrompt;
+
+  /// True when the current interval pair had to be generated outside the
+  /// session's level window (no valid in-window pair existed). The board stops
+  /// dimming the out-of-window note so the answer stays visible.
+  final RxBool _intervalOutOfWindow = false.obs;
+
+  /// True when the board should dim frets past the level. Suppressed for the
+  /// rare interval fallback that had to leave the window, so the question is
+  /// never asked about a fret the board has darkened.
+  bool get dimsPastLevel =>
+      showFretWindow && !(isIntervalMode && _intervalOutOfWindow.value);
   int? intervalRootIndex; // fretList index of the root note
   int? intervalTargetIndex; // fretList index of the target note (name mode)
   List<MusicInterval> intervalChoicesList = [];
@@ -98,9 +111,14 @@ class HomeController extends GetxController {
   List<String> chordChoicesList = []; // name mode: symbols to choose from
   String? chordSelected; // name mode: which symbol was tapped
   bool chordWasCorrect = false;
-  Set<int> chordTapped = {}; // build mode: fretted indices placed
+  Set<int> chordTapped = {}; // build mode: placed notes (fretted + open)
   bool chordBuildDone = false; // build mode: locked during feedback
   Set<int>? chordBuildReveal; // build mode: correct set after Reveal
+  Set<int> chordBuildHint = {}; // build mode: notes surfaced by the Hint button
+
+  /// Bumped each time the user asks to hear the current prompt — the board's
+  /// identify-mode target ball watches this to fire its "sound rings" pulse.
+  final RxInt playPulse = 0.obs;
 
   // ── Chord Lab ──────────────────────────────────────────────────────────────
   // The customize-session chord game type: one session rotates through the four
@@ -239,6 +257,8 @@ class HomeController extends GetxController {
   /// but the current mode — this is the explicit "let me hear it" action, so it
   /// always sounds regardless of the identifyPlaySound auto-play setting.
   void playCurrentPrompt() {
+    playPulse.value++;
+    update();
     if (isChordLab) {
       final shape = chordLabPrompt?.target;
       if (shape != null) unawaited(_playChord(shape));
@@ -312,6 +332,10 @@ class HomeController extends GetxController {
     final boardModel = index >= 0 && index < fretList.length
         ? fretList[index]
         : fretList.firstWhereOrNull((element) => element.fretSound == tune);
+    // Frets outside the session's level window are dimmed on the board and are
+    // out of bounds for answers too: a misclick on an unreachable fret should
+    // not dock a point. (Quick start has no window, so this never fires there.)
+    if (boardModel != null && !isFretInWindow(boardModel.fret ?? 0)) return;
     if (boardModel != null) {
       if (!isPlayed) {
         final stringStatus = getStringStatus(boardModel.string!);
@@ -377,15 +401,15 @@ class HomeController extends GetxController {
 
   int score = 0;
 
-  // [playFeedback] is kept for call-site compatibility but no longer gates a
-  // sound: the right / wrong answer cues were removed because they overlapped
-  // the note / chord playback and muddied it. Answers still give a haptic tick
-  // and the green / coral colour change.
+  // [playFeedback] gates the short correct / wrong answer cue (the same pair the
+  // Ear Training app uses). It's passed `false` where the note / chord audio has
+  // already sounded, so the cue never overlaps and muddies the pitch playback.
   void incrementScore({bool playFeedback = true}) {
     score = score + 1;
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.green;
+    if (playFeedback) unawaited(FeedbackSounds.instance.playCorrect());
     unawaited(HapticFeedback.lightImpact());
     update();
   }
@@ -395,6 +419,7 @@ class HomeController extends GetxController {
     answersGiven.value++;
     isPlayed = true;
     selectedColor = JHGColors.primary;
+    if (playFeedback) unawaited(FeedbackSounds.instance.playWrong());
     unawaited(HapticFeedback.mediumImpact());
     update();
   }
@@ -434,14 +459,35 @@ class HomeController extends GetxController {
     update();
   }
 
-  // FIXED: Restored the working do-while loop from old code
+  /// A random board index the current session may ask about.
+  ///
+  /// Filters by active strings AND by the level (fret window + naturals only)
+  /// up front rather than rejection-sampling: a narrow combination — say a
+  /// Beginner window on an awkward string set — could otherwise leave the old
+  /// do/while with no candidate at all and spin forever. With the candidate list
+  /// built first, "nothing fits" is handled explicitly.
   int getRandomIndex() {
-    Random random = Random();
-    int randomIndex;
-    do {
-      randomIndex = random.nextInt(fretList.length);
-    } while (getStringStatus(fretList[randomIndex].string!) == false);
-    return randomIndex;
+    final candidates = <int>[
+      for (var i = 0; i < fretList.length; i++)
+        if (getStringStatus(fretList[i].string ?? 0) &&
+            isNoteInLevelWindow(fretList[i]))
+          i,
+    ];
+    if (candidates.isNotEmpty) {
+      return candidates[Random().nextInt(candidates.length)];
+    }
+    // No position satisfies every filter (e.g. a natural-only session on strings
+    // where the window has no natural). Every string is guaranteed on by
+    // setStringActive, so falling back to the active strings alone always
+    // yields a playable board instead of an empty prompt.
+    final fallback = <int>[
+      for (var i = 0; i < fretList.length; i++)
+        if (getStringStatus(fretList[i].string ?? 0)) i,
+    ];
+    if (fallback.isNotEmpty) {
+      return fallback[Random().nextInt(fallback.length)];
+    }
+    return Random().nextInt(fretList.length);
   }
 
   void startTheGame() {
@@ -529,6 +575,7 @@ class HomeController extends GetxController {
 
   void _clearIntervalState() {
     intervalPrompt = null;
+    _intervalOutOfWindow.value = false;
     intervalRootIndex = null;
     intervalTargetIndex = null;
     intervalChoicesList = [];
@@ -546,6 +593,7 @@ class HomeController extends GetxController {
     chordTapped = {};
     chordBuildDone = false;
     chordBuildReveal = null;
+    chordBuildHint = {};
     chordLabPrompt = null;
     chordLabActive = {};
     chordLabFlashIndex = null;
@@ -662,6 +710,71 @@ class HomeController extends GetxController {
     update();
   }
 
+  // ── Practice level (Customized Practice only) ──────────────────────────────
+  // A level is the coarse preset the wizard picks before the fine-tuning steps:
+  // its headline is the fret window (Easy 0–5, Medium 0–9, Hard 0–15) and it
+  // also biases the vocabulary (Easy notes ask only naturals).
+  //
+  // Null means "no level": the whole neck, which is what Quick start and Random
+  // practice run, and what sessions saved before levels existed restore to.
+  PracticeLevel? practiceLevel;
+
+  /// Highest fret a prompt may use, or null for the whole board.
+  int? get fretCap => practiceLevel?.fretCap;
+
+  /// Whether [fret] sits inside the session's level window. Always true when no
+  /// level is set, so Quick start is untouched.
+  bool isFretInWindow(int fret) {
+    final cap = fretCap;
+    return cap == null || (fret >= 0 && fret <= cap);
+  }
+
+  /// Whether [pos] may be asked in a note game at the current level. Easy asks
+  /// only naturals; when no level is set (Quick start) every note is fair game.
+  bool isNoteInLevelWindow(BoardModel pos) {
+    if (!isFretInWindow(pos.fret ?? 0)) return false;
+    final level = practiceLevel;
+    if (level == null || !level.naturalNotesOnly) return true;
+    return kNaturalNoteNames.contains(pos.note);
+  }
+
+  /// Whether an interval prompt's two notes both sit inside the level window.
+  /// Pairs generated outside it are only a last-resort fallback, and the board
+  /// would dim the very note the question is asking about.
+  bool _promptInWindow(IntervalPrompt? prompt) {
+    if (prompt == null) return true;
+    return isFretInWindow(prompt.root.fret ?? 0) &&
+        isFretInWindow(prompt.target.fret ?? 0);
+  }
+
+  /// Sets the session level. Called by the wizard's level step, and by Quick
+  /// start / Random practice (with null) so the full board is restored.
+  ///
+  /// Also mirrors the level onto the legacy interval tier: the board's in-place
+  /// mode switcher and a restored session both read that tier directly, and the
+  /// two must not disagree about how far apart interval notes may sit.
+  void setPracticeLevel(PracticeLevel? level) {
+    practiceLevel = level;
+    if (level != null) {
+      intervalDifficulty = IntervalDifficulty.values[level.difficultyIndex];
+    }
+    // The wizard applies the level to a controller that may still be holding a
+    // prompt from the previous session; if that prompt now falls outside the new
+    // window, replace it so the board never shows a dimmed fret as the question.
+    if (isStart) {
+      final target = highlightFret;
+      if (target != null && !isFretInWindow(fretList[target].fret ?? 0)) {
+        highLightTheGame();
+      }
+    }
+    update();
+  }
+
+  /// True when the session was configured through the wizard, so the board
+  /// should show (and enforce) its fret window. Quick start has no level and
+  /// keeps the full board.
+  bool get showFretWindow => practiceLevel != null;
+
   // ── Saved sessions ─────────────────────────────────────────────────────────
   // A session snapshot the player can leave and return to. Restored config is
   // held in [_pendingRestore] until the board's initializeData() has run (which
@@ -678,7 +791,11 @@ class HomeController extends GetxController {
       ].where((s) => s).length;
 
   String _difficultyLabel(int index) =>
-      const ['Easy', 'Medium', 'Difficult'][index.clamp(0, 2)];
+      const ['Easy', 'Medium', 'Hard'][index.clamp(0, 2)];
+
+  /// The level part of a saved session's subtitle. Customized sessions lead
+  /// with their level; Quick start has none, so it leads with the strings.
+  String? get _levelLabel => practiceLevel?.label;
 
   String _sessionTitle() {
     if (isChordMode) {
@@ -696,18 +813,20 @@ class HomeController extends GetxController {
     final strings = _activeStringCount == 6
         ? 'all strings'
         : '$_activeStringCount string${_activeStringCount == 1 ? '' : 's'}';
+    final level = _levelLabel;
     if (isChordMode) {
       if (isChordLab) {
         final n = chordLabTonalities.length;
-        return '${_difficultyLabel(chordDifficulty.index)} · $n chord '
-            'type${n == 1 ? '' : 's'}';
+        final chords = '$n chord type${n == 1 ? '' : 's'}';
+        return level == null ? chords : '$level · $chords';
       }
-      return _difficultyLabel(chordDifficulty.index);
+      return level ?? _difficultyLabel(chordDifficulty.index);
     }
     if (isIntervalMode) {
-      return '${_difficultyLabel(intervalDifficulty.index)} · $strings';
+      final difficulty = _difficultyLabel(intervalDifficulty.index);
+      return level == null ? '$difficulty · $strings' : '$level · $strings';
     }
-    return strings;
+    return level == null ? strings : '$level · $strings';
   }
 
   /// Builds a snapshot of the current session (config + score + clock).
@@ -722,6 +841,8 @@ class HomeController extends GetxController {
       chordGameType: chordGameType.index,
       intervalDifficulty: intervalDifficulty.index,
       chordDifficulty: chordDifficulty.index,
+      level: practiceLevel?.name,
+      fretCap: practiceLevel?.fretCap,
       strings: [string1, string2, string3, string4, string5, string6],
       selectedIntervals: selectedIntervals.toList(),
       chordLabKeys: chordLabKeys.toList(),
@@ -775,6 +896,10 @@ class HomeController extends GetxController {
         s.intervalDifficulty.clamp(0, IntervalDifficulty.values.length - 1)];
     chordDifficulty = ChordDifficulty
         .values[s.chordDifficulty.clamp(0, ChordDifficulty.values.length - 1)];
+
+    // The level the session was configured at. Sessions saved before levels
+    // existed have no level, and restore to the full board exactly as they ran.
+    practiceLevel = practiceLevelFromName(s.level);
 
     // Strings
     final st = s.strings;
@@ -889,11 +1014,21 @@ class HomeController extends GetxController {
     IntervalGameType? type,
     IntervalDifficulty? difficulty,
     Set<int>? intervals,
+    PracticeLevel? level,
+    bool clearLevel = false,
   }) {
     modeChosen = true;
     currentGameMode.value = 'interval';
     if (type != null) intervalGameType = type;
     if (difficulty != null) intervalDifficulty = difficulty;
+    // Customized sessions pass their level; Random practice calls with none and
+    // [clearLevel] so it keeps the whole neck.
+    if (clearLevel) {
+      practiceLevel = null;
+    } else if (level != null) {
+      practiceLevel = level;
+      intervalDifficulty = IntervalDifficulty.values[level.difficultyIndex];
+    }
     if (intervals != null && intervals.isNotEmpty) {
       selectedIntervals = {...intervals};
     }
@@ -924,11 +1059,26 @@ class HomeController extends GetxController {
       difficulty: intervalDifficulty,
       isStringActive: getStringStatus,
       allowedSemitones: selectedIntervals,
+      level: practiceLevel,
     );
-    if (prompt == null) return;
+    // See newIntervalPrompt: never leave the round stuck when the window has
+    // nothing valid in it, and flag it so the board stops dimming the answer.
+    var resolved = prompt;
+    if (resolved == null) {
+      resolved = pickIntervalPrompt(
+        fretList,
+        difficulty: intervalDifficulty,
+        isStringActive: getStringStatus,
+        allowedSemitones: selectedIntervals,
+      );
+      if (resolved == null) return;
+      _intervalOutOfWindow.value = !_promptInWindow(resolved);
+    } else {
+      _intervalOutOfWindow.value = false;
+    }
 
-    intervalPrompt = prompt;
-    intervalRootIndex = fretList.indexOf(prompt.root);
+    intervalPrompt = resolved;
+    intervalRootIndex = fretList.indexOf(resolved.root);
     intervalTargetIndex = null; // hidden — the user taps to find it
     intervalSelected = null;
     intervalWasCorrect = false;
@@ -938,7 +1088,7 @@ class HomeController extends GetxController {
     selectedFret = null;
     selectedColor = Colors.transparent;
 
-    if (identifyPlaySound) unawaited(prompt.root.playSound());
+    if (identifyPlaySound) unawaited(resolved.root.playSound());
     update();
   }
 
@@ -953,6 +1103,9 @@ class HomeController extends GetxController {
     if (index < 0 || index >= fretList.length) return;
 
     final tapped = fretList[index];
+    // Outside the session's level window there is no note to place: ignore the
+    // tap entirely rather than grading a miss on a fret the level excludes.
+    if (!isFretInWindow(tapped.fret ?? (index ~/ 6))) return;
     // Only count taps on active strings, mirroring find mode.
     if (!getStringStatus(tapped.string ?? 0)) {
       unawaited(tapped.playSound());
@@ -1011,13 +1164,29 @@ class HomeController extends GetxController {
       difficulty: intervalDifficulty,
       isStringActive: getStringStatus,
       allowedSemitones: selectedIntervals,
+      level: practiceLevel,
     );
-    if (prompt == null) return;
+    // A narrow level (or a sparse string set) can leave no pair inside the
+    // window at all. Only then drop the window; if that happens, do not dim the
+    // fret the question points at.
+    var resolved = prompt;
+    if (resolved == null) {
+      resolved = pickIntervalPrompt(
+        fretList,
+        difficulty: intervalDifficulty,
+        isStringActive: getStringStatus,
+        allowedSemitones: selectedIntervals,
+      );
+      if (resolved == null) return;
+      _intervalOutOfWindow.value = !_promptInWindow(resolved);
+    } else {
+      _intervalOutOfWindow.value = false;
+    }
 
-    intervalPrompt = prompt;
-    intervalRootIndex = fretList.indexOf(prompt.root);
-    intervalTargetIndex = fretList.indexOf(prompt.target);
-    intervalChoicesList = intervalChoices(prompt.interval);
+    intervalPrompt = resolved;
+    intervalRootIndex = fretList.indexOf(resolved.root);
+    intervalTargetIndex = fretList.indexOf(resolved.target);
+    intervalChoicesList = intervalChoices(resolved.interval);
     intervalSelected = null;
     intervalWasCorrect = false;
     _intervalStatDone = false;
@@ -1106,11 +1275,17 @@ class HomeController extends GetxController {
   void switchToChordMode({
     ChordGameType? type,
     ChordDifficulty? difficulty,
+    PracticeLevel? level,
+    bool clearLevel = false,
   }) {
     modeChosen = true;
     currentGameMode.value = 'chord';
     if (type != null) chordGameType = type;
     if (difficulty != null) chordDifficulty = difficulty;
+    // See switchToIntervalMode: wizard sessions carry a level, Random practice
+    // clears it so the whole neck stays in play.
+    if (clearLevel) practiceLevel = null;
+    if (level != null) practiceLevel = level;
     _clearChordState();
     ensureChordCatalog();
     resetGame(false);
@@ -1123,11 +1298,13 @@ class HomeController extends GetxController {
     required Set<String> tonalities,
     required Set<ChordLabRound> rounds,
     required ChordDifficulty difficulty,
+    PracticeLevel? level,
   }) {
     modeChosen = true;
     currentGameMode.value = 'chord';
     chordGameType = ChordGameType.lab;
     chordDifficulty = difficulty;
+    if (level != null) practiceLevel = level;
     if (keys.isNotEmpty) chordLabKeys = {...keys};
     if (tonalities.isNotEmpty) chordLabTonalities = {...tonalities};
     if (rounds.isNotEmpty) chordLabRounds = {...rounds};
@@ -1135,6 +1312,25 @@ class HomeController extends GetxController {
     ensureChordCatalog();
     resetGame(false);
     update();
+  }
+
+  /// Last-resort pick when the requested vocabulary and the level's window have
+  /// no shape in common (e.g. "everything" vocabulary inside a 5-fret window,
+  /// where no extended voicing fits). Tries the triads that always exist at the
+  /// low frets, then gives up on the level window rather than leaving the board
+  /// empty — an empty prompt is a dead session, which is worse than an
+  /// unexpected shape.
+  ChordShape? _relaxedPick(ChordCatalog cat) {
+    for (final fallback in const [
+      ChordDifficulty.easy,
+      ChordDifficulty.medium,
+      ChordDifficulty.hard,
+    ]) {
+      if (fallback == chordDifficulty) continue;
+      final shape = cat.pick(fallback, level: practiceLevel);
+      if (shape != null) return shape;
+    }
+    return cat.pick(chordDifficulty);
   }
 
   /// Routes to the right chord-round generator for the current game type.
@@ -1210,11 +1406,13 @@ class HomeController extends GetxController {
   void newChordNamePrompt() {
     final cat = _chordCatalog;
     if (cat == null) return;
-    final shape = cat.pick(chordDifficulty);
+    final shape =
+        cat.pick(chordDifficulty, level: practiceLevel) ?? _relaxedPick(cat);
     if (shape == null) return;
 
     chordPrompt = shape;
-    chordChoicesList = cat.choices(shape, chordDifficulty);
+    chordChoicesList =
+        cat.choices(shape, chordDifficulty, level: practiceLevel);
     chordSelected = null;
     chordWasCorrect = false;
     chordTapped = {};
@@ -1248,7 +1446,8 @@ class HomeController extends GetxController {
   void newBuildChordPrompt() {
     final cat = _chordCatalog;
     if (cat == null) return;
-    final shape = cat.pick(chordDifficulty);
+    final shape =
+        cat.pick(chordDifficulty, level: practiceLevel) ?? _relaxedPick(cat);
     if (shape == null) return;
 
     chordPrompt = shape;
@@ -1258,6 +1457,7 @@ class HomeController extends GetxController {
     chordTapped = {};
     chordBuildDone = false;
     chordBuildReveal = null;
+    chordBuildHint = {};
     chordRevealIndex = 0;
     selectedFret = null;
     selectedColor = Colors.transparent;
@@ -1322,23 +1522,34 @@ class HomeController extends GetxController {
     final model = fretList[index];
     final fret = model.fret ?? (index ~/ 6);
     unawaited(model.playSound());
-    if (fret <= 0) return; // open string — not a placed note
+    // Dimmed (out-of-window) frets cannot be part of the answer at this level.
+    // Open strings (fret 0) sit at the nut and are always in window.
+    if (!isFretInWindow(fret)) return;
 
+    // Open strings are now placeable: an open E-minor needs its B♭/G from the
+    // open strings, so the user must be able to tap the nut, not just frets.
     if (chordTapped.contains(index)) {
       chordTapped.remove(index);
     } else {
       chordTapped.add(index);
     }
 
+    // The fretted-only subset, for the exact-voicing fallback match below (the
+    // bundled acceptable sets only ever store fretted notes).
+    final frettedOnly =
+        chordTapped.where((i) => (i ~/ 6) > 0).toSet();
+
     final bool matchesTheory = chordPrompt != null &&
         isPitchClassChordMatch(
           root: chordPrompt!.root,
           tonality: chordPrompt!.tonality,
           frettedIndices: chordTapped,
+          allowOpen: true,
         );
     final matched = matchesTheory ||
         (chordPrompt?.acceptableFrettedSets.any((s) =>
-                s.length == chordTapped.length && s.containsAll(chordTapped)) ??
+                s.length == frettedOnly.length &&
+                s.containsAll(frettedOnly)) ??
             false);
     if (matched) {
       chordBuildDone = true;
@@ -1367,6 +1578,32 @@ class HomeController extends GetxController {
   void clearChordBuild() {
     if (chordBuildDone) return;
     chordTapped = {};
+    update();
+  }
+
+  /// Build mode: surface ONE note of a correct voicing as a guide, without
+  /// placing it or ending the round — a single nudge per chord, not the whole
+  /// answer. Reveals the root (the natural starting point) and sounds it. Does
+  /// nothing once a hint is already showing for this chord.
+  void hintChordBuild() {
+    if (!isStart || chordBuildDone) return;
+    if (chordBuildHint.isNotEmpty) return; // one hint per question
+    final shape = chordPrompt;
+    if (shape == null) return;
+
+    // Prefer the root as the single hint (the anchor of the shape); fall back
+    // to the lowest sounding note if the root isn't in the display voicing.
+    final indices = shape.boardIndices;
+    final hintIndex = indices.firstWhereOrNull(
+          (i) => fretList[i].note == shape.root,
+        ) ??
+        (indices.isEmpty ? null : (indices.toList()..sort()).first);
+    if (hintIndex == null) return;
+
+    chordBuildHint.add(hintIndex);
+    if (hintIndex >= 0 && hintIndex < fretList.length) {
+      unawaited(fretList[hintIndex].playSound());
+    }
     update();
   }
 
@@ -1406,6 +1643,9 @@ class HomeController extends GetxController {
 
   /// Play audio for whatever is currently active on screen (note, chord, or interval).
   Future<void> playCurrentPromptSound() async {
+    // Nudge the board's identify-mode target so it pulses sound rings in time.
+    playPulse.value++;
+    update();
     if (isChordMode) {
       if (chordPrompt != null) {
         await _playChord(chordPrompt!);
@@ -1516,8 +1756,7 @@ class HomeController extends GetxController {
   void revealChordName() {
     if (!isStart || chordSelected != null) return;
     final isLab = isChordLab && isChordLabName;
-    final correct =
-        isLab ? chordLabPrompt?.target.symbol : chordPrompt?.symbol;
+    final correct = isLab ? chordLabPrompt?.target.symbol : chordPrompt?.symbol;
     if (correct == null) return;
     chordSelected = correct;
     // Show the revealed answer highlighted as the correct one (green), not as a
@@ -1622,6 +1861,7 @@ class HomeController extends GetxController {
       keys: chordLabKeys,
       tonalities: chordLabTonalities,
       rounds: chordLabRounds,
+      level: practiceLevel,
       avoid: _lastLabRound,
     );
     if (prompt == null) return; // nothing playable for this selection
@@ -1827,10 +2067,26 @@ class HomeController extends GetxController {
   }
 
   void generateReverseChoices(String correctNote) {
-    final others = List<String>.from(_allNotes)
+    // Easy level asks only naturals, so keep the distractor buttons natural too —
+    // otherwise the accidentals in the option row give the answer away or make a
+    // seven-note question look like a twelve-note one.
+    final naturalOnly = practiceLevel?.naturalNotesOnly ?? false;
+    final pool = naturalOnly
+        ? _allNotes.where(kNaturalNoteNames.contains).toList()
+        : _allNotes;
+    final others = List<String>.from(pool)
       ..remove(correctNote)
       ..shuffle();
-    reverseChoices = [correctNote, others[0], others[1], others[2]]..shuffle();
+    // Always hand back four distinct buttons: top up from the full chromatic
+    // set if a seven-note pool ever runs short, then from the loop itself as a
+    // guard so a malformed pool can never throw a RangeError.
+    final seen = <String>{correctNote};
+    final choices = <String>[correctNote];
+    for (final n in [...others, ..._allNotes]) {
+      if (choices.length >= 4) break;
+      if (seen.add(n)) choices.add(n);
+    }
+    reverseChoices = choices..shuffle();
   }
 
   void selectReverseAnswer(String note) {

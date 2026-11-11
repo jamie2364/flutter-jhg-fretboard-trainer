@@ -8,6 +8,7 @@
 import 'dart:math';
 
 import 'package:fretboard/models/board_model.dart';
+import 'package:fretboard/utils/levels.dart';
 
 /// Open-string pitch as a MIDI note number, keyed by the app's string
 /// numbering (1 = high e, 6 = low E) in standard tuning. E2=40 … E4=64.
@@ -80,6 +81,9 @@ MusicInterval? intervalForGap(int gap) {
 /// Difficulty controls how far apart the two notes may sit and whether the
 /// interval may descend. The full 13-interval catalog is available at every
 /// level — difficulty only widens the spatial spread.
+///
+/// A session's [PracticeLevel] is the coarser preset; it feeds this tier (see
+/// the level's difficultyIndex]) and also caps which frets may be used.
 enum IntervalDifficulty { easy, medium, hard }
 
 /// The two interval game types:
@@ -99,29 +103,40 @@ class IntervalPrompt {
 }
 
 /// Picks a random valid interval pair from [board], honouring the active
-/// strings and difficulty:
-///   easy   — both notes on the same string, ascending
+/// strings, the difficulty and the session's fret window:
+///   easy   — same string, ascending, at most a P4 (5 semitones) apart
 ///   medium — same or adjacent string, ascending
 ///   hard   — any two positions, either direction
 ///
 /// [isStringActive] mirrors HomeController.getStringStatus so muted strings are
-/// excluded. Returns null only if no valid pair exists (e.g. one active string
-/// under medium/easy leaves too few options).
+/// excluded. [level] caps both notes to the session's fret window (null = the
+/// whole neck, which is what Quick start uses). Returns null only if no valid
+/// pair exists (e.g. one active string under medium/easy leaves too few
+/// options).
 IntervalPrompt? pickIntervalPrompt(
   List<BoardModel> board, {
   required IntervalDifficulty difficulty,
   required bool Function(int string) isStringActive,
   Set<int>? allowedSemitones,
+  PracticeLevel? level,
   Random? rng,
 }) {
   final r = rng ?? Random();
   final active = board.where((b) => isStringActive(b.string ?? 0)).toList();
   if (active.length < 2) return null;
 
+  final fretCap = level?.fretCap;
+
   for (var attempt = 0; attempt < 600; attempt++) {
     final root = active[r.nextInt(active.length)];
     final target = active[r.nextInt(active.length)];
     if (identical(root, target)) continue;
+
+    // A level narrows the neck for intervals too, not just for notes/chords.
+    if (fretCap != null &&
+        ((root.fret ?? 0) > fretCap || (target.fret ?? 0) > fretCap)) {
+      continue;
+    }
 
     final gap = semitoneGap(root, target);
     if (gap.abs() > 12) continue;

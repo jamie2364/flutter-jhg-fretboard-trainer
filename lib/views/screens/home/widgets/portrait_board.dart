@@ -594,14 +594,6 @@ const TextStyle _kTileHero = TextStyle(
   height: 1.05,
 );
 
-const TextStyle _kTileLead = TextStyle(
-  color: Color(0xFFF1F1F1),
-  fontSize: 15,
-  fontWeight: FontWeight.w600,
-  letterSpacing: -0.2,
-  height: 1.1,
-);
-
 const TextStyle _kTileAsk = TextStyle(
   color: Color(0xFFF1F1F1),
   fontSize: 19,
@@ -626,11 +618,9 @@ class _TileHero extends StatelessWidget {
   }
 }
 
-/// A small lead word followed by the hero token, e.g. "Find" + "C#".
-///
-/// One rich Text rather than a Row, so the two sizes sit on a shared baseline
-/// for free, and one FittedBox around the lot so a long token scales the whole
-/// line down instead of clipping it.
+/// A small lead word stacked above the hero token, e.g. "PLAY" over "C#maj7"
+/// or "FIND" over "E". The lead is a quiet uppercase eyebrow so the note/chord
+/// itself stays the one bold thing the eye lands on.
 class _TilePrompt extends StatelessWidget {
   const _TilePrompt({required this.lead, required this.hero});
   final String lead;
@@ -638,16 +628,29 @@ class _TilePrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Text.rich(
-        TextSpan(children: [
-          TextSpan(text: '$lead  ', style: _kTileLead),
-          TextSpan(text: hero, style: _kTileHero),
-        ]),
-        maxLines: 1,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          lead.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: JhgFonts.inter(
+            color: const Color(0xFFB3B0AE),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.6,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(hero, maxLines: 1, style: _kTileHero),
+        ),
+      ],
     );
   }
 }
@@ -775,11 +778,90 @@ class _CollapsedTile extends StatelessWidget {
 
     Widget buildPromptWidget() {
       if (!isPlaying) {
-        return const Text(
-          'Tap play to start',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: _kTileLead,
+        // Idle "ready" state: a quiet icon, the mode as a title, and a one-line
+        // description of the practice — so the tile reads as a considered start
+        // screen rather than an empty box waiting to be tapped.
+        final IconData icon;
+        final String title;
+        final String subtitle;
+        if (isChord && c.isChordLab) {
+          icon = JhgIcons.note;
+          title = 'Chord Lab';
+          subtitle = 'Mixed chord challenges across the neck';
+        } else if (isChord && c.isChordBuild) {
+          icon = JhgIcons.note;
+          title = 'Build Chords';
+          subtitle = 'Place the shape on the fretboard';
+        } else if (isChord) {
+          icon = JhgIcons.note;
+          title = 'Name Chords';
+          subtitle = 'Name the shape lit on the neck';
+        } else if (isInterval && c.isIntervalBuild) {
+          icon = JhgIcons.navModes;
+          title = 'Build Intervals';
+          subtitle = 'Place the interval from the root';
+        } else if (isInterval) {
+          icon = JhgIcons.navModes;
+          title = 'Name Intervals';
+          subtitle = 'Name the distance between the notes';
+        } else if (isReverse) {
+          icon = JhgIcons.help;
+          title = 'Name Notes';
+          subtitle = 'Hear it or see it, then name the note';
+        } else {
+          icon = JhgIcons.search;
+          title = 'Find Notes';
+          subtitle = 'Locate the called-out note on the neck';
+        }
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.05),
+                border:
+                    Border.all(color: Colors.white.withValues(alpha: 0.10)),
+              ),
+              child: Icon(icon,
+                  color: JHGColors.primary.withValues(alpha: 0.9), size: 19),
+            ),
+            const SizedBox(width: 13),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: JhgFonts.poppins(
+                      color: const Color(0xFFF4F4F4),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      height: 1.05,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: JhgFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.46),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       }
       if (isChord && c.isChordLab) {
@@ -880,7 +962,24 @@ class _CollapsedTile extends StatelessWidget {
             children: [
               Expanded(child: buildPromptWidget()),
               const SizedBox(width: 14),
-              playBtn,
+              // A soft coral halo behind the play button while idle, so the
+              // primary action quietly draws the eye without any gimmickry.
+              if (!isPlaying)
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: JHGColors.primary.withValues(alpha: 0.32),
+                        blurRadius: 22,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: playBtn,
+                )
+              else
+                playBtn,
             ],
           ),
 
@@ -2182,7 +2281,9 @@ class _ChordBuildControls extends StatelessWidget {
       );
     }
 
-    return Row(
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
@@ -2209,12 +2310,22 @@ class _ChordBuildControls extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         pill(
+          icon: JhgIcons.help,
+          label: 'Hint',
+          tint: const Color(0xFFF2A33C),
+          onTap: (done || c.chordBuildHint.isNotEmpty)
+              ? null
+              : c.hintChordBuild,
+        ),
+        const SizedBox(width: 8),
+        pill(
           icon: JhgIcons.visible,
           label: 'Reveal',
           tint: JHGColors.primary,
           onTap: done ? null : c.revealChordBuild,
         ),
       ],
+      ),
     );
   }
 }

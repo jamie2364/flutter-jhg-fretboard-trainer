@@ -157,6 +157,9 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       for (final idx in c.chordTapped) {
         add(idx);
       }
+      for (final idx in c.chordBuildHint) {
+        add(idx);
+      }
       final reveal = c.chordBuildReveal;
       if (reveal != null) {
         for (final idx in reveal) {
@@ -289,6 +292,48 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     );
   }
 
+  /// Dims every fret above the session's window and draws a thin coral "edge of
+  /// the window" line at the cap, so the boundary reads as deliberate rather
+  /// than as the neck simply ending.
+  ///
+  /// [cap] is never null here — the caller checks [HomeController.dimsPastLevel]
+  /// first. Returns an empty box for a full-board cap, which is the whole board
+  /// anyway.
+  Widget _fretWindowShade(int? cap) {
+    if (cap == null || cap >= _kTotalFrets) return const SizedBox.shrink();
+    // The shade starts at the TOP of the first fret below the cap, so the cap's
+    // own fret space stays fully lit (that is the last playable fret).
+    final top = _cellTopFor(cap + 1);
+    const neckLeft = (_kBoardWidth - _kNeckWidth) / 2;
+    return IgnorePointer(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: neckLeft,
+            width: _kNeckWidth,
+            top: top,
+            bottom: 0,
+            child: const ColoredBox(color: Color(0x8F0B0B0B)),
+          ),
+          // The window edge: a hairline where the level stops.
+          Positioned(
+            left: neckLeft + 6,
+            width: _kNeckWidth - 12,
+            top: top - 1,
+            height: 2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: JHGColors.primary.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ───────────────────────────────────────────────────────────────────────────
   // NEW portrait board — pixel-identical to the dictionaries / drills fretboard.
   // ───────────────────────────────────────────────────────────────────────────
@@ -296,9 +341,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     final isReverse = controller.currentGameMode.value == 'reverse';
     final int? selected = controller.selectedFret;
     final int? target = controller.highlightFret;
-    final bool isFindMode = !isReverse &&
-        !controller.isIntervalMode &&
-        !controller.isChordMode;
+    final bool isFindMode =
+        !isReverse && !controller.isIntervalMode && !controller.isChordMode;
     final int? highlightString = isFindMode ? controller.highlightString : null;
 
     final bool isInterval = controller.currentGameMode.value == 'interval';
@@ -359,192 +403,225 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 26),
-              child: _stringLabelsRow(controller, interactive: stringSelectable),
+              child:
+                  _stringLabelsRow(controller, interactive: stringSelectable),
             ),
           ),
           const SizedBox(height: 8),
           // ── Scrollable fretboard ────────────────────────────────────────────
           Expanded(
-          child: ScrollConfiguration(
-            behavior:
-                ScrollConfiguration.of(context).copyWith(scrollbars: false),
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              // Bottom slack = the live tile height (+ a small margin): exactly
-              // enough for the auto-scroll to lift the lowest frets (15/16) into
-              // the clear area above the tile, while the neck's end tucks behind
-              // the tile's top edge rather than leaving a dead gap.
-              padding: EdgeInsets.only(bottom: _tileHeightPx + 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: _kBoardWidth,
-                    height: (15 + (_kTotalFrets * _kFretSpacing) + 50),
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Nut + ivory neck
-                        Positioned.fill(
-                          child: Column(
-                            children: [
-                              Container(
-                                width: _kNeckWidth,
-                                height: _kNutHeight,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF111111),
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(6),
-                                    topRight: Radius.circular(6),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Container(
+            child: ScrollConfiguration(
+              behavior:
+                  ScrollConfiguration.of(context).copyWith(scrollbars: false),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                // Bottom slack = the live tile height (+ a small margin): exactly
+                // enough for the auto-scroll to lift the lowest frets (15/16) into
+                // the clear area above the tile, while the neck's end tucks behind
+                // the tile's top edge rather than leaving a dead gap.
+                padding: EdgeInsets.only(bottom: _tileHeightPx + 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: _kBoardWidth,
+                      height: (15 + (_kTotalFrets * _kFretSpacing) + 50),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Nut + ivory neck
+                          Positioned.fill(
+                            child: Column(
+                              children: [
+                                Container(
                                   width: _kNeckWidth,
+                                  height: _kNutHeight,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFFEAE2D4),
+                                    color: Color(0xFF111111),
                                     borderRadius: BorderRadius.only(
-                                      bottomLeft: Radius.circular(4),
-                                      bottomRight: Radius.circular(4),
+                                      topLeft: Radius.circular(6),
+                                      topRight: Radius.circular(6),
                                     ),
                                   ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    width: _kNeckWidth,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEAE2D4),
+                                      borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(4),
+                                        bottomRight: Radius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Fret wires + inlay dots + strings
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              for (int i = 0; i <= _kTotalFrets; i++)
+                                _fretWire(i),
+                              for (int i = 0; i < _kTotalFrets; i++)
+                                ..._inlay(i),
+                              // Customized Practice: everything past the level's
+                              // fret window is dimmed, so the neck a Beginner sees
+                              // is the five frets they were promised. Sits above
+                              // the neck + wires + inlays but below the strings
+                              // and notes, which stay at full strength.
+                              if (controller.dimsPastLevel)
+                                Positioned.fill(
+                                  child: _fretWindowShade(controller.fretCap),
+                                ),
+                              for (int col = 0; col < 6; col++)
+                                _string(col, highlightString,
+                                    dim: stringSelectable &&
+                                        !controller.isStringOn(6 - col)),
+
+                              // Correct / wrong feedback ball (find mode)
+                              if (selected != null &&
+                                  selected >= 0 &&
+                                  selected < fretList.length)
+                                _noteBall(
+                                  index: selected,
+                                  color: controller.selectedColor ??
+                                      JHGColors.primary,
+                                ),
+
+                              // Identify-mode target glow + "sound rings" that
+                              // pulse out of the target each time the user hits
+                              // Listen, so the audio is tied to its spot on the
+                              // neck.
+                              if (showReverseTarget) ...[
+                                _pulseRings(target, controller.playPulse.value),
+                                _reverseTargetBall(target),
+                              ],
+
+                              // Interval-mode notes — clean coral balls (same as
+                              // the rest of the suite). Root + target in name
+                              // mode; root only in build mode.
+                              if (showIntervalRoot)
+                                _noteBall(
+                                  index: controller.intervalRootIndex!,
+                                  color: JHGColors.primary,
+                                ),
+                              if (showIntervalTarget)
+                                _noteBall(
+                                  index: controller.intervalTargetIndex!,
+                                  color: _kNoteGrey,
+                                ),
+                              // Build mode: green reveal of a correct target.
+                              if (showBuildReveal)
+                                _noteBall(
+                                  index: controller.intervalBuildRevealIndex!,
+                                  color: JHGColors.green,
+                                ),
+
+                              // Chord NAME: the full shape (root ringed, muted
+                              // strings marked with ×).
+                              if (showChordShape)
+                                ..._chordShapeWidgets(controller.chordPrompt!),
+
+                              // Chord BUILD: the user's placed notes. Turn green
+                              // once the placed set completes the chord.
+                              if (showChordTaps)
+                                for (final idx in controller.chordTapped)
+                                  _noteBall(
+                                    index: idx,
+                                    color: (controller.chordBuildDone &&
+                                            controller.chordBuildReveal == null)
+                                        ? JHGColors.green
+                                        : JHGColors.primary,
+                                  ),
+
+                              // Chord BUILD: a correct shape revealed in green,
+                              // each note labelled so the answer is a teachable
+                              // moment rather than just dots.
+                              if (showChordReveal)
+                                for (final idx in controller.chordBuildReveal!)
+                                  _noteBall(
+                                    index: idx,
+                                    color: JHGColors.green,
+                                    label: controller.chordPrompt != null
+                                        ? chordNoteLabelForIndex(
+                                            controller.chordPrompt!, idx)
+                                        : fretList[idx].note,
+                                  ),
+
+                              // Chord BUILD: Hint — one or more correct notes
+                              // surfaced as a faint amber guide (not placed).
+                              if (showChordTaps)
+                                for (final idx in controller.chordBuildHint)
+                                  if (!controller.chordTapped.contains(idx))
+                                    _hintBall(
+                                      index: idx,
+                                      label: controller.chordPrompt != null
+                                          ? chordNoteLabelForIndex(
+                                              controller.chordPrompt!, idx)
+                                          : fretList[idx].note,
+                                    ),
+
+                              // Chord Lab: given/placed notes (+ region band for
+                              // the Build round; full shape for the Name round).
+                              if (isChordLab && controller.isStart)
+                                ..._chordLabWidgets(controller),
+
+                              // Transparent tap targets — MUST be the topmost
+                              // layer so taps land on notes too (e.g. removing a
+                              // note in Chord Lab), not get absorbed by the balls
+                              // painted above the cells.
+                              IgnorePointer(
+                                ignoring: !tapMode,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    for (int index = 0;
+                                        index < fretList.length;
+                                        index++)
+                                      _tapCell(controller, index),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-
-                        // Fret wires + inlay dots + strings
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            for (int i = 0; i <= _kTotalFrets; i++)
-                              _fretWire(i),
-                            for (int i = 0; i < _kTotalFrets; i++) ..._inlay(i),
-                            for (int col = 0; col < 6; col++)
-                              _string(col, highlightString,
-                                  dim: stringSelectable &&
-                                      !controller.isStringOn(6 - col)),
-
-                            // Correct / wrong feedback ball (find mode)
-                            if (selected != null &&
-                                selected >= 0 &&
-                                selected < fretList.length)
-                              _noteBall(
-                                index: selected,
-                                color: controller.selectedColor ??
-                                    JHGColors.primary,
-                              ),
-
-                            // Identify-mode target glow
-                            if (showReverseTarget) _reverseTargetBall(target),
-
-                            // Interval-mode notes — clean coral balls (same as
-                            // the rest of the suite). Root + target in name
-                            // mode; root only in build mode.
-                            if (showIntervalRoot)
-                              _noteBall(
-                                index: controller.intervalRootIndex!,
-                                color: JHGColors.primary,
-                              ),
-                            if (showIntervalTarget)
-                              _noteBall(
-                                index: controller.intervalTargetIndex!,
-                                color: _kNoteGrey,
-                              ),
-                            // Build mode: green reveal of a correct target.
-                            if (showBuildReveal)
-                              _noteBall(
-                                index: controller.intervalBuildRevealIndex!,
-                                color: JHGColors.green,
-                              ),
-
-                            // Chord NAME: the full shape (root ringed, muted
-                            // strings marked with ×).
-                            if (showChordShape)
-                              ..._chordShapeWidgets(controller.chordPrompt!),
-
-                            // Chord BUILD: the user's placed notes. Turn green
-                            // once the placed set completes the chord.
-                            if (showChordTaps)
-                              for (final idx in controller.chordTapped)
-                                _noteBall(
-                                  index: idx,
-                                  color: (controller.chordBuildDone &&
-                                          controller.chordBuildReveal == null)
-                                      ? JHGColors.green
-                                      : JHGColors.primary,
-                                ),
-
-                            // Chord BUILD: a correct shape revealed in green,
-                            // each note labelled so the answer is a teachable
-                            // moment rather than just dots.
-                            if (showChordReveal)
-                              for (final idx in controller.chordBuildReveal!)
-                                _noteBall(
-                                  index: idx,
-                                  color: JHGColors.green,
-                                  label: fretList[idx].note,
-                                ),
-
-                            // Chord Lab: given/placed notes (+ region band for
-                            // the Build round; full shape for the Name round).
-                            if (isChordLab && controller.isStart)
-                              ..._chordLabWidgets(controller),
-
-                            // Transparent tap targets — MUST be the topmost
-                            // layer so taps land on notes too (e.g. removing a
-                            // note in Chord Lab), not get absorbed by the balls
-                            // painted above the cells.
-                            IgnorePointer(
-                              ignoring: !tapMode,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  for (int index = 0;
-                                      index < fretList.length;
-                                      index++)
-                                    _tapCell(controller, index),
-                                ],
-                              ),
+                        ],
+                      ),
+                    ),
+                    // Fret-number gutter (0..15) — each number sits on its fret's
+                    // wire, level with the notes on that line.
+                    SizedBox(
+                      width: 26,
+                      height: (15 + (_kTotalFrets * _kFretSpacing) + 50),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Each number sits level with the note ball on its
+                          // line — i.e. centred in the MIDDLE of that fret's
+                          // playing area, not down on the fret wire. Sharing the
+                          // ball geometry keeps them locked to the notes at every
+                          // fret (fret 0 already read correctly).
+                          for (int f = 0; f <= _kTotalFrets; f++)
+                            Positioned(
+                              top: _ballTopFor(f),
+                              height: 2 * _kBallRadius,
+                              left: 0,
+                              right: 0,
+                              child: Center(child: _fretNumberLabel('$f')),
                             ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  // Fret-number gutter (0..15) — each number sits on its fret's
-                  // wire, level with the notes on that line.
-                  SizedBox(
-                    width: 26,
-                    height: (15 + (_kTotalFrets * _kFretSpacing) + 50),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Each number sits level with the note ball on its
-                        // line — i.e. centred in the MIDDLE of that fret's
-                        // playing area, not down on the fret wire. Sharing the
-                        // ball geometry keeps them locked to the notes at every
-                        // fret (fret 0 already read correctly).
-                        for (int f = 0; f <= _kTotalFrets; f++)
-                          Positioned(
-                            top: _ballTopFor(f),
-                            height: 2 * _kBallRadius,
-                            left: 0,
-                            right: 0,
-                            child: Center(child: _fretNumberLabel('$f')),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         ],
       ),
     );
@@ -628,6 +705,40 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
               );
             }(),
         ],
+      ),
+    );
+  }
+
+  /// Percentage-based twin of [_fretWindowShade] for the legacy layout: nut +
+  /// [cap] fret rows of 7.7% viewport height each, then the shade to the end.
+  Widget _legacyFretWindowShade(int? cap, double viewportHeight) {
+    if (cap == null || cap >= 15) return const SizedBox.shrink();
+    final top = viewportHeight * (0.015 + 0.0771 * (cap + 1));
+    return Positioned(
+      top: top,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: Stack(
+          children: [
+            const Positioned.fill(
+              child: ColoredBox(color: Color(0x8F0B0B0B)),
+            ),
+            Positioned(
+              left: 10,
+              right: 10,
+              top: 0,
+              height: 2,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: JHGColors.primary.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -723,7 +834,8 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Color(0xFFE53935), // ds-guard: allow — true branding red
+                        Color(
+                            0xFFE53935), // ds-guard: allow — true branding red
                         Color(0xFFE53935), // ds-guard: allow
                       ],
                     )
@@ -807,6 +919,74 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
     );
   }
 
+  // ── Build-mode Hint ball: a solid amber guide note (not placed) with a white
+  // dashed ring + glow, so it reads clearly on the cream neck and stands apart
+  // from the coral placed notes and the green reveal. ─────────────────────────
+  Widget _hintBall({required int index, String? label}) {
+    final model = fretList[index];
+    final fret = model.fret ?? (index ~/ 6);
+    final col = index % 6;
+    const amber = Color(0xFFF59E0B);
+    return Positioned(
+      top: _ballTopFor(fret) - 2,
+      left: _ballLeftFor(col) - 2,
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: amber,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.95),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: amber.withValues(alpha: 0.6),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: label == null
+            ? null
+            : Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                  shadows: [
+                    Shadow(color: Colors.black38, blurRadius: 2),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  // ── Identify-mode "sound rings": concentric rings that bloom out of the
+  // target note whenever [trigger] changes (the Listen button bumps it). ───────
+  Widget _pulseRings(int index, int trigger) {
+    final model = fretList[index];
+    final fret = model.fret ?? (index ~/ 6);
+    final col = index % 6;
+    const field = 128.0;
+    // Centre the ring field on the 28px target ball (ball centre = top+14,
+    // left+14). A ValueKey on the trigger guarantees a fresh animation each
+    // time the user hits Listen, regardless of element reuse.
+    return Positioned(
+      top: _ballTopFor(fret) + 14 - field / 2,
+      left: _ballLeftFor(col) + 14 - field / 2,
+      child: IgnorePointer(
+        child: _SoundRings(key: ValueKey(trigger), size: field),
+      ),
+    );
+  }
+
   // ── The identify-mode target (white-ringed coral ball with a "?") ───────────
   Widget _reverseTargetBall(int index) {
     final model = fretList[index];
@@ -848,12 +1028,12 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
       final index = f * 6 + col;
       if (index < 0 || index >= fretList.length) continue;
       final isRoot = fretList[index].note == shape.root;
-      // Every sounding note is labelled with its name — the root keeps its coral
-      // ring so it still stands out, the rest are grey.
+      // Every sounding note is labelled with its chord-correct name (so Gm reads
+      // G · B♭ · D, not G · A# · D). The root keeps its coral ring.
+      final label = chordNoteLabelForIndex(shape, index);
       widgets.add(isRoot
-          ? _rootBall(index, label: shape.root)
-          : _noteBall(
-              index: index, color: _kNoteGrey, label: fretList[index].note));
+          ? _rootBall(index, label: label)
+          : _noteBall(index: index, color: _kNoteGrey, label: label));
     }
     return widgets;
   }
@@ -1145,6 +1325,14 @@ class _GuitarBoardAltState extends State<GuitarBoard> {
                           }),
                         ),
                       ),
+
+                      // Level window: dim everything past the cap. The legacy
+                      // board lays itself out in viewport percentages rather
+                      // than fixed pixels, so its boundary is approximate — but
+                      // it keeps the level legible on landscape/web fallbacks
+                      // instead of silently dropping the constraint there.
+                      if (controller.dimsPastLevel)
+                        _legacyFretWindowShade(controller.fretCap, height),
 
                       /// red green  With Grid
                       ///===========================================================
@@ -1582,3 +1770,82 @@ BoxDecoration _cleanBall(Color base, {bool ring = false}) {
 
 // Retained for any external references to the old glossy ball styling.
 BoxDecoration glossyBall(Color base) => _cleanBall(base);
+
+// ── Sound rings ──────────────────────────────────────────────────────────────
+// A one-shot bloom of concentric coral rings that plays once on mount. The host
+// gives it a ValueKey(trigger), so every tap of Listen builds a fresh instance
+// and the pulse replays reliably.
+class _SoundRings extends StatefulWidget {
+  const _SoundRings({super.key, required this.size});
+  final double size;
+
+  @override
+  State<_SoundRings> createState() => _SoundRingsState();
+}
+
+class _SoundRingsState extends State<_SoundRings>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 950),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _ac.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ac,
+      builder: (_, __) => CustomPaint(
+        size: Size(widget.size, widget.size),
+        painter: _SoundRingsPainter(_ac.value),
+      ),
+    );
+  }
+}
+
+class _SoundRingsPainter extends CustomPainter {
+  _SoundRingsPainter(this.t);
+  final double t; // 0 → 1 over the pulse
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (t <= 0 || t >= 1) return;
+    final center = Offset(size.width / 2, size.height / 2);
+    const baseRadius = 16.0;
+    final maxRadius = size.width / 2;
+    // Three rings, each trailing the last, expanding and fading outward.
+    for (var i = 0; i < 3; i++) {
+      final local = (t - i * 0.16).clamp(0.0, 1.0);
+      if (local <= 0 || local >= 1) continue;
+      final radius = baseRadius + (maxRadius - baseRadius) * local;
+      final opacity = (1 - local) * 0.9;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4.0 * (1 - local) + 1.0
+        ..color = JHGColors.primary.withValues(alpha: opacity);
+      canvas.drawCircle(center, radius, paint);
+    }
+    // A soft filled core flash right at the start, so the pulse clearly "fires"
+    // from the note before the rings travel out.
+    if (t < 0.4) {
+      final flash = Paint()
+        ..style = PaintingStyle.fill
+        ..color = JHGColors.primary.withValues(alpha: (0.4 - t) * 0.8);
+      canvas.drawCircle(center, baseRadius + t * 20, flash);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SoundRingsPainter old) => old.t != t;
+}
